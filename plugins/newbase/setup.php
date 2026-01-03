@@ -36,7 +36,7 @@ const newbase_VERSION = '2.0.0';
  */
 function plugin_init_newbase(): array
 {
-    global $PLUGIN_HOOKS;
+    global $PLUGIN_HOOKS, $CFG_GLPI;
 
     // Composer autoloader
     if (file_exists(__DIR__ . '/vendor/autoload.php')) {
@@ -61,13 +61,10 @@ function plugin_init_newbase(): array
         ]);
         Plugin::registerClass(Common::class);
 
-        // Add to main menu
+        // Add to Management menu
         $PLUGIN_HOOKS['menu_toadd']['newbase'] = [
             'management' => CompanyData::class
         ];
-
-        // Add specific menu entries
-        $PLUGIN_HOOKS['menu_entry']['newbase'] = 'front/index.php';
 
         // Configuration page
         $PLUGIN_HOOKS['config_page']['newbase'] = 'front/config.php';
@@ -84,7 +81,7 @@ function plugin_init_newbase(): array
 
         // Add JavaScript files
         $PLUGIN_HOOKS['add_javascript']['newbase'] = [
-            'js/jquery.mask.min.js',  // jQuery Mask Plugin - DEVE SER O PRIMEIRO!
+            'js/jquery.mask.min.js',
             'js/newbase.js',
             'js/forms.js',
             'js/map.js',
@@ -144,7 +141,6 @@ function plugin_version_newbase(): array
 
 /**
  * Check plugin prerequisites before installation
- * FUNÇÃO OBRIGATÓRIA RENOMEADA
  *
  * @return bool True if prerequisites are met
  */
@@ -177,7 +173,6 @@ function plugin_newbase_check_prerequisites(): bool
 
 /**
  * Check plugin configuration
- * FUNÇÃO OBRIGATÓRIA RENOMEADA
  *
  * @param bool $verbose Display message if config not ok
  * @return bool True if configuration is OK
@@ -192,7 +187,6 @@ function plugin_newbase_check_config($verbose = false): bool
 
 /**
  * Install plugin
- * FUNÇÃO OBRIGATÓRIA - RENOMEADA DE newbase_install() PARA plugin_newbase_install()
  *
  * @return bool True on success
  */
@@ -200,7 +194,6 @@ function plugin_newbase_install(): bool
 {
     global $DB;
 
-    // VERIFICAÇÃO IMPORTANTE: se migration ou classes não existem, falha graciosamente
     try {
         // Create CompanyData table
         if (!$DB->tableExists('glpi_plugin_newbase_companydata')) {
@@ -410,12 +403,12 @@ function plugin_newbase_install(): bool
             }
         }
 
-        // Add rights to glpi_profiles
+        // Define rights with proper values
         $rights = [
-            'plugin_newbase_companydata' => READ | CREATE | UPDATE | DELETE | PURGE,
-            'plugin_newbase_task' => READ | CREATE | UPDATE | DELETE | PURGE,
-            'plugin_newbase_system' => READ | CREATE | UPDATE | DELETE | PURGE,
-            'plugin_newbase_config' => READ | UPDATE
+            'plugin_newbase_companydata' => ALLSTANDARDRIGHT,  // All standard rights
+            'plugin_newbase_task' => ALLSTANDARDRIGHT,
+            'plugin_newbase_system' => ALLSTANDARDRIGHT,
+            'plugin_newbase_config' => READ | UPDATE  // Config only needs read/update
         ];
 
         // Get all profiles
@@ -427,12 +420,24 @@ function plugin_newbase_install(): bool
                     'profiles_id' => $profile['id'],
                     'name' => $rightname
                 ])) {
-                    // Add right based on profile type
+                    // Determine rights based on profile
                     $value = 0;
-
-                    // Super-Admin profile (id 4) gets all rights
-                    if ($profile['id'] == 4 || $profile['interface'] == 'central') {
+                    
+                    // Super-Admin (id 4) gets all rights
+                    if ($profile['id'] == 4) {
                         $value = $rightvalue;
+                    }
+                    // Central interface gets all rights except purge
+                    elseif ($profile['interface'] == 'central') {
+                        if ($rightvalue == ALLSTANDARDRIGHT) {
+                            $value = READ | CREATE | UPDATE | DELETE;
+                        } else {
+                            $value = $rightvalue;
+                        }
+                    }
+                    // Helpdesk interface gets read only
+                    elseif ($profile['interface'] == 'helpdesk') {
+                        $value = READ;
                     }
 
                     $DB->insert('glpi_profilerights', [
@@ -454,7 +459,6 @@ function plugin_newbase_install(): bool
 
 /**
  * Uninstall plugin
- * FUNÇÃO OBRIGATÓRIA RENOMEADA
  *
  * @return bool True on success
  */
@@ -463,17 +467,17 @@ function plugin_newbase_uninstall(): bool
     global $DB;
 
     try {
-        // ORDEM CORRETA: FILHAS PRIMEIRO, PAI DEPOIS
+        // Drop tables in correct order (children first, parent last)
         $tables = [
-            'glpi_plugin_newbase_tasksignature',  // ✅ Mais dependente (FK -> task)
-            'glpi_plugin_newbase_task',           // ✅ Dependente (FK -> companydata)
-            'glpi_plugin_newbase_system',         // ✅ Dependente (FK -> companydata)
-            'glpi_plugin_newbase_address',        // ✅ Dependente (FK -> companydata)
-            'glpi_plugin_newbase_companydata',    // ✅ PAI (referenciado por todos acima)
-            'glpi_plugin_newbase_config'          // ✅ Independente
+            'glpi_plugin_newbase_tasksignature',
+            'glpi_plugin_newbase_task',
+            'glpi_plugin_newbase_system',
+            'glpi_plugin_newbase_address',
+            'glpi_plugin_newbase_companydata',
+            'glpi_plugin_newbase_config'
         ];
 
-        // Desativa temporariamente foreign keys
+        // Temporarily disable foreign key checks
         $DB->query("SET FOREIGN_KEY_CHECKS = 0");
 
         foreach ($tables as $table) {
@@ -485,7 +489,7 @@ function plugin_newbase_uninstall(): bool
             }
         }
 
-        // Reativa foreign keys
+        // Re-enable foreign key checks
         $DB->query("SET FOREIGN_KEY_CHECKS = 1");
 
         // Remove display preferences

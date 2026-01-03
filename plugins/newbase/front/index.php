@@ -11,6 +11,9 @@
 
 declare(strict_types=1);
 
+use GlpiPlugin\Newbase\Task;
+use GlpiPlugin\Newbase\Config;
+
 include('../../../inc/includes.php');
 
 // Check authentication
@@ -24,14 +27,14 @@ Html::header(
     __('Newbase - Personal Data Management', 'newbase'),
     $_SERVER['PHP_SELF'],
     "management",
-    "PluginNewbaseCompanyData"
+    "GlpiPlugin\\Newbase\\CompanyData"
 );
 
 echo "<div class='center'>";
 echo "<h1>" . __('Newbase Dashboard', 'newbase') . "</h1>";
 echo "</div>";
 
-global $DB;
+global $DB, $CFG_GLPI;
 
 // Statistics cards
 echo "<div class='dashboard-cards' style='display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin: 20px;'>";
@@ -41,7 +44,7 @@ $companies_count = countElementsInTable('glpi_plugin_newbase_companydata');
 echo "<div class='card' style='background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);'>";
 echo "<h3 style='margin: 0 0 10px 0;'><i class='fas fa-building'></i> " . __('Companies', 'newbase') . "</h3>";
 echo "<div style='font-size: 32px; font-weight: bold; color: #2196F3;'>$companies_count</div>";
-echo "<a href='" . $CFG_GLPI['root_doc'] . "/plugins/newbase/front/company_data.php' class='btn btn-sm btn-primary' style='margin-top: 10px;'>";
+echo "<a href='" . $CFG_GLPI['root_doc'] . "/plugins/newbase/front/companydata.php' class='btn btn-sm btn-primary' style='margin-top: 10px;'>";
 echo __('View all', 'newbase') . " <i class='fas fa-arrow-right'></i></a>";
 echo "</div>";
 
@@ -127,7 +130,7 @@ if (count($iterator)) {
     echo "<th>" . __('Created', 'newbase') . "</th>";
     echo "</tr>";
 
-    $statuses = PluginNewbaseTask::getTaskStatuses();
+    $statuses = Task::getTaskStatuses();
 
     foreach ($iterator as $row) {
         $status_colors = [
@@ -163,7 +166,7 @@ echo "<h3><i class='fas fa-bolt'></i> " . __('Quick Actions', 'newbase') . "</h3
 echo "<div style='display: flex; gap: 10px; flex-wrap: wrap;'>";
 
 if (Session::haveRight('plugin_newbase_companydata', CREATE)) {
-    echo "<a href='" . $CFG_GLPI['root_doc'] . "/plugins/newbase/front/company_data.form.php' class='btn btn-primary'>";
+    echo "<a href='" . $CFG_GLPI['root_doc'] . "/plugins/newbase/front/companydata.form.php' class='btn btn-primary'>";
     echo "<i class='fas fa-plus'></i> " . __('New Company', 'newbase') . "</a>";
 }
 
@@ -190,7 +193,7 @@ echo "</div>";
 echo "</div>";
 
 // Map preview (if geolocation is enabled)
-if (PluginNewbaseConfig::isGeolocationEnabled()) {
+if (Config::isGeolocationEnabled()) {
     $tasks_with_coords = countElementsInTable('glpi_plugin_newbase_task', [
         'OR' => [
             ['latitude_start' => ['<>', null]],

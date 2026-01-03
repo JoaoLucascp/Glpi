@@ -104,8 +104,7 @@ class Address extends CommonDBTM
         if ($canedit) {
             echo "<div class='center firstbloc' style='margin-bottom: 15px;'>";
             echo "<a class='btn btn-primary' href='" . $CFG_GLPI['root_doc'] .
-                "/front/form.php?itemtype=" . __CLASS__ .
-                "&plugin_newbase_companydata_id=" . $company_id . "'>";
+                "/plugins/newbase/front/address.form.php?plugin_newbase_companydata_id=" . $company_id . "'>";
             echo "<i class='fas fa-plus'></i>&nbsp;Adicionar Endereço";
             echo "</a>";
             echo "</div>";
@@ -177,14 +176,19 @@ class Address extends CommonDBTM
                 if ($canedit) {
                     // Botão Editar
                     echo "<a href='" . $CFG_GLPI['root_doc'] .
-                        "/front/form.php?itemtype=" . __CLASS__ .
-                        "&id=" . $data['id'] . "' title='Editar'>";
+                        "/plugins/newbase/front/address.form.php?id=" . $data['id'] . "' title='Editar'>";
                     echo "<i class='fas fa-edit' style='color: #0066cc;'></i></a>&nbsp;";
 
-                    // Botão Excluir
-                    echo "<a href='#' onclick='return confirm(\"Confirma a exclusão deste endereço?\")'
-                            style='color: #dc3545;' title='Excluir'>";
-                    echo "<i class='fas fa-trash'></i></a>";
+                    // Formulário de exclusão inline
+                    echo "<form method='post' action='" . $CFG_GLPI['root_doc'] . "/plugins/newbase/front/address.form.php' style='display:inline;'>";
+                    echo Html::hidden('id', ['value' => $data['id']]);
+                    echo Html::hidden('plugin_newbase_companydata_id', ['value' => $company_id]);
+                    echo "<button type='submit' name='delete' class='btn btn-link' style='color: #dc3545; padding: 0; border: 0;' ";
+                    echo "onclick='return confirm(\"Confirma a exclusão deste endereço?\")' title='Excluir'>";
+                    echo "<i class='fas fa-trash'></i>";
+                    echo "</button>";
+                    echo Html::hidden('_glpi_csrf_token', ['value' => Session::getNewCSRFToken()]);
+                    echo "</form>";
                 }
                 echo "</td>";
                 echo "</tr>";
