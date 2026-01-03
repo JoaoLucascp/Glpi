@@ -208,7 +208,7 @@ class Address extends CommonDBTM
     }
 
     /**
-     * FORMULÁRIO MELHORADO COM BUSCA DE CEP
+     * FORMULÁRIO MELHORADO COM BUSCA DE CEP + COORDENADAS
      */
     public function showForm($ID, array $options = []): bool
     {
@@ -275,7 +275,8 @@ class Address extends CommonDBTM
         echo Html::input('number', [
             'value' => $this->fields['number'] ?? '',
             'placeholder' => 'Ex: 123 ou S/N',
-            'style' => 'width: 100px;'
+            'style' => 'width: 100px;',
+            'id' => 'number_field'
         ]);
         echo "</td>";
         echo "</tr>";
@@ -324,7 +325,8 @@ class Address extends CommonDBTM
         echo "&nbsp;&nbsp;País: ";
         echo Html::input('country', [
             'value' => $this->fields['country'] ?? 'Brasil',
-            'style' => 'width: 150px;'
+            'style' => 'width: 150px;',
+            'id' => 'country_field'
         ]);
         echo "</td>";
         echo "</tr>";
@@ -347,7 +349,7 @@ class Address extends CommonDBTM
         echo "</td>";
 
         echo "<td>Longitude</td>";
-        echo "<td>";
+        echo "<td id='longitude_container'>";
         echo Html::input('longitude', [
             'value' => $this->fields['longitude'] ?? '',
             'type' => 'number',
@@ -360,7 +362,7 @@ class Address extends CommonDBTM
 
         $this->showFormButtons($options);
 
-        // ========== JAVASCRIPT ==========
+        // ========== JAVASCRIPT MELHORADO COM GEOCODIFICAÇÃO ==========
         echo Html::scriptBlock("
         $(document).ready(function() {
             // Máscara no CEP
@@ -371,7 +373,50 @@ class Address extends CommonDBTM
                 $(this).val($(this).val().toUpperCase());
             });
 
-            // Buscar CEP via ViaCEP
+            // ✅ Função para buscar coordenadas via OpenStreetMap Nominatim
+            function buscarCoordenadas(endereco) {
+                var query = endereco.street + ', ' + endereco.number + ', ' +
+                        endereco.neighborhood + ', ' + endereco.city + ', ' +
+                        endereco.state + ', Brasil';
+
+                console.log('🔍 Buscando coordenadas para:', query);
+
+                // Delay de 1 segundo para respeitar rate limit do Nominatim (1 req/s)
+                setTimeout(function() {
+                    $.ajax({
+                        url: 'https://nominatim.openstreetmap.org/search',
+                        method: 'GET',
+                        dataType: 'json',
+                        data: {
+                            q: query,
+                            format: 'json',
+                            limit: 1,
+                            countrycodes: 'br'
+                        },
+                        headers: {
+                            'User-Agent': 'GLPI Plugin Newbase/2.0'
+                        },
+                        success: function(data) {
+                            if (data && data.length > 0) {
+                                var lat = parseFloat(data[0].lat).toFixed(8);
+                                var lon = parseFloat(data[0].lon).toFixed(8);
+
+                                $('#latitude_field').val(lat);
+                                $('#longitude_field').val(lon);
+
+                                console.log('✅ Coordenadas encontradas:', lat, lon);
+                            } else {
+                                console.log('⚠️ Coordenadas não encontradas para este endereço');
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            console.log('❌ Erro ao buscar coordenadas:', error);
+                        }
+                    });
+                }, 1000); // Delay de 1 segundo
+            }
+
+            // ✅ Buscar CEP via ViaCEP + Coordenadas automáticas
             $('#btn_buscar_cep').on('click', function() {
                 var cep = $('#cep_field').val().replace(/\D/g, '');
 
@@ -392,16 +437,35 @@ class Address extends CommonDBTM
                             return;
                         }
 
-                        // Preenche os campos
-                        $('#street_field').val(data.logradouro || '');
-                        $('#neighborhood_field').val(data.bairro || '');
-                        $('#city_field').val(data.localidade || '');
-                        $('#state_field').val(data.uf || '');
+                        // Preenche os campos de endereço
+                        var street = data.logradouro || '';
+                        var neighborhood = data.bairro || '';
+                        var city = data.localidade || '';
+                        var state = data.uf || '';
 
-                        alert('✅ Endereço carregado com sucesso!');
+                        $('#street_field').val(street);
+                        $('#neighborhood_field').val(neighborhood);
+                        $('#city_field').val(city);
+                        $('#state_field').val(state);
+
+                        // ✅ Preenche automaticamente o país como Brasil
+                        $('#country_field').val('Brasil');
+
+                        alert('✅ Endereço carregado! Buscando coordenadas...');
+
+                        // ✅ Busca coordenadas automaticamente após carregar o endereço
+                        var endereco = {
+                            street: street,
+                            number: $('#number_field').val() || 's/n',
+                            neighborhood: neighborhood,
+                            city: city,
+                            state: state
+                        };
+
+                        buscarCoordenadas(endereco);
 
                         // Foca no campo número
-                        $('input[name=\"number\"]').focus();
+                        $('#number_field').focus();
                     },
                     error: function() {
                         alert('❌ Erro ao buscar CEP. Verifique sua conexão e tente novamente.');
@@ -411,6 +475,35 @@ class Address extends CommonDBTM
                             .html('<i class=\"fas fa-search\"></i> Buscar CEP');
                     }
                 });
+            });
+
+            // ✅ Botão manual para buscar coordenadas (caso usuário queira atualizar depois)
+            var btnGeoloc = $('<button type=\"button\" class=\"btn btn-sm btn-info\" style=\"margin-left: 10px;\" title=\"Buscar coordenadas do endereço\">' +
+                            '<i class=\"fas fa-map-marked-alt\"></i> Buscar Coordenadas</button>');
+
+            $('#longitude_container').append(btnGeoloc);
+
+            btnGeoloc.on('click', function() {
+                var endereco = {
+                    street: $('#street_field').val(),
+                    number: $('#number_field').val() || 's/n',
+                    neighborhood: $('#neighborhood_field').val(),
+                    city: $('#city_field').val(),
+                    state: $('#state_field').val()
+                };
+
+                if (!endereco.street || !endereco.city || !endereco.state) {
+                    alert('⚠️ Preencha pelo menos Logradouro, Cidade e Estado antes de buscar coordenadas.');
+                    return;
+                }
+
+                $(this).prop('disabled', true).html('<i class=\"fas fa-spinner fa-spin\"></i> Buscando...');
+
+                buscarCoordenadas(endereco);
+
+                setTimeout(function() {
+                    btnGeoloc.prop('disabled', false).html('<i class=\"fas fa-map-marked-alt\"></i> Buscar Coordenadas');
+                }, 2000);
             });
         });
         ");
