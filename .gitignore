@@ -1,0 +1,21 @@
+# Laragon and system files
+/bin/
+/data/
+/tmp/
+/etc/
+*.log
+*.pid
+*.sock
+*.swap
+
+# Composer
+/vendor/
+
+# Node.js
+/node_modules/
+npm-debug.log
+yarn-error.log
+
+# OS generated files
+.DS_Store
+Thumbs.db

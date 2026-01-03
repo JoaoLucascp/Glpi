@@ -1,0 +1,210 @@
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                                                                               ║
+║  🔴 ERRO CRÍTICO IDENTIFICADO: BOM (Byte Order Mark)                          ║
+║                                                                               ║
+╠═══════════════════════════════════════════════════════════════════════════════╣
+║                                                                               ║
+║  ❌ ERRO FATAL:                                                               ║
+║  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  ║
+║                                                                               ║
+║  Fatal error: strict_types declaration must be the very first                 ║
+║  statement in the script in src\Config.php on line 3                          ║
+║                                                                               ║
+╠═══════════════════════════════════════════════════════════════════════════════╣
+║                                                                               ║
+║  🔍 CAUSA DO PROBLEMA:                                                        ║
+║  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  ║
+║                                                                               ║
+║  Todos os arquivos em src/ foram salvos com BOM UTF-8 (EF BB BF).            ║
+║                                                                               ║
+║  O BOM é um caractere invisível no início do arquivo que faz o PHP           ║
+║  interpretar que há conteúdo antes do declare(strict_types=1).               ║
+║                                                                               ║
+║  Exemplo do que o PHP "vê":                                                   ║
+║  ﻿<?php                    ← BOM está aqui (invisível)                        ║
+║  declare(strict_types=1);  ← PHP acha que isto não é a 1ª linha              ║
+║                                                                               ║
+╠═══════════════════════════════════════════════════════════════════════════════╣
+║                                                                               ║
+║  ✅ SOLUÇÃO AUTOMÁTICA CRIADA:                                                ║
+║  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  ║
+║                                                                               ║
+║  Criei um script que remove o BOM de TODOS os arquivos PHP automaticamente.  ║
+║                                                                               ║
+║  Arquivos criados:                                                            ║
+║  1. REMOVER_BOM.ps1                ← Script PowerShell                        ║
+║  2. EXECUTAR_REMOVER_BOM.bat       ← Execute este! (duplo clique)            ║
+║  3. CORRECAO_BOM_MANUAL.md         ← Guia completo (este arquivo)            ║
+║                                                                               ║
+╠═══════════════════════════════════════════════════════════════════════════════╣
+║                                                                               ║
+║  🚀 COMO EXECUTAR (3 PASSOS):                                                 ║
+║  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  ║
+║                                                                               ║
+║  PASSO 1: EXECUTAR SCRIPT                                                     ║
+║  ────────────────────────                                                     ║
+║                                                                               ║
+║  Opção A (Mais Fácil):                                                        ║
+║  1. Vá para: D:\laragon\www\glpi\plugins\newbase\                            ║
+║  2. Duplo clique em: EXECUTAR_REMOVER_BOM.bat                                 ║
+║  3. Aguarde a mensagem de sucesso                                             ║
+║                                                                               ║
+║  Opção B (PowerShell):                                                        ║
+║  1. Clique direito em: REMOVER_BOM.ps1                                        ║
+║  2. "Executar com PowerShell"                                                 ║
+║  3. Aguarde a conclusão                                                       ║
+║                                                                               ║
+║  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  ║
+║                                                                               ║
+║  PASSO 2: TESTAR O AUTOLOADER                                                 ║
+║  ──────────────────────────                                                   ║
+║                                                                               ║
+║  Abra o PowerShell ou CMD e execute:                                          ║
+║                                                                               ║
+║  cd D:\laragon\www\glpi\plugins\newbase                                      ║
+║  php -r "require 'vendor/autoload.php'; var_dump(class_exists('GlpiPlugin\Newbase\Config'));"  ║
+║                                                                               ║
+║  ✅ Resultado esperado: bool(true)                                            ║
+║  ❌ Se der erro: Me avise!                                                    ║
+║                                                                               ║
+║  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  ║
+║                                                                               ║
+║  PASSO 3: REINSTALAR PLUGIN NO GLPI                                           ║
+║  ─────────────────────────────────                                            ║
+║                                                                               ║
+║  1. Acesse: http://localhost/glpi                                             ║
+║  2. Login: glpi / glpi                                                        ║
+║  3. Configurar > Plugins                                                      ║
+║  4. Localize: Newbase                                                         ║
+║  5. Clique: Instalar                                                          ║
+║  6. Clique: Ativar                                                            ║
+║                                                                               ║
+║  7. Teste: http://localhost/glpi/plugins/newbase/front/config.php            ║
+║                                                                               ║
+║  ✅ Deve carregar sem erros!                                                  ║
+║                                                                               ║
+╠═══════════════════════════════════════════════════════════════════════════════╣
+║                                                                               ║
+║  📋 O QUE O SCRIPT FAZ:                                                       ║
+║  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  ║
+║                                                                               ║
+║  1. Verifica TODOS os arquivos PHP em:                                        ║
+║     • src/                                                                    ║
+║     • src/Ajax/                                                               ║
+║     • front/                                                                  ║
+║     • ajax/                                                                   ║
+║     • inc/                                                                    ║
+║     • setup.php                                                               ║
+║     • hook.php                                                                ║
+║                                                                               ║
+║  2. Detecta se há BOM UTF-8 (bytes: EF BB BF)                                 ║
+║                                                                               ║
+║  3. Remove o BOM mantendo todo o resto do arquivo intacto                     ║
+║                                                                               ║
+║  4. Gera relatório mostrando:                                                 ║
+║     • Arquivos verificados                                                    ║
+║     • Arquivos com BOM encontrados                                            ║
+║     • Arquivos corrigidos                                                     ║
+║                                                                               ║
+╠═══════════════════════════════════════════════════════════════════════════════╣
+║                                                                               ║
+║  ⚙️ DETALHES TÉCNICOS:                                                        ║
+║  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  ║
+║                                                                               ║
+║  O que é BOM?                                                                 ║
+║  • Byte Order Mark (EF BB BF em UTF-8)                                        ║
+║  • Caractere invisível no início de arquivos UTF-8                            ║
+║  • Usado por alguns editores (como Notepad) para identificar encoding        ║
+║  • PHP interpreta como conteúdo, causando erro                                ║
+║                                                                               ║
+║  Por que causa erro no PHP?                                                   ║
+║  • declare(strict_types=1) DEVE ser a primeira declaração                    ║
+║  • BOM vem antes de <?php, então PHP acha que declare não é a 1ª             ║
+║  • Resulta em: Fatal error                                                    ║
+║                                                                               ║
+║  Como o script resolve?                                                       ║
+║  • Lê arquivo como bytes                                                      ║
+║  • Verifica primeiros 3 bytes (EF BB BF)                                      ║
+║  • Remove esses 3 bytes                                                       ║
+║  • Salva arquivo sem BOM                                                      ║
+║                                                                               ║
+╠═══════════════════════════════════════════════════════════════════════════════╣
+║                                                                               ║
+║  🎯 RESULTADO ESPERADO:                                                       ║
+║  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  ║
+║                                                                               ║
+║  ANTES DA CORREÇÃO:                                                           ║
+║  ─────────────────────                                                        ║
+║  ❌ Fatal error: strict_types declaration must be...                          ║
+║  ❌ Plugin não instala no GLPI                                                ║
+║  ❌ Autoloader não funciona                                                   ║
+║  ❌ class_exists() retorna false                                              ║
+║                                                                               ║
+║  DEPOIS DA CORREÇÃO:                                                          ║
+║  ────────────────────                                                         ║
+║  ✅ Nenhum erro ao carregar classes                                           ║
+║  ✅ Plugin instala normalmente no GLPI                                        ║
+║  ✅ Autoloader funciona perfeitamente                                         ║
+║  ✅ class_exists('GlpiPlugin\Newbase\Config') retorna true                    ║
+║  ✅ Todas as páginas carregam sem erros                                       ║
+║                                                                               ║
+╠═══════════════════════════════════════════════════════════════════════════════╣
+║                                                                               ║
+║  ⚠️ IMPORTANTE:                                                               ║
+║  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  ║
+║                                                                               ║
+║  Após remover o BOM, EVITE editar os arquivos com:                            ║
+║  • Windows Notepad (sempre adiciona BOM)                                      ║
+║  • Alguns editores mal configurados                                           ║
+║                                                                               ║
+║  USE SEMPRE:                                                                  ║
+║  • VS Code (configure para "UTF-8 sem BOM")                                   ║
+║  • PhpStorm                                                                   ║
+║  • Sublime Text                                                               ║
+║  • Notepad++ (configure encoding para "UTF-8 sem BOM")                        ║
+║                                                                               ║
+║  NO VS CODE:                                                                  ║
+║  1. Abra o arquivo                                                            ║
+║  2. Canto inferior direito: clique em "UTF-8"                                 ║
+║  3. Selecione: "Save with Encoding"                                           ║
+║  4. Escolha: "UTF-8"                                                          ║
+║                                                                               ║
+╠═══════════════════════════════════════════════════════════════════════════════╣
+║                                                                               ║
+║  📊 CHECKLIST DE EXECUÇÃO:                                                    ║
+║  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  ║
+║                                                                               ║
+║  [ ] Duplo clique em EXECUTAR_REMOVER_BOM.bat                                 ║
+║  [ ] Vi a mensagem "BOM removido de X arquivo(s)"                             ║
+║  [ ] Testei o autoloader (php -r "...")                                       ║
+║  [ ] Resultado: bool(true)                                                    ║
+║  [ ] Acessei http://localhost/glpi                                            ║
+║  [ ] Instalei o plugin Newbase                                                ║
+║  [ ] Ativei o plugin Newbase                                                  ║
+║  [ ] Testei: /plugins/newbase/front/config.php                                ║
+║  [ ] Página carrega sem erros                                                 ║
+║  [ ] ✅ TUDO FUNCIONANDO!                                                     ║
+║                                                                               ║
+╠═══════════════════════════════════════════════════════════════════════════════╣
+║                                                                               ║
+║  🆘 SE AINDA HOUVER ERROS:                                                    ║
+║  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  ║
+║                                                                               ║
+║  Me envie:                                                                    ║
+║  1. Output completo do script REMOVER_BOM.ps1                                 ║
+║  2. Resultado do comando: php -r "require..."                                 ║
+║  3. Print da tela do erro (se houver)                                         ║
+║  4. Primeiras 5 linhas de: src/Config.php                                     ║
+║                                                                               ║
+║  Comando para ver as primeiras linhas:                                        ║
+║  Get-Content D:\laragon\www\glpi\plugins\newbase\src\Config.php -Head 5 | Format-Hex  ║
+║                                                                               ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+═══════════════════════════════════════════════════════════════════════════════
+
+              🚀 EXECUTE AGORA: EXECUTAR_REMOVER_BOM.bat
+
+    Duplo clique no arquivo e aguarde a mensagem de sucesso!
+
+═══════════════════════════════════════════════════════════════════════════════
