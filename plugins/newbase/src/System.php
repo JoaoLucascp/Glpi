@@ -9,7 +9,7 @@ use CommonGLPI;
 use Session;
 use Html;
 use Dropdown;
-use Toolbox;
+use Glpi\Toolbox\Sanitizer;
 
 /**
  * System class for Newbase Plugin
@@ -384,10 +384,11 @@ class System extends CommonDBTM
      */
     private function validateInput(array $input)
     {
-        // Sanitize all string inputs
+        // Sanitize all string inputs using GLPI Sanitizer
         foreach ($input as $key => $value) {
             if (is_string($value)) {
-                $input[$key] = Toolbox::sanitizeString($value);
+                $input[$key] = Sanitizer::unsanitize($value); // Remove escapes + encode para output seguro
+                // OU use: Sanitizer::encodeHtmlSpecialChars($value); para apenas HTML escape
             }
         }
 
