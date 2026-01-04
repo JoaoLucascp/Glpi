@@ -1,11 +1,10 @@
 <?php
 
 /**
- * Address Form
+ * Address Form - Newbase Plugin
  *
  * @package   PluginNewbase
  * @author    João Lucas
- * @copyright Copyright (c) 2025 João Lucas
  * @license   GPLv2+
  * @since     2.0.0
  */
@@ -21,14 +20,11 @@ use Html;
 
 global $CFG_GLPI, $DB;
 
-// Check authentication
 Session::checkLoginUser();
 
 $address = new Address();
 
-// Handle form submissions
 if (isset($_POST['add'])) {
-    // Validate company exists and is valid
     $company_id = (int)($_POST['plugin_newbase_companydata_id'] ?? 0);
 
     if ($company_id <= 0) {
@@ -40,7 +36,6 @@ if (isset($_POST['add'])) {
         Html::back();
     }
 
-    // Verify company exists in database
     $company = new CompanyData();
     if (!$company->getFromDB($company_id)) {
         Session::addMessageAfterRedirect(
@@ -51,7 +46,6 @@ if (isset($_POST['add'])) {
         Html::back();
     }
 
-    // Check right for company
     if (!$company->canUpdate()) {
         Session::addMessageAfterRedirect(
             __('You do not have permission to manage this company', 'newbase'),
@@ -61,14 +55,13 @@ if (isset($_POST['add'])) {
         Html::back();
     }
 
-    // Now safe to add address
     $address->check(-1, CREATE, $_POST);
 
     if ($newID = $address->add($_POST)) {
         Session::addMessageAfterRedirect(
-            __('Address added successfully', 'newbase'),
+            __('Company added successfully', 'newbase'),
             false,
-            SUCCESS
+            'success'
         );
         if ($_SESSION['glpibackcreated']) {
             Html::redirect($address->getLinkURL());
@@ -87,9 +80,9 @@ if (isset($_POST['add'])) {
 
     if ($address->update($_POST)) {
         Session::addMessageAfterRedirect(
-            __('Address updated successfully', 'newbase'),
+            __('Company added successfully', 'newbase'),
             false,
-            SUCCESS
+            'success'
         );
         Html::back();
     } else {
@@ -105,9 +98,9 @@ if (isset($_POST['add'])) {
 
     if ($address->delete($_POST)) {
         Session::addMessageAfterRedirect(
-            __('Address deleted successfully', 'newbase'),
+            __('Company added successfully', 'newbase'),
             false,
-            SUCCESS
+            'success'
         );
         $company_id = (int)($_POST['plugin_newbase_companydata_id'] ?? 0);
         if ($company_id > 0) {
@@ -127,9 +120,9 @@ if (isset($_POST['add'])) {
 
     if ($address->delete($_POST, 1)) {
         Session::addMessageAfterRedirect(
-            __('Address purged successfully', 'newbase'),
+            __('Company added successfully', 'newbase'),
             false,
-            SUCCESS
+            'success'
         );
         $company_id = (int)($_POST['plugin_newbase_companydata_id'] ?? 0);
         if ($company_id > 0) {
@@ -146,11 +139,9 @@ if (isset($_POST['add'])) {
     }
 }
 
-// Display form
 $id = (int)($_GET['id'] ?? $_POST['id'] ?? 0);
 $company_id = (int)($_GET['plugin_newbase_companydata_id'] ?? $_POST['plugin_newbase_companydata_id'] ?? 0);
 
-// Start page
 Html::header(
     Address::getTypeName(1),
     $_SERVER['PHP_SELF'],
@@ -159,14 +150,12 @@ Html::header(
     'address'
 );
 
-// Load address data or initialize new
 if ($id > 0) {
     $address->getFromDB($id);
 } elseif ($company_id > 0) {
     $address->fields['plugin_newbase_companydata_id'] = $company_id;
 }
 
-// Show form
 $address->showForm($id);
 
 Html::footer();

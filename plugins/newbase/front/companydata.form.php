@@ -45,7 +45,7 @@ if (isset($_POST['add'])) {
         Session::addMessageAfterRedirect(
             __('Company added successfully', 'newbase'),
             false,
-            SUCCESS
+            'success'
         );
 
         if ($_SESSION['glpibackcreated']) {
@@ -69,9 +69,9 @@ if (isset($_POST['add'])) {
         Event::log($_POST['id'], CompanyData::class, 4, 'newbase', sprintf(__('%s updates an item'), $_SESSION['glpiname']));
 
         Session::addMessageAfterRedirect(
-            __('Company updated successfully', 'newbase'),
+            __('Company added successfully', 'newbase'),
             false,
-            SUCCESS
+            'success'
         );
         Html::back();
     } else {
@@ -90,9 +90,9 @@ if (isset($_POST['add'])) {
         Event::log($_POST['id'], CompanyData::class, 4, 'newbase', sprintf(__('%s deletes an item'), $_SESSION['glpiname']));
 
         Session::addMessageAfterRedirect(
-            __('Company deleted successfully', 'newbase'),
+            __('Company added successfully', 'newbase'),
             false,
-            SUCCESS
+            'success'
         );
         Html::redirect($CFG_GLPI['root_doc'] . '/plugins/newbase/front/companydata.php');
     } else {
@@ -111,9 +111,9 @@ if (isset($_POST['add'])) {
         Event::log($_POST['id'], CompanyData::class, 4, 'newbase', sprintf(__('%s restores an item'), $_SESSION['glpiname']));
 
         Session::addMessageAfterRedirect(
-            __('Company restored successfully', 'newbase'),
+            __('Company added successfully', 'newbase'),
             false,
-            SUCCESS
+            'success'
         );
         Html::redirect($CFG_GLPI['root_doc'] . '/plugins/newbase/front/companydata.php');
     } else {
@@ -132,9 +132,9 @@ if (isset($_POST['add'])) {
         Event::log($_POST['id'], CompanyData::class, 4, 'newbase', sprintf(__('%s purges an item'), $_SESSION['glpiname']));
 
         Session::addMessageAfterRedirect(
-            __('Company permanently deleted', 'newbase'),
+            __('Company added successfully', 'newbase'),
             false,
-            SUCCESS
+            'success'
         );
         Html::redirect($CFG_GLPI['root_doc'] . '/plugins/newbase/front/companydata.php');
     } else {
@@ -167,7 +167,7 @@ if (isset($_POST['add'])) {
     }
 
     // Display the form using the showForm method
-    $company->display($id);
+    $company->showForm($id);
 
     // Display related items (addresses, systems, tasks) if viewing
     if ($id > 0) {

@@ -1,11 +1,10 @@
 <?php
 
 /**
- * Task Form
+ * Task Form - Newbase Plugin
  *
  * @package   PluginNewbase
  * @author    João Lucas
- * @copyright Copyright (c) 2025 João Lucas
  * @license   GPLv2+
  * @since     2.0.0
  */
@@ -23,21 +22,14 @@ use CommonDBTM;
 
 global $CFG_GLPI, $DB;
 
-// Check authentication
 Session::checkLoginUser();
-
-// Check rights
 Session::checkRight('plugin_newbase_task', READ);
 
-// Create instance
 $task = new Task();
 
-// Handle actions
 if (isset($_POST['add'])) {
-    // Add new task
     $task->check(-1, CREATE, $_POST);
 
-    // Auto-calculate mileage if coordinates provided and auto-calc is enabled
     if (Config::getConfigValue('autocalculatemileage', 1) == 1) {
         if (!empty($_POST['latitude_start']) && !empty($_POST['longitude_start']) &&
             !empty($_POST['latitude_end']) && !empty($_POST['longitude_end'])) {
@@ -53,12 +45,11 @@ if (isset($_POST['add'])) {
     $newID = $task->add($_POST);
     if ($newID) {
         Session::addMessageAfterRedirect(
-            __('Task created successfully', 'newbase'),
+            __('Company added successfully', 'newbase'),
             false,
-            SUCCESS
+            'success'
         );
 
-        // Redirect to company if company_id provided
         if (isset($_POST['plugin_newbase_companydata_id']) && $_POST['plugin_newbase_companydata_id'] > 0) {
             Html::redirect($CFG_GLPI['root_doc'] . '/plugins/newbase/front/companydata.form.php?id=' . $_POST['plugin_newbase_companydata_id']);
         } else {
@@ -73,10 +64,8 @@ if (isset($_POST['add'])) {
         Html::back();
     }
 } elseif (isset($_POST['update'])) {
-    // Update existing task
     $task->check($_POST['id'], UPDATE);
 
-    // Auto-calculate mileage if coordinates provided and auto-calc is enabled
     if (Config::getConfigValue('autocalculatemileage', 1) == 1) {
         if (!empty($_POST['latitude_start']) && !empty($_POST['longitude_start']) &&
             !empty($_POST['latitude_end']) && !empty($_POST['longitude_end'])) {
@@ -91,9 +80,9 @@ if (isset($_POST['add'])) {
 
     if ($task->update($_POST)) {
         Session::addMessageAfterRedirect(
-            __('Task updated successfully', 'newbase'),
+            __('Company added successfully', 'newbase'),
             false,
-            SUCCESS
+            'success'
         );
         Html::back();
     } else {
@@ -105,14 +94,13 @@ if (isset($_POST['add'])) {
         Html::back();
     }
 } elseif (isset($_POST['delete'])) {
-    // Delete task
     $task->check($_POST['id'], DELETE);
 
     if ($task->delete($_POST)) {
         Session::addMessageAfterRedirect(
-            __('Task deleted successfully', 'newbase'),
+            __('Company added successfully', 'newbase'),
             false,
-            SUCCESS
+            'success'
         );
         Html::redirect($CFG_GLPI['root_doc'] . '/plugins/newbase/front/task.php');
     } else {
@@ -124,14 +112,13 @@ if (isset($_POST['add'])) {
         Html::back();
     }
 } elseif (isset($_POST['purge'])) {
-    // Purge task
     $task->check($_POST['id'], PURGE);
 
     if ($task->delete($_POST, 1)) {
         Session::addMessageAfterRedirect(
-            __('Task purged successfully', 'newbase'),
+            __('Company added successfully', 'newbase'),
             false,
-            SUCCESS
+            'success'
         );
         Html::redirect($CFG_GLPI['root_doc'] . '/plugins/newbase/front/task.php');
     } else {
@@ -143,7 +130,6 @@ if (isset($_POST['add'])) {
         Html::back();
     }
 } else {
-    // Display form
     Html::header(
         Task::getTypeName(1),
         $_SERVER['PHP_SELF'],
@@ -155,20 +141,13 @@ if (isset($_POST['add'])) {
     $id = (int)($_GET['id'] ?? 0);
     $company_id = (int)($_GET['plugin_newbase_companydata_id'] ?? 0);
 
-    // Load or initialize task
     if ($id > 0) {
         $task->getFromDB($id);
     } elseif ($company_id > 0) {
         $task->fields['plugin_newbase_companydata_id'] = $company_id;
     }
 
-    // Display form
     $task->showForm($id, ['plugin_newbase_companydata_id' => $company_id]);
-
-    // Display signature section if task exists and signature is enabled
-    if ($id > 0 && Config::isSignatureEnabled()) {
-        TaskSignature::showForTask($task);
-    }
 
     Html::footer();
 }

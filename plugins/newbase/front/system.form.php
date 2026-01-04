@@ -1,11 +1,10 @@
 <?php
 
 /**
- * System Form
+ * System Form - Newbase Plugin
  *
  * @package   PluginNewbase
  * @author    João Lucas
- * @copyright Copyright (c) 2025 João Lucas
  * @license   GPLv2+
  * @since     2.0.0
  */
@@ -21,29 +20,22 @@ use Html;
 
 global $CFG_GLPI, $DB;
 
-// Check authentication
 Session::checkLoginUser();
-
-// Check rights
 Session::checkRight('plugin_newbase_system', READ);
 
-// Create instance
 $system = new System();
 
-// Handle actions
 if (isset($_POST['add'])) {
-    // Add new system
     $system->check(-1, CREATE, $_POST);
 
     $newID = $system->add($_POST);
     if ($newID) {
         Session::addMessageAfterRedirect(
-            __('System created successfully', 'newbase'),
+            __('Company added successfully', 'newbase'),
             false,
-            SUCCESS
+            'success'
         );
 
-        // Redirect to company if company_id provided
         if (isset($_POST['plugin_newbase_companydata_id']) && $_POST['plugin_newbase_companydata_id'] > 0) {
             Html::redirect($CFG_GLPI['root_doc'] . '/plugins/newbase/front/companydata.form.php?id=' . $_POST['plugin_newbase_companydata_id']);
         } else {
@@ -58,14 +50,13 @@ if (isset($_POST['add'])) {
         Html::back();
     }
 } elseif (isset($_POST['update'])) {
-    // Update existing system
     $system->check($_POST['id'], UPDATE);
 
     if ($system->update($_POST)) {
         Session::addMessageAfterRedirect(
-            __('System updated successfully', 'newbase'),
+            __('Company added successfully', 'newbase'),
             false,
-            SUCCESS
+            'success'
         );
         Html::back();
     } else {
@@ -77,14 +68,13 @@ if (isset($_POST['add'])) {
         Html::back();
     }
 } elseif (isset($_POST['delete'])) {
-    // Delete system
     $system->check($_POST['id'], DELETE);
 
     if ($system->delete($_POST)) {
         Session::addMessageAfterRedirect(
-            __('System deleted successfully', 'newbase'),
+            __('Company added successfully', 'newbase'),
             false,
-            SUCCESS
+            'success'
         );
         Html::redirect($CFG_GLPI['root_doc'] . '/plugins/newbase/front/system.php');
     } else {
@@ -96,14 +86,13 @@ if (isset($_POST['add'])) {
         Html::back();
     }
 } elseif (isset($_POST['purge'])) {
-    // Purge system
     $system->check($_POST['id'], PURGE);
 
     if ($system->delete($_POST, 1)) {
         Session::addMessageAfterRedirect(
-            __('System purged successfully', 'newbase'),
+            __('Company added successfully', 'newbase'),
             false,
-            SUCCESS
+            'success'
         );
         Html::redirect($CFG_GLPI['root_doc'] . '/plugins/newbase/front/system.php');
     } else {
@@ -115,7 +104,6 @@ if (isset($_POST['add'])) {
         Html::back();
     }
 } else {
-    // Display form
     Html::header(
         System::getTypeName(1),
         $_SERVER['PHP_SELF'],
@@ -127,14 +115,12 @@ if (isset($_POST['add'])) {
     $id = (int)($_GET['id'] ?? 0);
     $company_id = (int)($_GET['plugin_newbase_companydata_id'] ?? 0);
 
-    // Load or initialize system
     if ($id > 0) {
         $system->getFromDB($id);
     } elseif ($company_id > 0) {
         $system->fields['plugin_newbase_companydata_id'] = $company_id;
     }
 
-    // Display form
     $system->showForm($id, ['plugin_newbase_companydata_id' => $company_id]);
 
     Html::footer();
