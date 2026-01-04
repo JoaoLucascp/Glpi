@@ -1,26 +1,30 @@
 <?php
+
 /**
- * Company Data Form - VERSÃO CORRIGIDA E SIMPLIFICADA
+ * Company Data Form - VERSÃO CORRIGIDA
  *
  * @package   PluginNewbase
  * @author    João Lucas
+ * @copyright Copyright (c) 2025 João Lucas
  * @license   GPLv2+
  * @since     2.0.0
  */
 
-// Include GLPI
-include('../../../inc/includes.php');
+declare(strict_types=1);
 
-use Glpi\Event;
+require_once __DIR__ . '/../../../inc/includes.php';
+
 use GlpiPlugin\Newbase\CompanyData;
+use GlpiPlugin\Newbase\Address;
+use GlpiPlugin\Newbase\System;
+use GlpiPlugin\Newbase\Task;
+use Session;
+use Html;
+use Glpi\Event;
 
-// Check login
-if (!isset($_SERVER['REQUEST_URI'])) {
-    $_SERVER['REQUEST_URI'] = $_SERVER['PHP_SELF'];
-    if (isset($_SERVER['QUERY_STRING']) && !empty($_SERVER['QUERY_STRING'])) {
-        $_SERVER['REQUEST_URI'] .= '?' . $_SERVER['QUERY_STRING'];
-    }
-}
+global $CFG_GLPI, $DB;
+
+// Check authentication
 Session::checkLoginUser();
 
 // Check rights
@@ -29,109 +33,130 @@ Session::checkRight('plugin_newbase_companydata', READ);
 // Create object
 $company = new CompanyData();
 
-// ========== HANDLE FORM SUBMISSIONS ==========
+// HANDLE FORM SUBMISSIONS
 
 if (isset($_POST['add'])) {
     // ADD NEW COMPANY
     $company->check(-1, CREATE, $_POST);
 
     if ($newID = $company->add($_POST)) {
-        Event::log(
-            $newID,
-            "CompanyData",
-            4,
-            "newbase",
-            sprintf(__('%1$s adds the item %2$s'), $_SESSION["glpiname"], $_POST["name"] ?? '')
-        );
+        Event::log($newID, CompanyData::class, 4, 'newbase', sprintf(__('%1$s adds the item %2$s'), $_SESSION['glpiname'], $_POST['name'] ?? ''));
 
-        Session::addMessageAfterRedirect('✅ Empresa adicionada com sucesso!', false, INFO);
+        Session::addMessageAfterRedirect(
+            __('Company added successfully', 'newbase'),
+            false,
+            SUCCESS
+        );
 
         if ($_SESSION['glpibackcreated']) {
             Html::redirect($company->getFormURLWithID($newID));
+        } else {
+            Html::back();
         }
+    } else {
+        Session::addMessageAfterRedirect(
+            __('Error adding company', 'newbase'),
+            false,
+            ERROR
+        );
+        Html::back();
     }
-    Html::back();
-
-} else if (isset($_POST['update'])) {
+} elseif (isset($_POST['update'])) {
     // UPDATE COMPANY
     $company->check($_POST['id'], UPDATE);
 
     if ($company->update($_POST)) {
-        Event::log(
-            $_POST['id'],
-            "CompanyData",
-            4,
-            "newbase",
-            sprintf(__('%s updates an item'), $_SESSION["glpiname"])
+        Event::log($_POST['id'], CompanyData::class, 4, 'newbase', sprintf(__('%s updates an item'), $_SESSION['glpiname']));
+
+        Session::addMessageAfterRedirect(
+            __('Company updated successfully', 'newbase'),
+            false,
+            SUCCESS
         );
-
-        Session::addMessageAfterRedirect('✅ Empresa atualizada com sucesso!', false, INFO);
+        Html::back();
+    } else {
+        Session::addMessageAfterRedirect(
+            __('Error updating company', 'newbase'),
+            false,
+            ERROR
+        );
+        Html::back();
     }
-    Html::back();
-
-} else if (isset($_POST['delete'])) {
+} elseif (isset($_POST['delete'])) {
     // DELETE COMPANY (soft delete)
     $company->check($_POST['id'], DELETE);
 
     if ($company->delete($_POST)) {
-        Event::log(
-            $_POST['id'],
-            "CompanyData",
-            4,
-            "newbase",
-            sprintf(__('%s deletes an item'), $_SESSION["glpiname"])
+        Event::log($_POST['id'], CompanyData::class, 4, 'newbase', sprintf(__('%s deletes an item'), $_SESSION['glpiname']));
+
+        Session::addMessageAfterRedirect(
+            __('Company deleted successfully', 'newbase'),
+            false,
+            SUCCESS
         );
-
-        Session::addMessageAfterRedirect('✅ Empresa excluída com sucesso!', false, INFO);
+        Html::redirect($CFG_GLPI['root_doc'] . '/plugins/newbase/front/companydata.php');
+    } else {
+        Session::addMessageAfterRedirect(
+            __('Error deleting company', 'newbase'),
+            false,
+            ERROR
+        );
+        Html::back();
     }
-    Html::redirect($CFG_GLPI['root_doc'] . "/plugins/newbase/front/companydata.php");
-
-} else if (isset($_POST['restore'])) {
+} elseif (isset($_POST['restore'])) {
     // RESTORE COMPANY
     $company->check($_POST['id'], DELETE);
 
     if ($company->restore($_POST)) {
-        Event::log(
-            $_POST['id'],
-            "CompanyData",
-            4,
-            "newbase",
-            sprintf(__('%s restores an item'), $_SESSION["glpiname"])
+        Event::log($_POST['id'], CompanyData::class, 4, 'newbase', sprintf(__('%s restores an item'), $_SESSION['glpiname']));
+
+        Session::addMessageAfterRedirect(
+            __('Company restored successfully', 'newbase'),
+            false,
+            SUCCESS
         );
-
-        Session::addMessageAfterRedirect('✅ Empresa restaurada com sucesso!', false, INFO);
+        Html::redirect($CFG_GLPI['root_doc'] . '/plugins/newbase/front/companydata.php');
+    } else {
+        Session::addMessageAfterRedirect(
+            __('Error restoring company', 'newbase'),
+            false,
+            ERROR
+        );
+        Html::back();
     }
-    Html::redirect($CFG_GLPI['root_doc'] . "/plugins/newbase/front/companydata.php");
-
-} else if (isset($_POST['purge'])) {
+} elseif (isset($_POST['purge'])) {
     // PURGE COMPANY (permanent delete)
     $company->check($_POST['id'], PURGE);
 
     if ($company->delete($_POST, 1)) {
-        Event::log(
-            $_POST['id'],
-            "CompanyData",
-            4,
-            "newbase",
-            sprintf(__('%s purges an item'), $_SESSION["glpiname"])
+        Event::log($_POST['id'], CompanyData::class, 4, 'newbase', sprintf(__('%s purges an item'), $_SESSION['glpiname']));
+
+        Session::addMessageAfterRedirect(
+            __('Company permanently deleted', 'newbase'),
+            false,
+            SUCCESS
         );
-
-        Session::addMessageAfterRedirect('✅ Empresa removida permanentemente!', false, INFO);
+        Html::redirect($CFG_GLPI['root_doc'] . '/plugins/newbase/front/companydata.php');
+    } else {
+        Session::addMessageAfterRedirect(
+            __('Error purging company', 'newbase'),
+            false,
+            ERROR
+        );
+        Html::back();
     }
-    Html::redirect($CFG_GLPI['root_doc'] . "/plugins/newbase/front/companydata.php");
-
 } else {
-    // ========== DISPLAY FORM ==========
+    // DISPLAY FORM
 
     // Get ID from URL
-    $id = $_GET['id'] ?? 0;
+    $id = (int)($_GET['id'] ?? $_POST['id'] ?? 0);
 
     // Display header
     Html::header(
         CompanyData::getTypeName(1),
         $_SERVER['PHP_SELF'],
-        "management",
-        "CompanyData"
+        'management',
+        CompanyData::class
     );
 
     // Check permissions and display form
@@ -141,9 +166,30 @@ if (isset($_POST['add'])) {
         $company->check(-1, CREATE);
     }
 
-    // Display the form using the showForm() method
-    $company->display(['id' => $id]);
+    // Display the form using the showForm method
+    $company->display($id);
 
-    // Display footer
+    // Display related items (addresses, systems, tasks) if viewing
+    if ($id > 0) {
+        echo "<div class='spaced'>";
+
+        // Show addresses tab
+        if (class_exists('GlpiPlugin\Newbase\Address')) {
+            Address::displayTabContentForItem($company, 1);
+        }
+
+        // Show systems tab
+        if (class_exists('GlpiPlugin\Newbase\System')) {
+            System::displayTabContentForItem($company, 2);
+        }
+
+        // Show tasks tab
+        if (class_exists('GlpiPlugin\Newbase\Task')) {
+            Task::displayTabContentForItem($company, 3);
+        }
+
+        echo "</div>";
+    }
+
     Html::footer();
 }
