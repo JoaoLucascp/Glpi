@@ -1,0 +1,311 @@
+/**
+ * Responsive CSS for Newbase Plugin
+ *
+ * @package   PluginNewbase
+ * @author    João Lucas
+ * @copyright Copyright (c) 2025 João Lucas
+ * @license   GPLv2+
+ * @since     2.0.0
+ */
+
+/* ========== Mobile First Approach ========== */
+
+/* Extra small devices (phones, 600px and down) */
+@media only screen and (max-width: 600px) {
+    /* Dashboard cards stack vertically */
+    .dashboard-cards {
+        grid-template-columns: 1fr;
+        margin: 10px;
+        gap: 10px;
+    }
+
+    /* Cards padding reduction */
+    .newbase-card {
+        padding: 15px;
+        margin-bottom: 10px;
+    }
+
+    /* Tables scroll horizontally */
+    .newbase-table-wrapper {
+        overflow-x: auto;
+    }
+
+    .newbase-table {
+        min-width: 600px;
+    }
+
+    /* Buttons full width */
+    .newbase-btn {
+        width: 100%;
+        margin-bottom: 10px;
+        display: block;
+    }
+
+    /* Form inputs full width */
+    .newbase-form-group input,
+    .newbase-form-group select,
+    .newbase-form-group textarea {
+        width: 100%;
+        font-size: 16px; /* Prevent zoom on iOS */
+    }
+
+    /* Map height reduction on mobile */
+    .newbase-map-container {
+        height: 300px;
+    }
+
+    /* Signature canvas smaller on mobile */
+    .newbase-signature-canvas {
+        width: 100%;
+        max-width: 350px;
+        height: 150px;
+    }
+
+    /* Dashboard stat numbers smaller */
+    .dashboard-stat .number {
+        font-size: 28px;
+    }
+
+    /* Hide long text on mobile */
+    .mobile-hide {
+        display: none;
+    }
+
+    /* Stack form fields vertically */
+    .tab_cadre tr {
+        display: block;
+        margin-bottom: 15px;
+    }
+
+    .tab_cadre td {
+        display: block;
+        width: 100%;
+        text-align: left;
+        padding: 5px 10px;
+    }
+
+    .tab_cadre td:first-child {
+        font-weight: bold;
+        background: #F5F5F5;
+    }
+}
+
+/* Small devices (portrait tablets and large phones, 600px and up) */
+@media only screen and (min-width: 600px) {
+    .dashboard-cards {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Medium devices (landscape tablets, 768px and up) */
+@media only screen and (min-width: 768px) {
+    .dashboard-cards {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    /* Two column forms */
+    .newbase-form-row {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+    }
+
+    /* Map comfortable height */
+    .newbase-map-container {
+        height: 400px;
+    }
+}
+
+/* Large devices (laptops/desktops, 992px and up) */
+@media only screen and (min-width: 992px) {
+    .dashboard-cards {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    /* Three column forms */
+    .newbase-form-row-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 15px;
+    }
+
+    /* Full map height */
+    .newbase-map-container {
+        height: 500px;
+    }
+}
+
+/* Extra large devices (large laptops and desktops, 1200px and up) */
+@media only screen and (min-width: 1200px) {
+    .dashboard-cards {
+        grid-template-columns: repeat(4, 1fr);
+    }
+
+    /* Container max width */
+    .newbase-container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+}
+
+/* ========== Touch Device Specific ========== */
+@media (hover: none) and (pointer: coarse) {
+    /* Larger touch targets */
+    .newbase-btn {
+        padding: 12px 20px;
+        font-size: 16px;
+    }
+
+    /* Larger form inputs */
+    .newbase-form-group input,
+    .newbase-form-group select,
+    .newbase-form-group textarea {
+        padding: 12px 15px;
+        font-size: 16px;
+    }
+
+    /* Remove hover effects */
+    .newbase-card:hover {
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .newbase-table tr:hover {
+        background: transparent;
+    }
+}
+
+/* ========== Landscape Mode (Mobile) ========== */
+@media only screen and (max-height: 500px) and (orientation: landscape) {
+    /* Reduce vertical spacing */
+    .newbase-card {
+        padding: 10px;
+        margin-bottom: 5px;
+    }
+
+    .dashboard-stat .number {
+        font-size: 24px;
+    }
+
+    /* Smaller map in landscape */
+    .newbase-map-container {
+        height: 250px;
+    }
+}
+
+/* ========== Dark Mode Support ========== */
+@media (prefers-color-scheme: dark) {
+    .newbase-card {
+        background: #2C2C2C;
+        color: #E0E0E0;
+    }
+
+    .newbase-card h3 {
+        color: #E0E0E0;
+        border-bottom-color: #64B5F6;
+    }
+
+    .newbase-form-group label {
+        color: #E0E0E0;
+    }
+
+    .newbase-form-group input,
+    .newbase-form-group select,
+    .newbase-form-group textarea {
+        background: #3C3C3C;
+        color: #E0E0E0;
+        border-color: #555;
+    }
+
+    .newbase-table {
+        background: #2C2C2C;
+        color: #E0E0E0;
+    }
+
+    .newbase-table th {
+        background: #3C3C3C;
+        color: #E0E0E0;
+    }
+
+    .newbase-table tr:hover {
+        background: #3C3C3C;
+    }
+}
+
+/* ========== Accessibility ========== */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+    .newbase-btn {
+        border: 2px solid currentColor;
+    }
+
+    .newbase-card {
+        border: 2px solid #000;
+    }
+
+    .status-badge {
+        border: 2px solid currentColor;
+    }
+}
+
+/* ========== Tablet Specific ========== */
+@media only screen and (min-width: 768px) and (max-width: 991px) {
+    /* Tablet optimizations */
+    .dashboard-cards {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+    }
+
+    .newbase-card {
+        padding: 18px;
+    }
+
+    /* Side-by-side forms on tablet */
+    .newbase-form-tablet-row {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+    }
+}
+
+/* ========== Print Responsive ========== */
+@media print {
+    /* Force single column for print */
+    .dashboard-cards {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Hide interactive elements */
+    .newbase-btn,
+    button,
+    input[type="submit"],
+    input[type="button"] {
+        display: none !important;
+    }
+
+    /* Full width tables */
+    .newbase-table-wrapper {
+        overflow: visible;
+    }
+
+    .newbase-table {
+        min-width: 100%;
+    }
+
+    /* Remove colors for better print */
+    * {
+        background: white !important;
+        color: black !important;
+    }
+
+    .status-badge {
+        border: 1px solid black !important;
+    }
+}
