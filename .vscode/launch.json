@@ -4,10 +4,11 @@
         {
             "name": "Listen for Xdebug",
             "type": "php",
+            "request": "launch",
             "port": 9003,
-            "pathMapping": {
-                "/": "${workspaceFolder}/",
-                "/glpi/": "D:\\laragon\\www\\glpi\\"
+            "hostname": "localhost",
+            "pathMappings": {
+                "/glpi": "D:\\laragon\\www\\glpi"
             }
         }
     ]
