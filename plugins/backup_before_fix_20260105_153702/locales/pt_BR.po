@@ -1,0 +1,65 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: GLPI Plugin - Newbase 2.0.0\n"
+"POT-Creation-Date: 2025-12-22 16:00+0000\n"
+"PO-Revision-Date: 2025-12-22 16:00+0000\n"
+"Last-Translator: João Lucas\n"
+"Language-Team: Portuguese (Brazil)\n"
+"Language: pt_BR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+msgid "Company Data"
+msgid_plural "Companies Data"
+msgstr[0] "Dados da Empresa"
+msgstr[1] "Dados de Empresas"
+
+msgid "Newbase - Personal Data Management"
+msgstr "Newbase - Gestão de Dados Pessoais"
+
+msgid "Name"
+msgstr "Nome"
+
+msgid "CNPJ"
+msgstr "CNPJ"
+
+msgid "Email"
+msgstr "Email"
+
+msgid "Phone"
+msgstr "Telefone"
+
+msgid "Search"
+msgstr "Buscar"
+
+msgid "Invalid CNPJ"
+msgstr "CNPJ inválido"
+
+msgid "Legal Name"
+msgstr "Razão Social"
+
+msgid "Fantasy Name"
+msgstr "Nome Fantasia"
+
+msgid "Active"
+msgstr "Ativo"
+
+msgid "Inactive"
+msgstr "Inativo"
+
+msgid "Read"
+msgstr "Ler"
+
+msgid "Create"
+msgstr "Criar"
+
+msgid "Update"
+msgstr "Atualizar"
+
+msgid "Delete"
+msgstr "Deletar"
+
+msgid "Purge"
+msgstr "Limpar"

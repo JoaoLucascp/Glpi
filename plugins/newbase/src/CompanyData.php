@@ -4,22 +4,40 @@ declare(strict_types=1);
 
 namespace GlpiPlugin\Newbase;
 
+
 use CommonDBTM;
-use Toolbox;
 use Session;
 use Html;
 use Dropdown;
 use Entity;
-
+use Toolbox;
 /**
  * CompanyData class
  *
  * Gerencia apenas os dados principais da empresa.
- * Endereços são gerenciados na aba separada (tabela glpi_plugin_newbase_address)
+ * EndereÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§os sÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o gerenciados na aba separada (tabela glpi_plugin_newbase_address)
  * Busca email usando proxy PHP que resolve CORS
  *
  * @package   PluginNewbase
- * @author    João Lucas
+ * @author    JoÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o Lucas
+ * @license   GPLv2+
+ * @since     2.0.0
+ */
+/**
+ * Gerenciamento de dados de empresas (CNPJ, razao social, contatos)
+ *
+ * @package   PluginNewbase
+ * @author    Joao Lucas
+ * @copyright Copyright (c) 2025 Joao Lucas
+ * @license   GPLv2+
+ * @since     2.0.0
+ */
+/**
+ * Gerenciamento de dados de empresas (CNPJ, razao social, contatos)
+ *
+ * @package   PluginNewbase
+ * @author    Joao Lucas
+ * @copyright Copyright (c) 2025 Joao Lucas
  * @license   GPLv2+
  * @since     2.0.0
  */
@@ -103,7 +121,7 @@ class CompanyData extends CommonDBTM
     }
 
     /**
-     * Define tabs - ADICIONA ABA DE ENDEREÇOS
+     * Define tabs - ADICIONA ABA DE ENDEREÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¡OS
      */
     public function defineTabs($options = []): array
     {
@@ -117,8 +135,8 @@ class CompanyData extends CommonDBTM
     }
 
     /**
-     * FORMULÁRIO APENAS COM DADOS BÁSICOS DA EMPRESA
-     * (Endereços são gerenciados na aba separada)
+     * FORMULÃƒÆ’Ã†â€™Ãƒâ€šÃ‚ÂRIO APENAS COM DADOS BÃƒÆ’Ã†â€™Ãƒâ€šÃ‚ÂSICOS DA EMPRESA
+     * (EndereÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§os sÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o gerenciados na aba separada)
      */
     public function showForm($ID, array $options = []): bool
     {
@@ -139,9 +157,9 @@ class CompanyData extends CommonDBTM
         $this->initForm($ID, $options);
         $this->showFormHeader($options);
 
-        // ========== SEÇÃO 1: IDENTIFICAÇÃO ==========
+        // ========== SEÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢O 1: IDENTIFICAÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢O ==========
         echo "<tr class='tab_bg_1'><th colspan='4'>";
-        echo "<i class='fas fa-building'></i>&nbsp;IDENTIFICAÇÃO DA EMPRESA";
+        echo "<i class='fas fa-building'></i>&nbsp;IDENTIFICAÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢O DA EMPRESA";
         echo "</th></tr>";
 
         // Linha 1: CNPJ e Status
@@ -187,9 +205,9 @@ class CompanyData extends CommonDBTM
         echo "</td>";
         echo "</tr>";
 
-        // Linha 3: Razão Social
+        // Linha 3: RazÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o Social
         echo "<tr class='tab_bg_1'>";
-        echo "<td>Razão Social</td>";
+        echo "<td>RazÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o Social</td>";
         echo "<td colspan='3'>";
         echo Html::input('legal_name', [
             'value' => $this->fields['legal_name'] ?? '',
@@ -199,7 +217,7 @@ class CompanyData extends CommonDBTM
         echo "</td>";
         echo "</tr>";
 
-        // ========== SEÇÃO 2: CONTATO ==========
+        // ========== SEÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢O 2: CONTATO ==========
         echo "<tr class='tab_bg_1'><th colspan='4'>";
         echo "<i class='fas fa-phone'></i>&nbsp;CONTATO";
         echo "</th></tr>";
@@ -226,12 +244,12 @@ class CompanyData extends CommonDBTM
         echo "</td>";
         echo "</tr>";
 
-        // ========== NOTA SOBRE ENDEREÇOS ==========
+        // ========== NOTA SOBRE ENDEREÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¡OS ==========
         if ($ID > 0) {
             echo "<tr class='tab_bg_1'>";
             echo "<td colspan='4' style='text-align: center; padding: 15px; background-color: #f0f8ff;'>";
             echo "<i class='fas fa-info-circle' style='color: #0066cc;'></i> ";
-            echo "<strong>Para gerenciar os endereços desta empresa, acesse a aba \"Endereços\" acima.</strong>";
+            echo "<strong>Para gerenciar os endereÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§os desta empresa, acesse a aba \"EndereÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§os\" acima.</strong>";
             echo "</td>";
             echo "</tr>";
         }
@@ -241,7 +259,7 @@ class CompanyData extends CommonDBTM
         // ========== JAVASCRIPT COM PROXY PHP ==========
         echo Html::scriptBlock("
         $(document).ready(function() {
-            // Máscaras
+            // MÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡scaras
             $('#cnpj_field').mask('00.000.000/0000-00');
             $('#phone_field').mask('(00) 0000-00009');
             $('#phone_field').on('blur', function() {
@@ -257,7 +275,7 @@ class CompanyData extends CommonDBTM
             $('#btn_buscar_cnpj').on('click', function() {
                 var cnpj = $('#cnpj_field').val().replace(/\D/g, '');
                 if (cnpj.length !== 14) {
-                    alert('❌ CNPJ inválido! Digite um CNPJ com 14 dígitos.');
+                    alert('ÃƒÆ’Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒâ€¦Ã¢â‚¬â„¢ CNPJ invÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡lido! Digite um CNPJ com 14 dÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â­gitos.');
                     return;
                 }
 
@@ -284,24 +302,24 @@ class CompanyData extends CommonDBTM
                             $('#email_field').val(data.email || '');
 
                             // Mensagem de sucesso
-                            var msg = '✅ Dados da empresa carregados com sucesso!';
+                            var msg = 'ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã¢â‚¬Å“ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ Dados da empresa carregados com sucesso!';
                             if (data.email) {
-                                msg += '\\n📧 Email encontrado!';
+                                msg += '\\nÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒâ€šÃ‚Â§ Email encontrado!';
                             } else {
-                                msg += '\\n⚠️ Email não encontrado nas APIs.';
+                                msg += '\\nÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã‚Â¡Ãƒâ€šÃ‚Â ÃƒÆ’Ã‚Â¯Ãƒâ€šÃ‚Â¸Ãƒâ€šÃ‚Â Email nÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o encontrado nas APIs.';
                             }
-                            msg += '\\n\\n💡 Dica: Após salvar, use a aba \"Endereços\".';
+                            msg += '\\n\\nÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢Ãƒâ€šÃ‚Â¡ Dica: ApÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³s salvar, use a aba \"EndereÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§os\".';
 
                             alert(msg);
                         } else {
-                            alert('❌ Erro: ' + response.error);
+                            alert('ÃƒÆ’Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒâ€¦Ã¢â‚¬â„¢ Erro: ' + response.error);
                         }
                     },
                     error: function(xhr) {
                         if (xhr.status === 404) {
-                            alert('❌ CNPJ não encontrado nas bases de dados.');
+                            alert('ÃƒÆ’Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒâ€¦Ã¢â‚¬â„¢ CNPJ nÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o encontrado nas bases de dados.');
                         } else {
-                            alert('❌ Erro ao buscar CNPJ. Tente novamente.');
+                            alert('ÃƒÆ’Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒâ€¦Ã¢â‚¬â„¢ Erro ao buscar CNPJ. Tente novamente.');
                         }
                     },
                     complete: function() {
@@ -329,9 +347,9 @@ class CompanyData extends CommonDBTM
     {
         $input = Toolbox::addslashes_deep($input);
 
-        // Nome é obrigatório
+        // Nome ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â© obrigatÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³rio
         if (empty($input['name'])) {
-            Session::addMessageAfterRedirect('Nome Fantasia é obrigatório', false, ERROR);
+            Session::addMessageAfterRedirect('Nome Fantasia ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â© obrigatÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³rio', false, ERROR);
             return false;
         }
 
@@ -339,7 +357,7 @@ class CompanyData extends CommonDBTM
         if (!empty($input['cnpj'])) {
             $cnpj = preg_replace('/[^0-9]/', '', $input['cnpj']);
             if (!$this->validateCNPJ($cnpj)) {
-                Session::addMessageAfterRedirect('CNPJ inválido', false, ERROR);
+                Session::addMessageAfterRedirect('CNPJ invÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡lido', false, ERROR);
                 return false;
             }
             $input['cnpj'] = $this->formatCNPJ($cnpj);
@@ -348,7 +366,7 @@ class CompanyData extends CommonDBTM
         // Valida email se fornecido
         if (!empty($input['email'])) {
             if (!filter_var($input['email'], FILTER_VALIDATE_EMAIL)) {
-                Session::addMessageAfterRedirect('Email inválido', false, ERROR);
+                Session::addMessageAfterRedirect('Email invÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡lido', false, ERROR);
                 return false;
             }
         }
@@ -357,7 +375,7 @@ class CompanyData extends CommonDBTM
         if (!empty($input['phone'])) {
             $phone = preg_replace('/[^0-9]/', '', $input['phone']);
             if (strlen($phone) < 10 || strlen($phone) > 11) {
-                Session::addMessageAfterRedirect('Número de telefone inválido', false, ERROR);
+                Session::addMessageAfterRedirect('NÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Âºmero de telefone invÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡lido', false, ERROR);
                 return false;
             }
             $input['phone'] = $this->formatPhone($phone);
@@ -414,3 +432,4 @@ class CompanyData extends CommonDBTM
         return preg_replace('/(\d{2})(\d{4})(\d{4})/', '($1) $2-$3', $phone);
     }
 }
+

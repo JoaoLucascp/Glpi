@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace GlpiPlugin\Newbase;
 
+
 use CommonDBTM;
-use CommonGLPI;
 use Session;
 use Html;
 use Dropdown;
-use User;
 use Toolbox;
+use User;
+use CommonGLPI;
 
 /**
  * Task class for Newbase Plugin
@@ -19,8 +20,26 @@ use Toolbox;
  * and assignment to users
  *
  * @package   PluginNewbase
- * @author    João Lucas
- * @copyright Copyright (c) 2025 João Lucas
+ * @author    JoÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o Lucas
+ * @copyright Copyright (c) 2025 JoÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o Lucas
+ * @license   GPLv2+
+ * @since     2.0.0
+ */
+/**
+ * Gerenciamento de tarefas com geolocalizacao e assinatura digital
+ *
+ * @package   PluginNewbase
+ * @author    Joao Lucas
+ * @copyright Copyright (c) 2025 Joao Lucas
+ * @license   GPLv2+
+ * @since     2.0.0
+ */
+/**
+ * Gerenciamento de tarefas com geolocalizacao e assinatura digital
+ *
+ * @package   PluginNewbase
+ * @author    Joao Lucas
+ * @copyright Copyright (c) 2025 Joao Lucas
  * @license   GPLv2+
  * @since     2.0.0
  */
@@ -511,3 +530,4 @@ class Task extends CommonDBTM
         return $input;
     }
 }
+

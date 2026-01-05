@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace GlpiPlugin\Newbase;
 
+
 use CommonDBTM;
 use Session;
 use Html;
+use Config;
 use Dropdown;
 use Toolbox;
 use Exception;
@@ -17,8 +19,26 @@ use Exception;
  * Manages plugin configuration settings
  *
  * @package   PluginNewbase
- * @author    João Lucas
- * @copyright Copyright (c) 2025 João Lucas
+ * @author    JoÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o Lucas
+ * @copyright Copyright (c) 2025 JoÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o Lucas
+ * @license   GPLv2+
+ * @since     2.0.0
+ */
+/**
+ * Gerenciamento de configuracoes do plugin
+ *
+ * @package   PluginNewbase
+ * @author    Joao Lucas
+ * @copyright Copyright (c) 2025 Joao Lucas
+ * @license   GPLv2+
+ * @since     2.0.0
+ */
+/**
+ * Gerenciamento de configuracoes do plugin
+ *
+ * @package   PluginNewbase
+ * @author    Joao Lucas
+ * @copyright Copyright (c) 2025 Joao Lucas
  * @license   GPLv2+
  * @since     2.0.0
  */
@@ -391,3 +411,4 @@ class Config extends CommonDBTM
         return self::getConfigValue('cep_api_url', 'https://viacep.com.br/ws/');
     }
 }
+

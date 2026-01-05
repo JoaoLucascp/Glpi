@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace GlpiPlugin\Newbase;
 
+
 use CommonDBTM;
-use CommonGLPI;
 use Session;
 use Html;
 use Dropdown;
+use User;
+use CommonGLPI;
+
 use Glpi\Toolbox\Sanitizer;
 
 /**
@@ -18,8 +21,26 @@ use Glpi\Toolbox\Sanitizer;
  * associated with companies
  *
  * @package   PluginNewbase
- * @author    João Lucas
- * @copyright Copyright (c) 2025 João Lucas
+ * @author    JoÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o Lucas
+ * @copyright Copyright (c) 2025 JoÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o Lucas
+ * @license   GPLv2+
+ * @since     2.0.0
+ */
+/**
+ * Gerenciamento de sistemas telefonicos (IPBX, PABX, Chatbot)
+ *
+ * @package   PluginNewbase
+ * @author    Joao Lucas
+ * @copyright Copyright (c) 2025 Joao Lucas
+ * @license   GPLv2+
+ * @since     2.0.0
+ */
+/**
+ * Gerenciamento de sistemas telefonicos (IPBX, PABX, Chatbot)
+ *
+ * @package   PluginNewbase
+ * @author    Joao Lucas
+ * @copyright Copyright (c) 2025 Joao Lucas
  * @license   GPLv2+
  * @since     2.0.0
  */
@@ -414,3 +435,4 @@ class System extends CommonDBTM
         return $input;
     }
 }
+

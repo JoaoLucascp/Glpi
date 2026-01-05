@@ -4,19 +4,38 @@ declare(strict_types=1);
 
 namespace GlpiPlugin\Newbase;
 
+
 use CommonDBTM;
 use Session;
 use Html;
 use Toolbox;
-
+use User;
 /**
  * TaskSignature class for Newbase Plugin
  *
  * Manages digital signatures for tasks with upload and display functionality
  *
  * @package   PluginNewbase
- * @author    João Lucas
- * @copyright Copyright (c) 2025 João Lucas
+ * @author    JoÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o Lucas
+ * @copyright Copyright (c) 2025 JoÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o Lucas
+ * @license   GPLv2+
+ * @since     2.0.0
+ */
+/**
+ * Gerenciamento de assinaturas digitais de tarefas
+ *
+ * @package   PluginNewbase
+ * @author    Joao Lucas
+ * @copyright Copyright (c) 2025 Joao Lucas
+ * @license   GPLv2+
+ * @since     2.0.0
+ */
+/**
+ * Gerenciamento de assinaturas digitais de tarefas
+ *
+ * @package   PluginNewbase
+ * @author    Joao Lucas
+ * @copyright Copyright (c) 2025 Joao Lucas
  * @license   GPLv2+
  * @since     2.0.0
  */
@@ -385,3 +404,4 @@ class TaskSignature extends CommonDBTM
         );
     }
 }
+

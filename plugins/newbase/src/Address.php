@@ -4,20 +4,38 @@ declare(strict_types=1);
 
 namespace GlpiPlugin\Newbase;
 
+
 use CommonDBTM;
-use CommonGLPI;
 use Session;
 use Html;
-use Toolbox;
+use CommonGLPI;
 
 /**
  * Address class
  *
- * Gerencia endereços com busca automática de CEP via ViaCEP
- * e suporte a geolocalização
+ * Gerencia endereÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§os com busca automÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡tica de CEP via ViaCEP
+ * e suporte a geolocalizaÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o
  *
  * @package   PluginNewbase
- * @author    João Lucas
+ * @author    JoÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o Lucas
+ * @license   GPLv2+
+ * @since     2.0.0
+ */
+/**
+ * Gerenciamento de enderecos com geocodificacao e busca por CEP
+ *
+ * @package   PluginNewbase
+ * @author    Joao Lucas
+ * @copyright Copyright (c) 2025 Joao Lucas
+ * @license   GPLv2+
+ * @since     2.0.0
+ */
+/**
+ * Gerenciamento de enderecos com geocodificacao e busca por CEP
+ *
+ * @package   PluginNewbase
+ * @author    Joao Lucas
+ * @copyright Copyright (c) 2025 Joao Lucas
  * @license   GPLv2+
  * @since     2.0.0
  */
@@ -36,7 +54,7 @@ class Address extends CommonDBTM
 
     public static function getTypeName($nb = 0): string
     {
-        return ($nb > 1) ? 'Endereços' : 'Endereço';
+        return ($nb > 1) ? 'EndereÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§os' : 'EndereÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§o';
     }
 
     /**
@@ -100,12 +118,12 @@ class Address extends CommonDBTM
 
         echo "<div class='spaced'>";
 
-        // Botão de adicionar
+        // BotÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o de adicionar
         if ($canedit) {
             echo "<div class='center firstbloc' style='margin-bottom: 15px;'>";
             echo "<a class='btn btn-primary' href='" . $CFG_GLPI['root_doc'] .
                 "/plugins/newbase/front/address.form.php?plugin_newbase_companydata_id=" . $company_id . "'>";
-            echo "<i class='fas fa-plus'></i>&nbsp;Adicionar Endereço";
+            echo "<i class='fas fa-plus'></i>&nbsp;Adicionar EndereÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§o";
             echo "</a>";
             echo "</div>";
         }
@@ -129,12 +147,12 @@ class Address extends CommonDBTM
             echo "<th width='5%'>ID</th>";
             echo "<th width='10%'>CEP</th>";
             echo "<th width='25%'>Logradouro</th>";
-            echo "<th width='8%'>Número</th>";
+            echo "<th width='8%'>NÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Âºmero</th>";
             echo "<th width='15%'>Bairro</th>";
             echo "<th width='15%'>Cidade</th>";
             echo "<th width='5%'>UF</th>";
             echo "<th width='12%'>Coordenadas</th>";
-            echo "<th width='5%'>Ações</th>";
+            echo "<th width='5%'>AÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Âµes</th>";
             echo "</tr>";
 
             foreach ($iterator as $data) {
@@ -149,7 +167,7 @@ class Address extends CommonDBTM
                 // Logradouro
                 echo "<td>" . ($data['street'] ?: '-') . "</td>";
 
-                // Número
+                // NÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Âºmero
                 echo "<td>" . ($data['number'] ?: 'S/N') . "</td>";
 
                 // Bairro
@@ -171,20 +189,20 @@ class Address extends CommonDBTM
                 }
                 echo "</td>";
 
-                // Ações
+                // AÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Âµes
                 echo "<td class='center'>";
                 if ($canedit) {
-                    // Botão Editar
+                    // BotÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o Editar
                     echo "<a href='" . $CFG_GLPI['root_doc'] .
                         "/plugins/newbase/front/address.form.php?id=" . $data['id'] . "' title='Editar'>";
                     echo "<i class='fas fa-edit' style='color: #0066cc;'></i></a>&nbsp;";
 
-                    // Formulário de exclusão inline
+                    // FormulÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡rio de exclusÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o inline
                     echo "<form method='post' action='" . $CFG_GLPI['root_doc'] . "/plugins/newbase/front/address.form.php' style='display:inline;'>";
                     echo Html::hidden('id', ['value' => $data['id']]);
                     echo Html::hidden('plugin_newbase_companydata_id', ['value' => $company_id]);
                     echo "<button type='submit' name='delete' class='btn btn-link' style='color: #dc3545; padding: 0; border: 0;' ";
-                    echo "onclick='return confirm(\"Confirma a exclusão deste endereço?\")' title='Excluir'>";
+                    echo "onclick='return confirm(\"Confirma a exclusÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o deste endereÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§o?\")' title='Excluir'>";
                     echo "<i class='fas fa-trash'></i>";
                     echo "</button>";
                     echo Html::hidden('_glpi_csrf_token', ['value' => Session::getNewCSRFToken()]);
@@ -196,11 +214,11 @@ class Address extends CommonDBTM
 
             echo "</table>";
         } else {
-            // Nenhum endereço encontrado
+            // Nenhum endereÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§o encontrado
             echo "<div style='text-align: center; padding: 40px; background: #f8f9fa; border: 2px dashed #ddd; border-radius: 8px;'>";
             echo "<i class='fas fa-map-marker-alt' style='font-size: 48px; color: #ccc;'></i>";
-            echo "<h3 style='color: #666; margin-top: 15px;'>Nenhum endereço cadastrado</h3>";
-            echo "<p style='color: #999;'>Clique no botão acima para adicionar o primeiro endereço desta empresa.</p>";
+            echo "<h3 style='color: #666; margin-top: 15px;'>Nenhum endereÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§o cadastrado</h3>";
+            echo "<p style='color: #999;'>Clique no botÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o acima para adicionar o primeiro endereÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§o desta empresa.</p>";
             echo "</div>";
         }
 
@@ -208,7 +226,7 @@ class Address extends CommonDBTM
     }
 
     /**
-     * FORMULÁRIO MELHORADO COM BUSCA DE CEP + COORDENADAS
+     * FORMULÃƒÆ’Ã†â€™Ãƒâ€šÃ‚ÂRIO MELHORADO COM BUSCA DE CEP + COORDENADAS
      */
     public function showForm($ID, array $options = []): bool
     {
@@ -221,7 +239,7 @@ class Address extends CommonDBTM
         $this->initForm($ID, $options);
         $this->showFormHeader($options);
 
-        // ========== SEÇÃO 1: EMPRESA ==========
+        // ========== SEÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢O 1: EMPRESA ==========
         echo "<tr class='tab_bg_1'><th colspan='4'>";
         echo "<i class='fas fa-building'></i>&nbsp;EMPRESA";
         echo "</th></tr>";
@@ -238,9 +256,9 @@ class Address extends CommonDBTM
         echo "</td>";
         echo "</tr>";
 
-        // ========== SEÇÃO 2: ENDEREÇO ==========
+        // ========== SEÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢O 2: ENDEREÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¡O ==========
         echo "<tr class='tab_bg_1'><th colspan='4'>";
-        echo "<i class='fas fa-map-marker-alt'></i>&nbsp;ENDEREÇO";
+        echo "<i class='fas fa-map-marker-alt'></i>&nbsp;ENDEREÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¡O";
         echo "</th></tr>";
 
         // Linha 1: CEP
@@ -253,13 +271,13 @@ class Address extends CommonDBTM
             'id' => 'cep_field',
             'placeholder' => '00000-000'
         ]);
-        echo "&nbsp;<button type='button' id='btn_buscar_cep' class='btn btn-sm btn-primary' title='Buscar endereço pelo CEP'>";
+        echo "&nbsp;<button type='button' id='btn_buscar_cep' class='btn btn-sm btn-primary' title='Buscar endereÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§o pelo CEP'>";
         echo "<i class='fas fa-search'></i> Buscar CEP";
         echo "</button>";
         echo "</td>";
         echo "</tr>";
 
-        // Linha 2: Logradouro e Número
+        // Linha 2: Logradouro e NÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Âºmero
         echo "<tr class='tab_bg_1'>";
         echo "<td>Logradouro <span class='red'>*</span></td>";
         echo "<td>";
@@ -270,7 +288,7 @@ class Address extends CommonDBTM
         ]);
         echo "</td>";
 
-        echo "<td width='15%'>Número</td>";
+        echo "<td width='15%'>NÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Âºmero</td>";
         echo "<td width='35%'>";
         echo Html::input('number', [
             'value' => $this->fields['number'] ?? '',
@@ -301,7 +319,7 @@ class Address extends CommonDBTM
         echo "</td>";
         echo "</tr>";
 
-        // Linha 4: Cidade, Estado e País
+        // Linha 4: Cidade, Estado e PaÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â­s
         echo "<tr class='tab_bg_1'>";
         echo "<td>Cidade <span class='red'>*</span></td>";
         echo "<td>";
@@ -322,7 +340,7 @@ class Address extends CommonDBTM
             'style' => 'width: 60px; text-transform: uppercase;',
             'id' => 'state_field'
         ]);
-        echo "&nbsp;&nbsp;País: ";
+        echo "&nbsp;&nbsp;PaÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â­s: ";
         echo Html::input('country', [
             'value' => $this->fields['country'] ?? 'Brasil',
             'style' => 'width: 150px;',
@@ -331,9 +349,9 @@ class Address extends CommonDBTM
         echo "</td>";
         echo "</tr>";
 
-        // ========== SEÇÃO 3: GEOLOCALIZAÇÃO ==========
+        // ========== SEÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢O 3: GEOLOCALIZAÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢O ==========
         echo "<tr class='tab_bg_1'><th colspan='4'>";
-        echo "<i class='fas fa-globe'></i>&nbsp;GEOLOCALIZAÇÃO (Opcional)";
+        echo "<i class='fas fa-globe'></i>&nbsp;GEOLOCALIZAÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢O (Opcional)";
         echo "</th></tr>";
 
         echo "<tr class='tab_bg_1'>";
@@ -362,24 +380,24 @@ class Address extends CommonDBTM
 
         $this->showFormButtons($options);
 
-        // ========== JAVASCRIPT MELHORADO COM GEOCODIFICAÇÃO ==========
+        // ========== JAVASCRIPT MELHORADO COM GEOCODIFICAÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢O ==========
         echo Html::scriptBlock("
         $(document).ready(function() {
-            // Máscara no CEP
+            // MÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡scara no CEP
             $('#cep_field').mask('00000-000');
 
-            // Força maiúscula no estado
+            // ForÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§a maiÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Âºscula no estado
             $('#state_field').on('input', function() {
                 $(this).val($(this).val().toUpperCase());
             });
 
-            // ✅ Função para buscar coordenadas via OpenStreetMap Nominatim
+            // ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã¢â‚¬Å“ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ FunÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o para buscar coordenadas via OpenStreetMap Nominatim
             function buscarCoordenadas(endereco) {
                 var query = endereco.street + ', ' + endereco.number + ', ' +
                         endereco.neighborhood + ', ' + endereco.city + ', ' +
                         endereco.state + ', Brasil';
 
-                console.log('🔍 Buscando coordenadas para:', query);
+                console.log('ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒâ€šÃ‚Â Buscando coordenadas para:', query);
 
                 // Delay de 1 segundo para respeitar rate limit do Nominatim (1 req/s)
                 setTimeout(function() {
@@ -404,24 +422,24 @@ class Address extends CommonDBTM
                                 $('#latitude_field').val(lat);
                                 $('#longitude_field').val(lon);
 
-                                console.log('✅ Coordenadas encontradas:', lat, lon);
+                                console.log('ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã¢â‚¬Å“ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ Coordenadas encontradas:', lat, lon);
                             } else {
-                                console.log('⚠️ Coordenadas não encontradas para este endereço');
+                                console.log('ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã‚Â¡Ãƒâ€šÃ‚Â ÃƒÆ’Ã‚Â¯Ãƒâ€šÃ‚Â¸Ãƒâ€šÃ‚Â Coordenadas nÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o encontradas para este endereÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§o');
                             }
                         },
                         error: function(xhr, status, error) {
-                            console.log('❌ Erro ao buscar coordenadas:', error);
+                            console.log('ÃƒÆ’Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒâ€¦Ã¢â‚¬â„¢ Erro ao buscar coordenadas:', error);
                         }
                     });
                 }, 1000); // Delay de 1 segundo
             }
 
-            // ✅ Buscar CEP via ViaCEP + Coordenadas automáticas
+            // ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã¢â‚¬Å“ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ Buscar CEP via ViaCEP + Coordenadas automÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡ticas
             $('#btn_buscar_cep').on('click', function() {
                 var cep = $('#cep_field').val().replace(/\D/g, '');
 
                 if (cep.length !== 8) {
-                    alert('❌ CEP inválido! Digite um CEP com 8 dígitos.');
+                    alert('ÃƒÆ’Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒâ€¦Ã¢â‚¬â„¢ CEP invÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡lido! Digite um CEP com 8 dÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â­gitos.');
                     return;
                 }
 
@@ -433,11 +451,11 @@ class Address extends CommonDBTM
                     dataType: 'json',
                     success: function(data) {
                         if (data.erro) {
-                            alert('❌ CEP não encontrado!');
+                            alert('ÃƒÆ’Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒâ€¦Ã¢â‚¬â„¢ CEP nÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o encontrado!');
                             return;
                         }
 
-                        // Preenche os campos de endereço
+                        // Preenche os campos de endereÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§o
                         var street = data.logradouro || '';
                         var neighborhood = data.bairro || '';
                         var city = data.localidade || '';
@@ -448,12 +466,12 @@ class Address extends CommonDBTM
                         $('#city_field').val(city);
                         $('#state_field').val(state);
 
-                        // ✅ Preenche automaticamente o país como Brasil
+                        // ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã¢â‚¬Å“ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ Preenche automaticamente o paÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â­s como Brasil
                         $('#country_field').val('Brasil');
 
-                        alert('✅ Endereço carregado! Buscando coordenadas...');
+                        alert('ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã¢â‚¬Å“ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ EndereÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§o carregado! Buscando coordenadas...');
 
-                        // ✅ Busca coordenadas automaticamente após carregar o endereço
+                        // ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã¢â‚¬Å“ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ Busca coordenadas automaticamente apÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³s carregar o endereÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§o
                         var endereco = {
                             street: street,
                             number: $('#number_field').val() || 's/n',
@@ -464,11 +482,11 @@ class Address extends CommonDBTM
 
                         buscarCoordenadas(endereco);
 
-                        // Foca no campo número
+                        // Foca no campo nÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Âºmero
                         $('#number_field').focus();
                     },
                     error: function() {
-                        alert('❌ Erro ao buscar CEP. Verifique sua conexão e tente novamente.');
+                        alert('ÃƒÆ’Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒâ€¦Ã¢â‚¬â„¢ Erro ao buscar CEP. Verifique sua conexÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o e tente novamente.');
                     },
                     complete: function() {
                         $('#btn_buscar_cep').prop('disabled', false)
@@ -477,8 +495,8 @@ class Address extends CommonDBTM
                 });
             });
 
-            // ✅ Botão manual para buscar coordenadas (caso usuário queira atualizar depois)
-            var btnGeoloc = $('<button type=\"button\" class=\"btn btn-sm btn-info\" style=\"margin-left: 10px;\" title=\"Buscar coordenadas do endereço\">' +
+            // ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã¢â‚¬Å“ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ BotÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o manual para buscar coordenadas (caso usuÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡rio queira atualizar depois)
+            var btnGeoloc = $('<button type=\"button\" class=\"btn btn-sm btn-info\" style=\"margin-left: 10px;\" title=\"Buscar coordenadas do endereÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§o\">' +
                             '<i class=\"fas fa-map-marked-alt\"></i> Buscar Coordenadas</button>');
 
             $('#longitude_container').append(btnGeoloc);
@@ -493,7 +511,7 @@ class Address extends CommonDBTM
                 };
 
                 if (!endereco.street || !endereco.city || !endereco.state) {
-                    alert('⚠️ Preencha pelo menos Logradouro, Cidade e Estado antes de buscar coordenadas.');
+                    alert('ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã‚Â¡Ãƒâ€šÃ‚Â ÃƒÆ’Ã‚Â¯Ãƒâ€šÃ‚Â¸Ãƒâ€šÃ‚Â Preencha pelo menos Logradouro, Cidade e Estado antes de buscar coordenadas.');
                     return;
                 }
 
@@ -511,3 +529,4 @@ class Address extends CommonDBTM
         return true;
     }
 }
+

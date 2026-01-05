@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace GlpiPlugin\Newbase;
 
+
+use Config;
 use Toolbox;
 use Exception;
 
@@ -13,8 +15,26 @@ use Exception;
  * Provides shared utility functions for the plugin
  *
  * @package   PluginNewbase
- * @author    João Lucas
- * @copyright Copyright (c) 2025 João Lucas
+ * @author    JoÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o Lucas
+ * @copyright Copyright (c) 2025 JoÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o Lucas
+ * @license   GPLv2+
+ * @since     2.0.0
+ */
+/**
+ * Classe base com metodos utilitarios comuns
+ *
+ * @package   PluginNewbase
+ * @author    Joao Lucas
+ * @copyright Copyright (c) 2025 Joao Lucas
+ * @license   GPLv2+
+ * @since     2.0.0
+ */
+/**
+ * Classe base com metodos utilitarios comuns
+ *
+ * @package   PluginNewbase
+ * @author    Joao Lucas
+ * @copyright Copyright (c) 2025 Joao Lucas
  * @license   GPLv2+
  * @since     2.0.0
  */
@@ -268,7 +288,6 @@ class Common
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
             curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
 
-
             curl_setopt($ch, CURLOPT_USERAGENT, 'GLPI Newbase Plugin/2.0.0');
             curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
             curl_setopt($ch, CURLOPT_MAXREDIRS, 3);
@@ -405,3 +424,4 @@ class Common
         return (intval($cnpj[13]) === $digit2);
     }
 }
+

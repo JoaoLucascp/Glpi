@@ -1,0 +1,368 @@
+﻿============================================================
+RELATORIO DE AUDITORIA - PLUGIN NEWBASE
+Data: 2026-01-05 15:22:20
+============================================================
+
+PASSO 1: LISTAGEM DE ARQUIVOS PHP
+------------------------------------------------------------
+Total de arquivos PHP encontrados: 35
+
+  [PHP] .php-cs-fixer.dist.php
+  [PHP] ajax\.php-cs-fixer.dist.php
+  [PHP] ajax\calculateMileage.php
+  [PHP] ajax\cnpj_proxy.php
+  [PHP] ajax\mapData.php
+  [PHP] ajax\searchAddress.php
+  [PHP] ajax\searchCompany.php
+  [PHP] ajax\signatureUpload.php
+  [PHP] ajax\taskActions.php
+  [PHP] front\.php-cs-fixer.dist.php
+  [PHP] front\address.form.php
+  [PHP] front\companydata.form.php
+  [PHP] front\companydata.php
+  [PHP] front\config.php
+  [PHP] front\index.php
+  [PHP] front\report.php
+  [PHP] front\system.form.php
+  [PHP] front\system.php
+  [PHP] front\task.form.php
+  [PHP] front\task.php
+  [PHP] front\tools\diagnostic.php
+  [PHP] front\tools\fix_permissions.php
+  [PHP] hook.php
+  [PHP] setup.php
+  [PHP] src\.php-cs-fixer.dist.php
+  [PHP] src\Address.php
+  [PHP] src\Ajax\.php-cs-fixer.dist.php
+  [PHP] src\Ajax\AddressHandler.php
+  [PHP] src\Common.php
+  [PHP] src\CompanyData.php
+  [PHP] src\Config.php
+  [PHP] src\System.php
+  [PHP] src\Task.php
+  [PHP] src\TaskSignature.php
+  [PHP] tools\cleanup_db.php
+
+PASSO 2: VALIDACAO DE SINTAXE PHP
+------------------------------------------------------------
+  [OK]   VALIDO: .php-cs-fixer.dist.php
+  [OK]   VALIDO: ajax\.php-cs-fixer.dist.php
+  [OK]   VALIDO: ajax\calculateMileage.php
+  [OK]   VALIDO: ajax\cnpj_proxy.php
+  [OK]   VALIDO: ajax\mapData.php
+  [OK]   VALIDO: ajax\searchAddress.php
+  [OK]   VALIDO: ajax\searchCompany.php
+  [OK]   VALIDO: ajax\signatureUpload.php
+  [OK]   VALIDO: ajax\taskActions.php
+  [OK]   VALIDO: front\.php-cs-fixer.dist.php
+  [OK]   VALIDO: front\address.form.php
+  [OK]   VALIDO: front\companydata.form.php
+  [OK]   VALIDO: front\companydata.php
+  [OK]   VALIDO: front\config.php
+  [OK]   VALIDO: front\index.php
+  [OK]   VALIDO: front\report.php
+  [OK]   VALIDO: front\system.form.php
+  [OK]   VALIDO: front\system.php
+  [OK]   VALIDO: front\task.form.php
+  [OK]   VALIDO: front\task.php
+  [OK]   VALIDO: front\tools\diagnostic.php
+  [OK]   VALIDO: front\tools\fix_permissions.php
+  [OK]   VALIDO: hook.php
+  [OK]   VALIDO: setup.php
+  [OK]   VALIDO: src\.php-cs-fixer.dist.php
+  [OK]   VALIDO: src\Address.php
+  [OK]   VALIDO: src\Ajax\.php-cs-fixer.dist.php
+  [OK]   VALIDO: src\Ajax\AddressHandler.php
+  [OK]   VALIDO: src\Common.php
+  [OK]   VALIDO: src\CompanyData.php
+  [OK]   VALIDO: src\Config.php
+  [OK]   VALIDO: src\System.php
+  [OK]   VALIDO: src\Task.php
+  [OK]   VALIDO: src\TaskSignature.php
+  [OK]   VALIDO: tools\cleanup_db.php
+
+RESULTADO VALIDACAO:
+  [OK]   Arquivos validos: 35
+  [ERRO] Arquivos com erro: 0
+
+PASSO 3: BUSCA DE PADROES DE RISCO
+------------------------------------------------------------
+
+Padrao: uso de mysqli_* [Risco: CRITICO]
+  [OK] Nenhuma ocorrencia encontrada
+
+Padrao: uso de mysql_* [Risco: CRITICO]
+  [OK] Nenhuma ocorrencia encontrada
+
+Padrao: uso de eval() [Risco: CRITICO]
+  [OK] Nenhuma ocorrencia encontrada
+
+Padrao: uso de exec() [Risco: ALTO]
+  [RISCO] ajax\cnpj_proxy.php : linha 55
+          $response = curl_exec($ch);
+  [RISCO] ajax\cnpj_proxy.php : linha 78
+          $response = curl_exec($ch);
+  [RISCO] src\Common.php : linha 146
+          $response = curl_exec($ch);
+  [RISCO] src\Common.php : linha 194
+          $response = curl_exec($ch);
+  [RISCO] src\Common.php : linha 274
+          $response = curl_exec($ch);
+
+Padrao: uso de system() [Risco: ALTO]
+  [RISCO] front\system.form.php : linha 24
+          $system = new System();
+
+Padrao: uso de shell_exec() [Risco: ALTO]
+  [OK] Nenhuma ocorrencia encontrada
+
+Padrao: uso de passthru() [Risco: ALTO]
+  [OK] Nenhuma ocorrencia encontrada
+
+Padrao: acesso direto a \ [Risco: MEDIO]
+  [RISCO] ajax\mapData.php : linha 34
+          $company_id = intval($_GET['company_id'] ?? 0);
+  [RISCO] ajax\mapData.php : linha 35
+          $user_id = intval($_GET['user_id'] ?? 0);
+  [RISCO] ajax\mapData.php : linha 36
+          $status = strip_tags($_GET['status'] ?? '');
+  [RISCO] ajax\mapData.php : linha 37
+          $date_from = strip_tags($_GET['date_from'] ?? '');
+  [RISCO] ajax\mapData.php : linha 38
+          $date_to = strip_tags($_GET['date_to'] ?? '');
+  [RISCO] front\address.form.php : linha 140
+          $id = (int)($_GET['id'] ?? $_POST['id'] ?? 0);
+  [RISCO] front\address.form.php : linha 141
+          $company_id = (int)($_GET['plugin_newbase_companydata_id'] ?? $_POST['plugin_...
+  [RISCO] front\companydata.form.php : linha 150
+          $id = (int)($_GET['id'] ?? $_POST['id'] ?? 0);
+  [RISCO] front\report.php : linha 46
+          Html::showDateField('date_from', ['value' => $_GET['date_from'] ?? '']);
+  [RISCO] front\report.php : linha 51
+          Html::showDateField('date_to', ['value' => $_GET['date_to'] ?? '']);
+  [RISCO] front\report.php : linha 60
+          'value' => $_GET['company_id'] ?? 0,
+  [RISCO] front\report.php : linha 69
+          'value' => $_GET['user_id'] ?? 0,
+  [RISCO] front\report.php : linha 90
+          if (!empty($_GET['date_from'])) {
+  [RISCO] front\report.php : linha 91
+          $where[] = ['date_start' => ['>=', $_GET['date_from'] . ' 00:00:00']];
+  [RISCO] front\report.php : linha 93
+          if (!empty($_GET['date_to'])) {
+  [RISCO] front\report.php : linha 94
+          $where[] = ['date_start' => ['<=', $_GET['date_to'] . ' 23:59:59']];
+  [RISCO] front\report.php : linha 96
+          if (!empty($_GET['company_id'])) {
+  [RISCO] front\report.php : linha 97
+          $where['plugin_newbase_companydata_id'] = intval($_GET['company_id']);
+  [RISCO] front\report.php : linha 99
+          if (!empty($_GET['user_id'])) {
+  [RISCO] front\report.php : linha 100
+          $where['assigned_to'] = intval($_GET['user_id']);
+  [RISCO] front\system.form.php : linha 113
+          $id = (int)($_GET['id'] ?? 0);
+  [RISCO] front\system.form.php : linha 114
+          $company_id = (int)($_GET['plugin_newbase_companydata_id'] ?? 0);
+  [RISCO] front\task.form.php : linha 138
+          $id = (int)($_GET['id'] ?? 0);
+  [RISCO] front\task.form.php : linha 139
+          $company_id = (int)($_GET['plugin_newbase_companydata_id'] ?? 0);
+
+Padrao: acesso direto a \ [Risco: MEDIO]
+  [RISCO] ajax\calculateMileage.php : linha 35
+          $lat1 = floatval($_POST['lat1'] ?? 0);
+  [RISCO] ajax\calculateMileage.php : linha 36
+          $lng1 = floatval($_POST['lng1'] ?? 0);
+  [RISCO] ajax\calculateMileage.php : linha 37
+          $lat2 = floatval($_POST['lat2'] ?? 0);
+  [RISCO] ajax\calculateMileage.php : linha 38
+          $lng2 = floatval($_POST['lng2'] ?? 0);
+  [RISCO] ajax\cnpj_proxy.php : linha 23
+          if (empty($_POST['cnpj'])) {
+  [RISCO] ajax\cnpj_proxy.php : linha 32
+          $cnpj = preg_replace('/[^0-9]/', '', $_POST['cnpj']);
+  [RISCO] ajax\searchCompany.php : linha 35
+          $cnpj = $_POST['cnpj'] ?? '';
+  [RISCO] ajax\signatureUpload.php : linha 35
+          $task_id = intval($_POST['task_id'] ?? 0);
+  [RISCO] ajax\signatureUpload.php : linha 36
+          $signature_data = $_POST['signature'] ?? '';
+  [RISCO] ajax\taskActions.php : linha 35
+          $task_id = intval($_POST['task_id'] ?? 0);
+  [RISCO] ajax\taskActions.php : linha 36
+          $action = strip_tags($_POST['action'] ?? '');
+  [RISCO] front\address.form.php : linha 25
+          if (isset($_POST['add'])) {
+  [RISCO] front\address.form.php : linha 26
+          $company_id = (int)($_POST['plugin_newbase_companydata_id'] ?? 0);
+  [RISCO] front\address.form.php : linha 76
+          } elseif (isset($_POST['update'])) {
+  [RISCO] front\address.form.php : linha 77
+          $address->check($_POST['id'], UPDATE);
+  [RISCO] front\address.form.php : linha 94
+          } elseif (isset($_POST['delete'])) {
+  [RISCO] front\address.form.php : linha 95
+          $address->check($_POST['id'], DELETE);
+  [RISCO] front\address.form.php : linha 103
+          $company_id = (int)($_POST['plugin_newbase_companydata_id'] ?? 0);
+  [RISCO] front\address.form.php : linha 116
+          } elseif (isset($_POST['purge'])) {
+  [RISCO] front\address.form.php : linha 117
+          $address->check($_POST['id'], PURGE);
+  [RISCO] front\address.form.php : linha 125
+          $company_id = (int)($_POST['plugin_newbase_companydata_id'] ?? 0);
+  [RISCO] front\address.form.php : linha 140
+          $id = (int)($_GET['id'] ?? $_POST['id'] ?? 0);
+  [RISCO] front\address.form.php : linha 141
+          $company_id = (int)($_GET['plugin_newbase_companydata_id'] ?? $_POST['plugin_...
+  [RISCO] front\companydata.form.php : linha 36
+          if (isset($_POST['add'])) {
+  [RISCO] front\companydata.form.php : linha 41
+          Event::log($newID, CompanyData::class, 4, 'newbase', sprintf(__('%1$s adds th...
+  [RISCO] front\companydata.form.php : linha 62
+          } elseif (isset($_POST['update'])) {
+  [RISCO] front\companydata.form.php : linha 64
+          $company->check($_POST['id'], UPDATE);
+  [RISCO] front\companydata.form.php : linha 67
+          Event::log($_POST['id'], CompanyData::class, 4, 'newbase', sprintf(__('%s upd...
+  [RISCO] front\companydata.form.php : linha 83
+          } elseif (isset($_POST['delete'])) {
+  [RISCO] front\companydata.form.php : linha 85
+          $company->check($_POST['id'], DELETE);
+  [RISCO] front\companydata.form.php : linha 88
+          Event::log($_POST['id'], CompanyData::class, 4, 'newbase', sprintf(__('%s del...
+  [RISCO] front\companydata.form.php : linha 104
+          } elseif (isset($_POST['restore'])) {
+  [RISCO] front\companydata.form.php : linha 106
+          $company->check($_POST['id'], DELETE);
+  [RISCO] front\companydata.form.php : linha 109
+          Event::log($_POST['id'], CompanyData::class, 4, 'newbase', sprintf(__('%s res...
+  [RISCO] front\companydata.form.php : linha 125
+          } elseif (isset($_POST['purge'])) {
+  [RISCO] front\companydata.form.php : linha 127
+          $company->check($_POST['id'], PURGE);
+  [RISCO] front\companydata.form.php : linha 130
+          Event::log($_POST['id'], CompanyData::class, 4, 'newbase', sprintf(__('%s pur...
+  [RISCO] front\companydata.form.php : linha 150
+          $id = (int)($_GET['id'] ?? $_POST['id'] ?? 0);
+  [RISCO] front\config.php : linha 25
+          if (isset($_POST['update_config'])) {
+  [RISCO] front\system.form.php : linha 26
+          if (isset($_POST['add'])) {
+  [RISCO] front\system.form.php : linha 37
+          if (isset($_POST['plugin_newbase_companydata_id']) && $_POST['plugin_newbase_...
+  [RISCO] front\system.form.php : linha 38
+          Html::redirect($CFG_GLPI['root_doc'] . '/plugins/newbase/front/companydata.fo...
+  [RISCO] front\system.form.php : linha 50
+          } elseif (isset($_POST['update'])) {
+  [RISCO] front\system.form.php : linha 51
+          $system->check($_POST['id'], UPDATE);
+  [RISCO] front\system.form.php : linha 68
+          } elseif (isset($_POST['delete'])) {
+  [RISCO] front\system.form.php : linha 69
+          $system->check($_POST['id'], DELETE);
+  [RISCO] front\system.form.php : linha 86
+          } elseif (isset($_POST['purge'])) {
+  [RISCO] front\system.form.php : linha 87
+          $system->check($_POST['id'], PURGE);
+  [RISCO] front\task.form.php : linha 27
+          if (isset($_POST['add'])) {
+  [RISCO] front\task.form.php : linha 31
+          if (!empty($_POST['latitude_start']) && !empty($_POST['longitude_start']) &&
+  [RISCO] front\task.form.php : linha 32
+          !empty($_POST['latitude_end']) && !empty($_POST['longitude_end'])) {
+  [RISCO] front\task.form.php : linha 33
+          $_POST['mileage'] = CommonDBTM::calculateDistance(
+  [RISCO] front\task.form.php : linha 34
+          (float)$_POST['latitude_start'],
+  [RISCO] front\task.form.php : linha 35
+          (float)$_POST['longitude_start'],
+  [RISCO] front\task.form.php : linha 36
+          (float)$_POST['latitude_end'],
+  [RISCO] front\task.form.php : linha 37
+          (float)$_POST['longitude_end']
+  [RISCO] front\task.form.php : linha 50
+          if (isset($_POST['plugin_newbase_companydata_id']) && $_POST['plugin_newbase_...
+  [RISCO] front\task.form.php : linha 51
+          Html::redirect($CFG_GLPI['root_doc'] . '/plugins/newbase/front/companydata.fo...
+  [RISCO] front\task.form.php : linha 63
+          } elseif (isset($_POST['update'])) {
+  [RISCO] front\task.form.php : linha 64
+          $task->check($_POST['id'], UPDATE);
+  [RISCO] front\task.form.php : linha 67
+          if (!empty($_POST['latitude_start']) && !empty($_POST['longitude_start']) &&
+  [RISCO] front\task.form.php : linha 68
+          !empty($_POST['latitude_end']) && !empty($_POST['longitude_end'])) {
+  [RISCO] front\task.form.php : linha 69
+          $_POST['mileage'] = CommonDBTM::calculateDistance(
+  [RISCO] front\task.form.php : linha 70
+          (float)$_POST['latitude_start'],
+  [RISCO] front\task.form.php : linha 71
+          (float)$_POST['longitude_start'],
+  [RISCO] front\task.form.php : linha 72
+          (float)$_POST['latitude_end'],
+  [RISCO] front\task.form.php : linha 73
+          (float)$_POST['longitude_end']
+  [RISCO] front\task.form.php : linha 93
+          } elseif (isset($_POST['delete'])) {
+  [RISCO] front\task.form.php : linha 94
+          $task->check($_POST['id'], DELETE);
+  [RISCO] front\task.form.php : linha 111
+          } elseif (isset($_POST['purge'])) {
+  [RISCO] front\task.form.php : linha 112
+          $task->check($_POST['id'], PURGE);
+
+Padrao: acesso direto a \ [Risco: MEDIO]
+  [OK] Nenhuma ocorrencia encontrada
+
+Padrao: acesso direto a \ [Risco: MEDIO]
+  [OK] Nenhuma ocorrencia encontrada
+
+Padrao: uso de md5 [Risco: MEDIO]
+  [OK] Nenhuma ocorrencia encontrada
+
+Padrao: uso de sha1 [Risco: MEDIO]
+  [OK] Nenhuma ocorrencia encontrada
+
+Total de padroes de risco encontrados: 101
+
+PASSO 4: VERIFICACAO DE ARQUIVOS OBRIGATORIOS
+------------------------------------------------------------
+  [OK]   setup.php
+  [OK]   hook.php
+  [OK]   composer.json
+  [OK]   README.md
+  [OK]   CHANGELOG.md
+  [OK]   VERSION
+
+PASSO 5: VERIFICACAO DE ESTRUTURA
+------------------------------------------------------------
+  [OK]   ajax/ (8 arquivos)
+  [OK]   css/ (3 arquivos)
+  [OK]   front/ (13 arquivos)
+  [OK]   js/ (7 arquivos)
+  [OK]   src/ (10 arquivos)
+  [OK]   locales/ (2 arquivos)
+  [OK]   install/ (1 arquivos)
+
+PASSO 6: VERIFICACAO DE declare(strict_types=1)
+------------------------------------------------------------
+
+Arquivos com strict_types: 35
+Arquivos sem strict_types: 0
+
+RESUMO FINAL
+------------------------------------------------------------
+Total PHP: 35
+Validos: 35
+Com erro de sintaxe: 0
+Padroes de risco: 101
+Arquivos obrigatorios faltantes: 0
+Diretorios obrigatorios faltantes: 0
+Com strict_types: 35
+Sem strict_types: 0
+Score: 50/100
+Status: REGULAR
+
+FIM DO RELATORIO
