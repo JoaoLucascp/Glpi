@@ -72,9 +72,112 @@ class System extends CommonDBTM
      * @param int $nb Number of items
      * @return string
      */
-    public static function getTypeName($nb = 0): string
-    {
-        return _n('Communication System', 'Communication Systems', $nb, 'newbase');
+    public static function getTypeName($nb = 0) {
+        return _n('Sistema', 'Sistemas', $nb, 'newbase');
+    }
+
+    /**
+     * ✅ Opções de busca
+     */
+    public function rawSearchOptions() {
+        $tab = [];
+        
+        $tab[] = [
+            'id'   => 'common',
+            'name' => self::getTypeName(2)
+        ];
+        
+        $tab[] = [
+            'id'            => '1',
+            'table'         => $this->getTable(),
+            'field'         => 'id',
+            'name'          => __('ID'),
+            'datatype'      => 'number',
+            'massiveaction' => false
+        ];
+        
+        $tab[] = [
+            'id'            => '2',
+            'table'         => $this->getTable(),
+            'field'         => 'name',
+            'name'          => __('Nome', 'newbase'),
+            'datatype'      => 'string',
+            'massiveaction' => false,
+            'autocomplete'  => true
+        ];
+        
+        $tab[] = [
+            'id'            => '3',
+            'table'         => $this->getTable(),
+            'field'         => 'ip_address',
+            'name'          => __('Endereço IP', 'newbase'),
+            'datatype'      => 'string',
+            'massiveaction' => false
+        ];
+        
+        $tab[] = [
+            'id'            => '4',
+            'table'         => $this->getTable(),
+            'field'         => 'version',
+            'name'          => __('Versão', 'newbase'),
+            'datatype'      => 'string',
+            'massiveaction' => false
+        ];
+        
+        $tab[] = [
+            'id'            => '5',
+            'table'         => $this->getTable(),
+            'field'         => 'status',
+            'name'          => __('Status'),
+            'datatype'      => 'string',
+            'massiveaction' => false
+        ];
+        
+        // Data de Criação
+        $tab[] = [
+            'id'            => '11',
+            'table'         => $this->getTable(),
+            'field'         => 'date_creation',
+            'name'          => __('Data de criação'),
+            'datatype'      => 'datetime',
+            'massiveaction' => false
+        ];
+        
+        // Data de Modificação
+        $tab[] = [
+            'id'            => '12',
+            'table'         => $this->getTable(),
+            'field'         => 'date_mod',
+            'name'          => __('Data de modificação'),
+            'datatype'      => 'datetime',
+            'massiveaction' => false
+        ];
+        
+        // Entidade
+        $tab[] = [
+            'id'            => '80',
+            'table'         => 'glpi_entities',
+            'field'         => 'completename',
+            'name'          => __('Entidade'),
+            'datatype'      => 'dropdown',
+            'massiveaction' => false
+        ];
+        
+        // Recursivo
+        $tab[] = [
+            'id'            => '86',
+            'table'         => $this->getTable(),
+            'field'         => 'is_recursive',
+            'name'          => __('Entidades filhas'),
+            'datatype'      => 'bool',
+            'massiveaction' => false
+        ];
+        
+        return $tab;
+    }
+    
+    public function getDefaultToDisplay() {
+        return ['id', 'name', 'ip_address', 'version', 'status'];
     }
 
     /**

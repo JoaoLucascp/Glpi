@@ -18,15 +18,14 @@ if (!defined('GLPI_ROOT')) {
 
 include(GLPI_ROOT . "/inc/includes.php");
 
+use GlpiPlugin\Newbase\Common;
+
 // Check authentication
 Session::checkLoginUser();
-
 // Check rights
 Session::checkRight('plugin_newbase_task', READ);
-
 // Validate CSRF token
 Session::checkCSRF($_POST);
-
 // Set JSON header
 header('Content-Type: application/json; charset=utf-8');
 
@@ -65,7 +64,7 @@ try {
     }
 
     // Calculate distance using Haversine formula
-    $distance = PluginNewbaseCommon::calculateDistance($lat1, $lng1, $lat2, $lng2);
+    $distance = Common::calculateDistance($lat1, $lng1, $lat2, $lng2);
 
     // Success response
     echo json_encode([

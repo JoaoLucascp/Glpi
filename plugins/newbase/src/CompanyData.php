@@ -11,6 +11,7 @@ use Html;
 use Dropdown;
 use Entity;
 use Toolbox;
+use CommonGLPI;
 /**
  * CompanyData class
  *
@@ -54,9 +55,185 @@ class CompanyData extends CommonDBTM
         return 'glpi_plugin_newbase_companydata';
     }
 
-    public static function getTypeName($nb = 0): string
-    {
-        return ($nb > 1) ? 'Dados de Empresas' : 'Dados da Empresa';
+    public static function getTypeName($nb = 0) {
+        return _n('Dado Pessoal', 'Dados Pessoais', $nb, 'newbase');
+    }
+
+    /**
+     * ✅ FUNÇÃO OBRIGATÓRIA: Define campos de busca/exibição
+     */
+    public function rawSearchOptions() {
+        $tab = [];
+        
+        // Opção comum (cabeçalho)
+        $tab[] = [
+            'id'   => 'common',
+            'name' => self::getTypeName(2)
+        ];
+        
+        // ID
+        $tab[] = [
+            'id'            => '1',
+            'table'         => $this->getTable(),
+            'field'         => 'id',
+            'name'          => __('ID'),
+            'datatype'      => 'number',
+            'massiveaction' => false
+        ];
+        
+        // Nome/Razão Social
+        $tab[] = [
+            'id'            => '2',
+            'table'         => $this->getTable(),
+            'field'         => 'name',
+            'name'          => __('Nome', 'newbase'),
+            'datatype'      => 'itemlink',
+            'massiveaction' => false,
+            'autocomplete'  => true
+        ];
+        
+        // CNPJ
+        $tab[] = [
+            'id'            => '3',
+            'table'         => $this->getTable(),
+            'field'         => 'cnpj',
+            'name'          => __('CNPJ', 'newbase'),
+            'datatype'      => 'string',
+            'massiveaction' => false
+        ];
+        
+        // Email
+        $tab[] = [
+            'id'            => '4',
+            'table'         => $this->getTable(),
+            'field'         => 'email',
+            'name'          => __('Email'),
+            'datatype'      => 'email',
+            'massiveaction' => false
+        ];
+        
+        // Telefone
+        $tab[] = [
+            'id'            => '5',
+            'table'         => $this->getTable(),
+            'field'         => 'phone',
+            'name'          => __('Telefone', 'newbase'),
+            'datatype'      => 'string',
+            'massiveaction' => false
+        ];
+        
+        // Nome Legal
+        $tab[] = [
+            'id'            => '6',
+            'table'         => $this->getTable(),
+            'field'         => 'legal_name',
+            'name'          => __('Razão Social', 'newbase'),
+            'datatype'      => 'string',
+            'massiveaction' => false
+        ];
+        
+        // Nome Fantasia
+        $tab[] = [
+            'id'            => '7',
+            'table'         => $this->getTable(),
+            'field'         => 'fantasy_name',
+            'name'          => __('Nome Fantasia', 'newbase'),
+            'datatype'      => 'string',
+            'massiveaction' => false
+        ];
+        
+        // Inscrição Estadual
+        $tab[] = [
+            'id'            => '8',
+            'table'         => $this->getTable(),
+            'field'         => 'state_registration',
+            'name'          => __('Inscrição Estadual', 'newbase'),
+            'datatype'      => 'string',
+            'massiveaction' => false
+        ];
+        
+        // Inscrição Municipal
+        $tab[] = [
+            'id'            => '9',
+            'table'         => $this->getTable(),
+            'field'         => 'city_registration',
+            'name'          => __('Inscrição Municipal', 'newbase'),
+            'datatype'      => 'string',
+            'massiveaction' => false
+        ];
+        
+        // Status do Contrato
+        $tab[] = [
+            'id'            => '10',
+            'table'         => $this->getTable(),
+            'field'         => 'contract_status',
+            'name'          => __('Status do Contrato', 'newbase'),
+            'datatype'      => 'string',
+            'massiveaction' => false
+        ];
+        
+        // Data de Criação
+        $tab[] = [
+            'id'            => '11',
+            'table'         => $this->getTable(),
+            'field'         => 'date_creation',
+            'name'          => __('Data de criação'),
+            'datatype'      => 'datetime',
+            'massiveaction' => false
+        ];
+        
+        // Data de Modificação
+        $tab[] = [
+            'id'            => '12',
+            'table'         => $this->getTable(),
+            'field'         => 'date_mod',
+            'name'          => __('Data de modificação'),
+            'datatype'      => 'datetime',
+            'massiveaction' => false
+        ];
+        
+        // Entidade (relação com tabela de entidades)
+        $tab[] = [
+            'id'            => '80',
+            'table'         => 'glpi_entities',
+            'field'         => 'completename',
+            'name'          => __('Entidade'),
+            'datatype'      => 'dropdown',
+            'massiveaction' => false
+        ];
+        
+        // Recursivo
+        $tab[] = [
+            'id'            => '86',
+            'table'         => $this->getTable(),
+            'field'         => 'is_recursive',
+            'name'          => __('Entidades filhas'),
+            'datatype'      => 'bool',
+            'massiveaction' => false
+        ];
+        
+        return $tab;
+    }
+    
+    /**
+     * ✅ Define campos padrão a serem exibidos
+     */
+    public function getDefaultToDisplay() {
+        return ['id', 'name', 'cnpj', 'email', 'phone', 'contract_status'];
+    }
+    
+    /**
+     * ✅ Título da página de formulário
+     */
+    public function getTabNameForItem(CommonGLPI $item, $withtemplate = 0) {
+        return self::getTypeName(2);
+    }
+    
+    /**
+     * ✅ Exibe conteúdo das abas
+     */
+    public static function displayTabContentForItem(CommonGLPI $item, $tabnum = 1, $withtemplate = 0) {
+        return true;
     }
 
     public static function getForeignKeyField()

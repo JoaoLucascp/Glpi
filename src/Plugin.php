@@ -166,8 +166,8 @@ class Plugin extends CommonDBTM
 
             $menu['title'] = self::getMenuName();
             $menu['page']  = $redirect_mp == MarketplaceController::MP_REPLACE_YES
-                           ? '/front/marketplace.php'
-                           : '/front/plugin.php';
+                        ? '/front/marketplace.php'
+                        : '/front/plugin.php';
             $menu['icon']  = self::getIcon();
         }
         if (count($menu)) {
@@ -1577,10 +1577,10 @@ class Plugin extends CommonDBTM
             $install_method = $is_marketplace ? "Marketplace" : "Manual";
 
             $msg  = substr(str_pad($plugin['directory'], 30), 0, 20) .
-                 " Name: " . Toolbox::substr(str_pad($name, 40), 0, 30) .
-                 " Version: " . str_pad($version, 10) .
-                 " State: " . str_pad($state, 40) .
-                 " Install Method: " . $install_method;
+                " Name: " . Toolbox::substr(str_pad($name, 40), 0, 30) .
+                " Version: " . str_pad($version, 10) .
+                " State: " . str_pad($state, 40) .
+                " Install Method: " . $install_method;
 
 
 
@@ -2758,11 +2758,11 @@ class Plugin extends CommonDBTM
                             'plugin_name' => $plugin->getField('name'),
                             'modal_id' => 'uninstallModal' . $plugin->getField('directory'),
                             'open_btn' => '<a class="pointer"><span class="fas fa-fw fa-folder-minus fa-2x me-1"
-                                                  data-bs-toggle="modal"
-                                                  data-bs-target="#uninstallModal' . $plugin->getField('directory') . '"
-                                                  title="' . __s("Uninstall") . '">
-                                                  <span class="sr-only">' . __s("Uninstall") . '</span>
-                                              </span></a>',
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#uninstallModal' . $plugin->getField('directory') . '"
+                                                title="' . __s("Uninstall") . '">
+                                                <span class="sr-only">' . __s("Uninstall") . '</span>
+                                            </span></a>',
                             'uninstall_btn' => Html::getSimpleForm(
                                 static::getFormURL(),
                                 ['action' => 'uninstall'],
@@ -2801,8 +2801,8 @@ class Plugin extends CommonDBTM
                 $value = Html::entities_deep(Toolbox::formatOutputWebLink($values[$field]));
                 if (!empty($value)) {
                     return "<a href=\"" . $value . "\" target='_blank'>
-                     <i class='fas fa-external-link-alt fa-2x'></i><span class='sr-only'>$value</span>
-                  </a>";
+                    <i class='fas fa-external-link-alt fa-2x'></i><span class='sr-only'>$value</span>
+                </a>";
                 }
                 return "&nbsp;";
                 break;

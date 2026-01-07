@@ -161,6 +161,54 @@ function plugin_newbase_check_config($verbose = false): bool
 }
 
 /**
+ * Define os direitos do plugin
+ */
+function plugin_newbase_install_rights()
+{
+    $rights = [
+        [
+            'itemtype'  => 'plugin_newbase',
+            'name'      => 'Newbase',
+            'comment'   => 'Acesso ao plugin Newbase',
+        ],
+        [
+            'itemtype'  => 'plugin_newbase_companydata',
+            'name'      => 'Dados Pessoais',
+            'comment'   => 'Gestão de dados pessoais',
+        ],
+        [
+            'itemtype'  => 'plugin_newbase_system',
+            'name'      => 'Sistemas',
+            'comment'   => 'Gestão de sistemas',
+        ],
+        [
+            'itemtype'  => 'plugin_newbase_task',
+            'name'      => 'Tarefas',
+            'comment'   => 'Gestão de tarefas',
+        ],
+    ];
+
+    $right_names = array_column($rights, 'itemtype');
+    ProfileRight::addProfileRights($right_names);
+
+    // Grant all rights to admin profiles
+    $profileright = new ProfileRight();
+    $admin_profiles_iterator = $profileright->find(['name' => 'profile', 'rights' => ['&', UPDATE]]);
+    $admin_profile_ids = array_column($admin_profiles_iterator, 'profiles_id');
+
+    $rights_to_set = [];
+    foreach ($right_names as $name) {
+        $rights_to_set[$name] = ALLSTANDARDRIGHT;
+    }
+
+    foreach (array_unique($admin_profile_ids) as $pid) {
+        ProfileRight::updateProfileRights($pid, $rights_to_set);
+    }
+
+    return true;
+}
+
+/**
  * Install
  */
 function plugin_newbase_install(): bool
@@ -169,9 +217,14 @@ function plugin_newbase_install(): bool
 
     $migration = new Migration(PLUGIN_NEWBASE_VERSION);
 
+    // ✅ DESABILITAR VERIFICAÇÃO DE FK NO INÍCIO
+    $DB->query("SET FOREIGN_KEY_CHECKS = 0");
+
     $sqlFile = PLUGIN_NEWBASE_DIR . '/install/mysql/2.0.0.sql';
     if (!file_exists($sqlFile)) {
         echo "Arquivo SQL nao encontrado: $sqlFile\n";
+        // ✅ REABILITAR FK ANTES DE RETORNAR ERRO
+        $DB->query("SET FOREIGN_KEY_CHECKS = 1");
         return false;
     }
 
@@ -188,13 +241,22 @@ function plugin_newbase_install(): bool
             $DB->query($command);
         } catch (Throwable $e) {
             echo "Erro na instalacao: " . $e->getMessage() . "\n";
+            // ✅ REABILITAR FK ANTES DE RETORNAR ERRO
+            $DB->query("SET FOREIGN_KEY_CHECKS = 1");
             return false;
         }
     }
 
+    // ✅ REABILITAR FK NO FINAL (SUCESSO)
+    $DB->query("SET FOREIGN_KEY_CHECKS = 1");
+
     $migration->executeMigration();
+
+    plugin_newbase_install_rights();
+
     return true;
 }
+
 
 /**
  * Uninstall

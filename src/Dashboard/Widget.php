@@ -2087,7 +2087,7 @@ JAVASCRIPT;
             \$ct-series-names: ({$series_names});
             \$ct-series-colors: ({$series_colors});
 
-            @import '{$generate_scss_path}';
+            @import '_generate.scss';
          }",
             dirname($generate_scss_path)
         );

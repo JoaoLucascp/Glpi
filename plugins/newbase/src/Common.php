@@ -4,8 +4,7 @@ declare(strict_types=1);
 
 namespace GlpiPlugin\Newbase;
 
-
-use Config;
+use GlpiPlugin\Newbase\Config as PluginConfig;
 use Toolbox;
 use Exception;
 
@@ -15,26 +14,8 @@ use Exception;
  * Provides shared utility functions for the plugin
  *
  * @package   PluginNewbase
- * @author    JoÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o Lucas
- * @copyright Copyright (c) 2025 JoÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o Lucas
- * @license   GPLv2+
- * @since     2.0.0
- */
-/**
- * Classe base com metodos utilitarios comuns
- *
- * @package   PluginNewbase
- * @author    Joao Lucas
- * @copyright Copyright (c) 2025 Joao Lucas
- * @license   GPLv2+
- * @since     2.0.0
- */
-/**
- * Classe base com metodos utilitarios comuns
- *
- * @package   PluginNewbase
- * @author    Joao Lucas
- * @copyright Copyright (c) 2025 Joao Lucas
+ * @author    João Lucas
+ * @copyright Copyright (c) 2025 João Lucas
  * @license   GPLv2+
  * @since     2.0.0
  */
@@ -73,7 +54,8 @@ class Common
      */
     public static function searchCompanyByCNPJ(string $cnpj): ?array
     {
-        if (!Config::isCNPJApiEnabled()) {
+        // ✅ CORRIGIDO - usar PluginConfig ao invés de Config
+        if (!PluginConfig::isCNPJApiEnabled()) {
             return null;
         }
 
@@ -185,7 +167,8 @@ class Common
      */
     public static function searchAddressByCEP(string $cep): ?array
     {
-        if (!Config::isCEPApiEnabled()) {
+        // ✅ CORRIGIDO - usar PluginConfig
+        if (!PluginConfig::isCEPApiEnabled()) {
             return null;
         }
 
@@ -196,7 +179,8 @@ class Common
         }
 
         try {
-            $api_url = Config::getCEPApiUrl() . $cep . '/json/';
+            // ✅ CORRIGIDO - usar PluginConfig
+            $api_url = PluginConfig::getCEPApiUrl() . $cep . '/json/';
 
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, $api_url);
@@ -268,7 +252,8 @@ class Common
      */
     public static function getCoordinatesFromAddress(string $street, string $neighborhood, string $city, string $state): ?array
     {
-        if (!Config::isGeolocationEnabled()) {
+        // ✅ CORRIGIDO - usar PluginConfig
+        if (!PluginConfig::isGeolocationEnabled()) {
             return null;
         }
 
@@ -424,4 +409,3 @@ class Common
         return (intval($cnpj[13]) === $digit2);
     }
 }
-

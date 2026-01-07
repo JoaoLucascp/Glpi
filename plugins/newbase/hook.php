@@ -12,11 +12,11 @@ use GlpiPlugin\Newbase\Task;
 use GlpiPlugin\Newbase\System;
 use GlpiPlugin\Newbase\Address;
 use GlpiPlugin\Newbase\Config;
-use CommonDBTM;
-use Entity;
-use MassiveAction;
-use Toolbox;
-use Html;
+// use CommonDBTM;
+// use Entity;
+// use MassiveAction;
+// use Toolbox;
+// use Html;
 
 // Composer autoloader
 if (file_exists(__DIR__ . '/vendor/autoload.php')) {
@@ -282,4 +282,57 @@ function newbase_cleanForEntity(Entity $entity): void
     } catch (Throwable $e) {
         Toolbox::logInFile('newbase_plugin', "ERROR in newbase_cleanForEntity(): " . $e->getMessage() . "\n");
     }
+}
+
+/**
+ * Hook para adicionar itens ao menu do GLPI
+ */
+function plugin_newbase_menu()
+{
+    global $CFG_GLPI;
+    $menu = [];
+
+    // Se o usuário tem permissão para ver o plugin
+    if (Session::haveRight('plugin_newbase_companydata', READ)) {
+        // Adicionar menu principal "NewBase" em "Gestão"
+        $menu['companydata'] = [
+            'title' => _n('Dado Pessoal', 'Dados Pessoais', 2, 'newbase'),
+            'page'  => '/plugins/newbase/front/companydata.php',
+            'icon'  => 'ti ti-building',
+        ];
+
+        // Adicionar submenu "Sistemas"
+        $menu['system'] = [
+            'title' => _n('Sistema', 'Sistemas', 2, 'newbase'),
+            'page'  => '/plugins/newbase/front/system.php',
+            'icon'  => 'ti ti-server',
+        ];
+
+        // Adicionar submenu "Tarefas"
+        $menu['task'] = [
+            'title' => _n('Tarefa', 'Tarefas', 2, 'newbase'),
+            'page'  => '/plugins/newbase/front/task.php',
+            'icon'  => 'ti ti-checkbox',
+        ];
+
+        // Adicionar submenu "Configuração"
+        $menu['config'] = [
+            'title' => __('Configuração', 'newbase'),
+            'page'  => '/plugins/newbase/front/config.php',
+            'icon'  => 'ti ti-settings',
+        ];
+    }
+    return $menu;
+}
+
+/**
+ * Hook para definir onde o menu aparece
+ */
+function plugin_newbase_addDefaultJoin()
+{
+    return [
+        'PluginNewbaseCompanyData',
+        'PluginNewbaseSystem',
+        'PluginNewbaseTask',
+    ];
 }

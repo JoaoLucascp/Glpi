@@ -1,14 +1,11 @@
 <?php
-
 declare(strict_types=1);
 
 namespace GlpiPlugin\Newbase;
 
-
 use CommonDBTM;
 use Session;
 use Html;
-use Config;
 use Dropdown;
 use Toolbox;
 use Exception;
@@ -108,8 +105,10 @@ class Config extends CommonDBTM
     {
         global $DB;
 
-        $key = \Glpi\Toolbox\Sanitizer::cleanHtml($key);
-        $value = is_array($value) ? json_encode($value) : \Glpi\Toolbox\Sanitizer::cleanHtml((string)$value);
+        $key = \Glpi\Toolbox\Sanitizer::sanitize($key);
+        $value = is_array($value)
+            ? json_encode($value)
+            : \Glpi\Toolbox\Sanitizer::sanitize((string)$value);
 
         try {
             // Check if key exists

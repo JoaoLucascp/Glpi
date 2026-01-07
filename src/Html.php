@@ -6822,7 +6822,7 @@ HTML;
         // Fix issue with Windows directory separator
         $path = str_replace(DIRECTORY_SEPARATOR, '/', $path);
 
-        $import = '@import "' . $path . '";';
+        $import = '@import "' . basename($path) . '";';
         $fckey = 'css_raw_file_' . $file;
         $file_hash = self::getScssFileHash($path);
 
