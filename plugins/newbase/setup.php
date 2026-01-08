@@ -165,44 +165,69 @@ function plugin_newbase_check_config($verbose = false): bool
  */
 function plugin_newbase_install_rights()
 {
+    global $DB;
+
     $rights = [
         [
-            'itemtype'  => 'plugin_newbase',
-            'name'      => 'Newbase',
-            'comment'   => 'Acesso ao plugin Newbase',
+            'itemtype' => 'plugin_newbase',
+            'name' => 'Newbase',
+            'comment' => 'Acesso ao plugin Newbase',
         ],
         [
-            'itemtype'  => 'plugin_newbase_companydata',
-            'name'      => 'Dados Pessoais',
-            'comment'   => 'Gestão de dados pessoais',
+            'itemtype' => 'plugin_newbase_companydata',
+            'name' => 'Dados Pessoais',
+            'comment' => 'Gestão de dados pessoais',
         ],
         [
-            'itemtype'  => 'plugin_newbase_system',
-            'name'      => 'Sistemas',
-            'comment'   => 'Gestão de sistemas',
+            'itemtype' => 'plugin_newbase_system',
+            'name' => 'Sistemas',
+            'comment' => 'Gestão de sistemas',
         ],
         [
-            'itemtype'  => 'plugin_newbase_task',
-            'name'      => 'Tarefas',
-            'comment'   => 'Gestão de tarefas',
+            'itemtype' => 'plugin_newbase_task',
+            'name' => 'Tarefas',
+            'comment' => 'Gestão de tarefas',
         ],
     ];
 
     $right_names = array_column($rights, 'itemtype');
-    ProfileRight::addProfileRights($right_names);
 
-    // Grant all rights to admin profiles
+    // Adicionar direitos apenas se não existirem
+    foreach ($right_names as $right_name) {
+        // Verificar se o direito já existe em algum perfil
+        $exists = $DB->request([
+            'FROM' => 'glpi_profilerights',
+            'WHERE' => ['name' => $right_name],
+            'LIMIT' => 1
+        ]);
+
+        if (count($exists) === 0) {
+            // Adicionar direito apenas se não existir
+            ProfileRight::addProfileRights([$right_name]);
+        }
+    }
+
+    // Conceder todos os direitos aos perfis de administrador
     $profileright = new ProfileRight();
-    $admin_profiles_iterator = $profileright->find(['name' => 'profile', 'rights' => ['&', UPDATE]]);
-    $admin_profile_ids = array_column($admin_profiles_iterator, 'profiles_id');
+
+    // Buscar perfis de admin (Super-Admin e Admin)
+    $admin_profiles = $DB->request([
+        'FROM' => 'glpi_profiles',
+        'WHERE' => [
+            'OR' => [
+                ['name' => 'Super-Admin'],
+                ['name' => 'Admin']
+            ]
+        ]
+    ]);
 
     $rights_to_set = [];
     foreach ($right_names as $name) {
         $rights_to_set[$name] = ALLSTANDARDRIGHT;
     }
 
-    foreach (array_unique($admin_profile_ids) as $pid) {
-        ProfileRight::updateProfileRights($pid, $rights_to_set);
+    foreach ($admin_profiles as $profile) {
+        ProfileRight::updateProfileRights($profile['id'], $rights_to_set);
     }
 
     return true;
@@ -217,13 +242,13 @@ function plugin_newbase_install(): bool
 
     $migration = new Migration(PLUGIN_NEWBASE_VERSION);
 
-    // ✅ DESABILITAR VERIFICAÇÃO DE FK NO INÍCIO
+    // DESABILITAR VERIFICAÇÃO DE FK NO INÍCIO
     $DB->query("SET FOREIGN_KEY_CHECKS = 0");
 
     $sqlFile = PLUGIN_NEWBASE_DIR . '/install/mysql/2.0.0.sql';
     if (!file_exists($sqlFile)) {
         echo "Arquivo SQL nao encontrado: $sqlFile\n";
-        // ✅ REABILITAR FK ANTES DE RETORNAR ERRO
+        // REABILITAR FK ANTES DE RETORNAR ERRO
         $DB->query("SET FOREIGN_KEY_CHECKS = 1");
         return false;
     }
@@ -241,13 +266,13 @@ function plugin_newbase_install(): bool
             $DB->query($command);
         } catch (Throwable $e) {
             echo "Erro na instalacao: " . $e->getMessage() . "\n";
-            // ✅ REABILITAR FK ANTES DE RETORNAR ERRO
+            // REABILITAR FK ANTES DE RETORNAR ERRO
             $DB->query("SET FOREIGN_KEY_CHECKS = 1");
             return false;
         }
     }
 
-    // ✅ REABILITAR FK NO FINAL (SUCESSO)
+    // REABILITAR FK NO FINAL (SUCESSO)
     $DB->query("SET FOREIGN_KEY_CHECKS = 1");
 
     $migration->executeMigration();
@@ -257,29 +282,62 @@ function plugin_newbase_install(): bool
     return true;
 }
 
-
 /**
- * Uninstall
+ * Uninstall - Remove todas as tabelas e dados do plugin
  */
 function plugin_newbase_uninstall(): bool
 {
     global $DB;
 
-    $tables = [
-        'glpi_plugin_newbase_companydatas',
-        'glpi_plugin_newbase_addresses',
-        'glpi_plugin_newbase_systems',
-        'glpi_plugin_newbase_tasks',
-        'glpi_plugin_newbase_tasksignatures',
-        'glpi_plugin_newbase_configs',
-    ];
+    try {
+        // DESABILITAR VERIFICAÇÃO DE FK NO INÍCIO
+        $DB->query("SET FOREIGN_KEY_CHECKS = 0");
 
-    foreach ($tables as $table) {
-        $DB->query("DROP TABLE IF EXISTS `$table`");
+        // Lista de tabelas em ordem reversa de dependência
+        $tables = [
+            // Tabelas no plural (versão atual)
+            'glpi_plugin_newbase_tasksignatures',
+            'glpi_plugin_newbase_tasks',
+            'glpi_plugin_newbase_systems',
+            'glpi_plugin_newbase_addresses',
+            'glpi_plugin_newbase_configs',
+            'glpi_plugin_newbase_companydatas',
+
+            // Tabelas no singular (versões antigas - se existirem)
+            'glpi_plugin_newbase_tasksignature',
+            'glpi_plugin_newbase_task',
+            'glpi_plugin_newbase_system',
+            'glpi_plugin_newbase_address',
+            'glpi_plugin_newbase_config',
+            'glpi_plugin_newbase_companydata',
+        ];
+
+        // Remover cada tabela
+        foreach ($tables as $table) {
+            if ($DB->tableExists($table)) {
+                $DB->query("DROP TABLE `$table`");
+            }
+        }
+
+        // ✅ REABILITAR VERIFICAÇÃO DE FK
+        $DB->query("SET FOREIGN_KEY_CHECKS = 1");
+
+        // Limpar direitos de perfil
+        $DB->query("DELETE FROM `glpi_profilerights` WHERE `name` LIKE 'plugin_newbase%'");
+
+        // Limpar preferências de exibição
+        $DB->query("DELETE FROM `glpi_displaypreferences` WHERE `itemtype` LIKE 'PluginNewbase%'");
+
+        // Limpar logs relacionados
+        $DB->query("DELETE FROM `glpi_logs` WHERE `itemtype` LIKE 'PluginNewbase%'");
+
+        return true;
+
+    } catch (Throwable $e) {
+        // Garantir que FK seja reabilitada mesmo em caso de erro
+        $DB->query("SET FOREIGN_KEY_CHECKS = 1");
+
+        Toolbox::logError('Newbase uninstall error: ' . $e->getMessage());
+        return false;
     }
-
-    $DB->query("DELETE FROM `glpi_profilerights` WHERE `name` LIKE 'plugin_newbase_%'");
-    $DB->query("DELETE FROM `glpi_displaypreferences` WHERE `itemtype` LIKE 'PluginNewbase%'");
-
-    return true;
 }
