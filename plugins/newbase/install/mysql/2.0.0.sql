@@ -159,19 +159,9 @@ CREATE TABLE `glpi_plugin_newbase_configs` (
     UNIQUE KEY `config_key` (`config_key`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
 
---
--- Default configuration values
---
-INSERT INTO `glpi_plugin_newbase_configs` (`config_key`, `config_value`, `date_mod`) VALUES
-('enable_cnpj_api', '1', NOW()),
-('enable_cep_api', '1', NOW()),
-('enable_geolocation', '1', NOW()),
-('enable_signature', '1', NOW()),
-('cnpj_api_url', 'https://brasilapi.com.br/api/cnpj/v1/', NOW()),
-('cep_api_url', 'https://viacep.com.br/ws/', NOW()),
-('map_provider', 'leaflet', NOW()),
-('map_default_zoom', '13', NOW()),
-('map_default_lat', '-23.5505', NOW()),
-('map_default_lng', '-46.6333', NOW()),
-('auto_calculate_mileage', '1', NOW()),
-('require_signature', '0', NOW());
+-- Inserir configurações padrão
+INSERT INTO `glpi_plugin_newbase_configs` (`name`, `value`) VALUES
+('version', '2.0.0'),
+('api_timeout', '30'),
+('enable_geolocation', '1'),
+    ('enable_signature', '1');
