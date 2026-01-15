@@ -2,61 +2,40 @@
 
 declare(strict_types=1);
 
-namespace GlpiPlugin\Newbase;
+namespace GlpiPlugin\Newbase\Src;
 
 
 use CommonDBTM;
 use Session;
 use Html;
 use Dropdown;
-use Toolbox;
 use User;
 use CommonGLPI;
+use Glpi\Toolbox\Sanitizer;
 
 /**
- * Task class for Newbase Plugin
- *
- * Manages tasks with geolocation, status tracking, mileage calculation
- * and assignment to users
- *
- * @package   PluginNewbase
- * @author    JoÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o Lucas
- * @copyright Copyright (c) 2025 JoÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o Lucas
- * @license   GPLv2+
- * @since     2.0.0
- */
-/**
- * Gerenciamento de tarefas com geolocalizacao e assinatura digital
- *
- * @package   PluginNewbase
- * @author    Joao Lucas
- * @copyright Copyright (c) 2025 Joao Lucas
- * @license   GPLv2+
- * @since     2.0.0
- */
-/**
- * Gerenciamento de tarefas com geolocalizacao e assinatura digital
- *
- * @package   PluginNewbase
- * @author    Joao Lucas
- * @copyright Copyright (c) 2025 Joao Lucas
- * @license   GPLv2+
- * @since     2.0.0
- */
+* Classe de tarefas para o plugin Newbase
+* Gerencia tarefas com geolocalização, rastreamento de status, cálculo de quilometragem e atribuição a usuários
+* Gerenciamento de tarefas com geolocalização e assinatura digital
+* @package   PluginNewbase
+* @author    Joao Lucas
+* @copyright Copyright (c) 2026 Joao Lucas
+* @license   GPLv2+
+* @since     2.0.0
+*/
 class Task extends CommonDBTM
 {
-    // Right name for permissions
+    // Nome correto para permissões
     public static $rightname = 'plugin_newbase_task';
 
-    // Enable history
+    // Ativar histórico
     public $dohistory = true;
 
     /**
-     * Get table name
-     *
-     * @param string|null $classname Class name
-     * @return string
-     */
+    * Obter nome da tabela
+    * @param string|null $classname Nome da classe ou nulo para usar a classe atual
+    * @return string
+    */
     public static function getTable($classname = null): string
     {
         if ($classname !== null && $classname !== self::class) {
@@ -66,37 +45,32 @@ class Task extends CommonDBTM
     }
 
     /**
-     * Get type name
-     *
-     * @param int $nb Number of items
-     * @return string
-     */
+    * Obter nome do tipo
+    * @param int $nb Numero do item
+    * @return string
+    */
     public static function getTypeName($nb = 0) {
         return _n('Tarefa', 'Tarefas', $nb, 'newbase');
     }
-    
-    /**
-     * ✅ Opções de busca
-     */
+
+    // Opções de busca
     public function rawSearchOptions() {
         $tab = [];
-        
-        $tab[] = [
-            'id'   => 'common',
-            'name' => self::getTypeName(2)
-        ];
-        
-        $tab[] = [
-            'id'            => '1',
+
+        // Grupo principal
+        $tab['common'] = self::getTypeName(2);
+
+        $tab[1] = [
+            'id'            => 1,
             'table'         => $this->getTable(),
             'field'         => 'id',
             'name'          => __('ID'),
             'datatype'      => 'number',
             'massiveaction' => false
         ];
-        
-        $tab[] = [
-            'id'            => '2',
+
+        $tab[2] = [
+            'id'            => 2,
             'table'         => $this->getTable(),
             'field'         => 'name',
             'name'          => __('Nome', 'newbase'),
@@ -104,155 +78,148 @@ class Task extends CommonDBTM
             'massiveaction' => false,
             'autocomplete'  => true
         ];
-        
-        $tab[] = [
-            'id'            => '3',
+
+        $tab[3] = [
+            'id'            => 3,
             'table'         => $this->getTable(),
             'field'         => 'description',
             'name'          => __('Descrição'),
             'datatype'      => 'text',
             'massiveaction' => false
         ];
-        
-        $tab[] = [
-            'id'            => '4',
+
+        $tab[4] = [
+            'id'            => 4,
             'table'         => $this->getTable(),
             'field'         => 'date_start',
             'name'          => __('Data de início', 'newbase'),
             'datatype'      => 'datetime',
             'massiveaction' => false
         ];
-        
-        $tab[] = [
-            'id'            => '5',
+
+        $tab[5] = [
+            'id'            => 5,
             'table'         => $this->getTable(),
             'field'         => 'date_end',
             'name'          => __('Data de término', 'newbase'),
             'datatype'      => 'datetime',
             'massiveaction' => false
         ];
-        
-        $tab[] = [
-            'id'            => '6',
+
+        $tab[6] = [
+            'id'            => 6,
             'table'         => $this->getTable(),
             'field'         => 'status',
             'name'          => __('Status'),
             'datatype'      => 'string',
             'massiveaction' => false
         ];
-        
+
         // Data de Criação
-        $tab[] = [
-            'id'            => '11',
+        $tab[11] = [
+            'id'            => 11,
             'table'         => $this->getTable(),
             'field'         => 'date_creation',
             'name'          => __('Data de criação'),
             'datatype'      => 'datetime',
             'massiveaction' => false
         ];
-        
+
         // Data de Modificação
-        $tab[] = [
-            'id'            => '12',
+        $tab[12] = [
+            'id'            => 12,
             'table'         => $this->getTable(),
             'field'         => 'date_mod',
             'name'          => __('Data de modificação'),
             'datatype'      => 'datetime',
             'massiveaction' => false
         ];
-        
+
         // Entidade
-        $tab[] = [
-            'id'            => '80',
+        $tab[80] = [
+            'id'            => 80,
             'table'         => 'glpi_entities',
             'field'         => 'completename',
             'name'          => __('Entidade'),
             'datatype'      => 'dropdown',
             'massiveaction' => false
         ];
-        
+
         // Recursivo
-        $tab[] = [
-            'id'            => '86',
+        $tab[86] = [
+            'id'            => 86,
             'table'         => $this->getTable(),
             'field'         => 'is_recursive',
             'name'          => __('Entidades filhas'),
             'datatype'      => 'bool',
             'massiveaction' => false
         ];
-        
+
         return $tab;
     }
-    
+
     public function getDefaultToDisplay() {
         return ['id', 'name', 'description', 'date_start', 'date_end', 'status'];
     }
 
     /**
-     * Get foreign key field name
-     *
-     * @return string
-     */
+    * Obter o nome do campo de chave estrangeira
+    * @return string
+    */
     public static function getForeignKeyField(): string
     {
         return 'plugin_newbase_task_id';
     }
 
     /**
-     * Check if user can view item
-     *
-     * @return bool
-     */
+    * Verificar se o usuário pode visualizar o item
+    * @return bool
+    */
     public static function canView(): bool
     {
         return (bool) Session::haveRight(self::$rightname, READ);
     }
 
     /**
-     * Check if user can create item
-     *
-     * @return bool
-     */
+    * Verificar se o usuário pode criar um item
+    * @return bool
+    */
     public static function canCreate(): bool
     {
         return (bool) Session::haveRight(self::$rightname, CREATE);
     }
 
     /**
-     * Check if user can update item
-     *
-     * @return bool
-     */
+    * Verificar se o usuário pode atualizar o item
+    * @return bool
+    */
     public static function canUpdate(): bool
     {
         return (bool) Session::haveRight(self::$rightname, UPDATE);
     }
 
     /**
-     * Check if user can delete item
-     *
-     * @return bool
-     */
+    * Verificar se o usuário pode excluir o item
+    * @return bool
+    */
     public static function canDelete(): bool
     {
         return (bool) Session::haveRight(self::$rightname, DELETE);
     }
 
     /**
-     * Check if user can purge item
-     *
-     * @return bool
-     */
+    * Verificar se o usuário pode excluir o item
+    * @return bool
+    */
     public static function canPurge(): bool
     {
         return (bool) Session::haveRight(self::$rightname, PURGE);
     }
 
     /**
-     * Get menu content
-     *
-     * @return array
-     */
+    * Obtenha o conteúdo do menu
+    * @return array
+    */
     public static function getMenuContent(): array
     {
         $menu = [];
@@ -277,12 +244,11 @@ class Task extends CommonDBTM
     }
 
     /**
-     * Get tab name for item
-     *
-     * @param CommonGLPI $item         Item
-     * @param int        $withtemplate Template
-     * @return string
-     */
+    * Obter o nome da aba do item
+    * @param CommonGLPI $item Item
+    * @param int        $withtemplate Template
+    * @return string
+    */
     public function getTabNameForItem(CommonGLPI $item, $withtemplate = 0): string
     {
         if ($item instanceof CompanyData) {
@@ -298,13 +264,12 @@ class Task extends CommonDBTM
     }
 
     /**
-     * Display tab content
-     *
-     * @param CommonGLPI $item         Item
-     * @param int        $tabnum       Tab number
-     * @param int        $withtemplate Template
-     * @return bool
-     */
+    * Exibir conteúdo da guia
+    * @param CommonGLPI $item Item
+    * @param int        $tabnum Número da guia
+    * @param int        $withtemplate Template
+    * @return bool
+    */
     public static function displayTabContentForItem(CommonGLPI $item, $tabnum = 1, $withtemplate = 0): bool
     {
         if ($item instanceof CompanyData) {
@@ -315,12 +280,11 @@ class Task extends CommonDBTM
     }
 
     /**
-     * Count tasks for a company
-     *
-     * @param CommonGLPI $item Company item
-     * @return int
-     */
-    public static function countForItem(CommonGLPI $item): int
+    * Contabilizar tarefas para uma empresa
+    * @param CommonGLPI $item Item da empresa
+    * @return int
+    */
+    public static function countForItem(CommonDBTM $item): int
     {
         global $DB;
 
@@ -328,7 +292,7 @@ class Task extends CommonDBTM
             'COUNT' => 'cpt',
             'FROM'  => self::getTable(),
             'WHERE' => [
-                'plugin_newbase_companydata_id' => $item->getID()
+                'plugin_newbase_companydata_id' => $item->getId()
             ]
         ]);
 
@@ -337,16 +301,15 @@ class Task extends CommonDBTM
     }
 
     /**
-     * Show tasks for a company
-     *
-     * @param CompanyData $company Company item
-     * @return void
-     */
+    * Exibir tarefas para uma empresa
+    * @param CompanyData $company Item da empresa
+    * @return void
+    */
     public static function showForCompany(CompanyData $company): void
     {
         global $DB, $CFG_GLPI;
 
-        $company_id = $company->getID();
+        $company_id = $company->getId();
         $canedit = $company->canUpdate();
 
         echo "<div class='spaced'>";
@@ -429,10 +392,10 @@ class Task extends CommonDBTM
     }
 
     /**
-     * Get task statuses array
-     *
-     * @return array
-     */
+    * Obter matriz de status de tarefas
+    *
+    * @return array
+    */
     public static function getTaskStatuses(): array
     {
         return [
@@ -444,12 +407,11 @@ class Task extends CommonDBTM
     }
 
     /**
-     * Display form for task
-     *
-     * @param int   $ID      ID of the item
-     * @param array $options Options
-     * @return bool
-     */
+    * Exibir formulário para tarefa
+    * @param int   $ID ID do item
+    * @param array $options Opções
+    * @return bool
+    */
     public function showForm($ID, array $options = []): bool
     {
         global $CFG_GLPI;
@@ -526,7 +488,7 @@ class Task extends CommonDBTM
         echo "</td>";
         echo "</tr>";
 
-        // Geolocation section
+        // Seção de geolocalização
         echo "<tr class='tab_bg_2'>";
         echo "<th colspan='4'>" . __('Geolocation', 'newbase') . "</th>";
         echo "</tr>";
@@ -586,38 +548,35 @@ class Task extends CommonDBTM
     }
 
     /**
-     * Prepare input for add
-     *
-     * @param array $input Input data
-     * @return array|false
-     */
+    * Prepare a entrada para adição
+    * @param array $input Dados de entrada
+    * @return array|false
+    */
     public function prepareInputForAdd($input)
     {
         return $this->validateInput($input);
     }
 
     /**
-     * Prepare input for update
-     *
-     * @param array $input Input data
-     * @return array|false
-     */
+    * Prepare os dados para a atualização
+    * @param array $input Dados de entrada
+    * @return array|false
+    */
     public function prepareInputForUpdate($input)
     {
         return $this->validateInput($input);
     }
 
     /**
-     * Validate input data
-     *
-     * @param array $input Input data
-     * @return array|false
-     */
+    * Validar dados de entrada
+    * @param array $input Dados de entrada
+    * @return array|false
+    */
     private function validateInput(array $input)
     {
         foreach ($input as $key => $value) {
             if (is_string($value)) {
-                $input[$key] = Toolbox::sanitizeString($value);
+                $input[$key] = Sanitizer::unsanitize($value);
             }
         }
 

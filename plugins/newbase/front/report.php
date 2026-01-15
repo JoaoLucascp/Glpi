@@ -1,17 +1,18 @@
 <?php
 /**
- * Reports page for Newbase Plugin
- *
- * @package   PluginNewbase
- * @author    João Lucas
- * @copyright Copyright (c) 2025 João Lucas
- * @license   GPLv2+
- * @since     2.0.0
- */
-
+* Reports page for Newbase Plugin
+* @package   PluginNewbase
+* @author    João Lucas
+* @copyright Copyright (c) 2026 João Lucas
+* @license   GPLv2+
+* @since     2.0.0
+*/
 declare(strict_types=1);
 
 include('../../../inc/includes.php');
+
+use GlpiPlugin\Newbase\Src\CompanyData;
+use GlpiPlugin\Newbase\Src\Task;
 
 // Check authentication
 Session::checkLoginUser();
@@ -55,7 +56,7 @@ echo "</tr>";
 echo "<tr>";
 echo "<td>" . __('Company', 'newbase') . "</td>";
 echo "<td>";
-PluginNewbaseCompanyData::dropdown([
+CompanyData::dropdown([
     'name' => 'company_id',
     'value' => $_GET['company_id'] ?? 0,
     'display_emptychoice' => true
@@ -119,7 +120,7 @@ echo "<th>" . __('Status', 'newbase') . "</th>";
 echo "<th>" . __('Count', 'newbase') . "</th>";
 echo "</tr>";
 
-$statuses = PluginNewbaseTask::getTaskStatuses();
+$statuses = Task::getTaskStatuses();
 $total = 0;
 foreach ($tasks_by_status as $status => $count) {
     $total += $count;

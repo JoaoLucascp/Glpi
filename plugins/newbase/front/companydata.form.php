@@ -1,23 +1,21 @@
 <?php
-
 /**
- * Company Data Form - VERSÃO CORRIGIDA
- *
- * @package   PluginNewbase
- * @author    João Lucas
- * @copyright Copyright (c) 2025 João Lucas
- * @license   GPLv2+
- * @since     2.0.0
- */
-
+* Company Data Form - VERSÃO CORRIGIDA
+*
+* @package   PluginNewbase
+* @author    João Lucas
+* @copyright Copyright (c) 2025 João Lucas
+* @license   GPLv2+
+* @since     2.0.0
+*/
 declare(strict_types=1);
 
 require_once __DIR__ . '/../../../inc/includes.php';
 
-use GlpiPlugin\Newbase\CompanyData;
-use GlpiPlugin\Newbase\Address;
-use GlpiPlugin\Newbase\System;
-use GlpiPlugin\Newbase\Task;
+use GlpiPlugin\Newbase\Src\CompanyData;
+use GlpiPlugin\Newbase\Src\Address;
+use GlpiPlugin\Newbase\Src\System;
+use GlpiPlugin\Newbase\Src\Task;
 use Glpi\Event;
 
 global $CFG_GLPI, $DB;

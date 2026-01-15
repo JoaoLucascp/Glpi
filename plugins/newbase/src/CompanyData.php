@@ -1,252 +1,558 @@
 <?php
-
 /**
- * -------------------------------------------------------------------------
- * Newbase plugin for GLPI
- * -------------------------------------------------------------------------
- *
- * LICENSE
- *
- * This file is part of Newbase.
- *
- * Newbase is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * Newbase is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- */
+* CompanyData Class - Gerencia informações da empresa para o Plugin Newbase
+* @package   Newbase
+* @author    João Lucas
+* @copyright 2026 By João Lucas
+* @license   GPLv2+
+* @version   2.0.0
+*/
 
-namespace GlpiPlugin\Newbase;
+declare(strict_types=1);
 
-use CommonDBTM;
+namespace GlpiPlugin\Newbase\Src;
+
+use GlpiPlugin\Newbase\Src\Common;
+use GlpiPlugin\Newbase\Src\Address;
+use GlpiPlugin\Newbase\Src\System;
 use Session;
 use Html;
+use Entity;
 
-if (!defined('GLPI_ROOT')) {
-    die("Sorry. You can't access directly to this file");
-}
-
-class CompanyData extends CommonDBTM
+/**
+* CompanyData - Gerencia informações da empresa
+* Lidar com operações CRUD para empresas com validação de CNPJ,
+* integração API, e gerenciamento de relacionamentos
+*/
+class CompanyData extends Common
 {
-    public static $rightname = 'plugin_newbase_companydata';
+    // ============= CONFIGURAÇÕES GLPI ==========
+    /**
+    * Gestão de direitos
+    * @var string
+    */
+    public static $rightname = 'plugin_newbase';
 
+    /**
+    * Habilitar rastreamento de histórico
+    * @var bool
+    */
+    public $dohistory = true;
+
+    // ========== MÉTODOS GLPI OBRIGATÓRIOS ===========
+    /**
+    * Obtenha o nome do tipo
+    * @param int $nb Número de itens
+    * @return string Nome do tipo
+    */
     public static function getTypeName($nb = 0)
     {
-        return __('Company Data', 'newbase');
+        return $nb > 1 ? __('Companies', 'newbase') : __('Company', 'newbase');
     }
 
-public function getSearchOptions()
-{
-    $tab = [];
-
-    $tab['common'] = __('Características');
-
-    $tab[1] = [
-        'id'            => 1,
-        'table'         => static::getTable(),
-        'field'         => 'name',
-        'name'          => __('Nome'),
-        'datatype'      => 'itemlink',
-        'massiveaction' => false,
-        'forcegroupby'  => true,
-        'autocomplete'  => true,
-    ];
-
-    $tab[2] = [
-        'id'            => 2,
-        'table'         => static::getTable(),
-        'field'         => 'id',
-        'name'          => __('ID'),
-        'massiveaction' => false,
-        'datatype'      => 'number',
-        'forcegroupby'  => true,
-    ];
-
-    $tab[3] = [
-        'id'            => 3,
-        'table'         => static::getTable(),
-        'field'         => 'cnpj',
-        'name'          => __('CNPJ'),
-        'datatype'      => 'string',
-        'massiveaction' => false,
-        'forcegroupby'  => true,
-    ];
-
-    $tab[4] = [
-        'id'            => 4,
-        'table'         => static::getTable(),
-        'field'         => 'corporate_name',
-        'name'          => __('Razão Social'),
-        'datatype'      => 'string',
-        'massiveaction' => false,
-        'forcegroupby'  => true,
-    ];
-
-    $tab[5] = [
-        'id'            => 5,
-        'table'         => static::getTable(),
-        'field'         => 'fantasy_name',
-        'name'          => __('Nome Fantasia'),
-        'datatype'      => 'string',
-        'massiveaction' => false,
-        'forcegroupby'  => true,
-    ];
-
-    $tab[6] = [
-        'id'            => 6,
-        'table'         => static::getTable(),
-        'field'         => 'branch',
-        'name'          => __('Filial'),
-        'datatype'      => 'string',
-        'massiveaction' => false,
-        'forcegroupby'  => true,
-    ];
-
-    $tab[7] = [
-        'id'            => 7,
-        'table'         => static::getTable(),
-        'field'         => 'federal_registration',
-        'name'          => __('Inscrição Federal'),
-        'datatype'      => 'string',
-        'massiveaction' => false,
-        'forcegroupby'  => true,
-    ];
-
-    $tab[8] = [
-        'id'            => 8,
-        'table'         => static::getTable(),
-        'field'         => 'state_registration',
-        'name'          => __('Inscrição Estadual'),
-        'datatype'      => 'string',
-        'massiveaction' => false,
-        'forcegroupby'  => true,
-    ];
-
-    $tab[9] = [
-        'id'            => 9,
-        'table'         => static::getTable(),
-        'field'         => 'city_registration',
-        'name'          => __('Inscrição Municipal'),
-        'datatype'      => 'string',
-        'massiveaction' => false,
-        'forcegroupby'  => true,
-    ];
-
-    $tab[10] = [
-        'id'            => 10,
-        'table'         => static::getTable(),
-        'field'         => 'contract_status',
-        'name'          => __('Status do Contrato'),
-        'datatype'      => 'string',
-        'massiveaction' => false,
-        'forcegroupby'  => true,
-    ];
-
-    $tab[11] = [
-        'id'            => 11,
-        'table'         => static::getTable(),
-        'field'         => 'date_creation',
-        'name'          => __('Data de Criação'),
-        'datatype'      => 'datetime',
-        'massiveaction' => false,
-        'forcegroupby'  => true,
-    ];
-
-    $tab[12] = [
-        'id'            => 12,
-        'table'         => static::getTable(),
-        'field'         => 'date_mod',
-        'name'          => __('Data de Modificação'),
-        'datatype'      => 'datetime',
-        'massiveaction' => false,
-        'forcegroupby'  => true,
-    ];
-
-    $tab[80] = [
-        'id'            => 80,
-        'table'         => 'glpi_entities',
-        'field'         => 'completename',
-        'name'          => __('Entity'),
-        'datatype'      => 'dropdown',
-        'massiveaction' => false,
-        'forcegroupby'  => true,
-    ];
-
-    $tab[86] = [
-        'id'            => 86,
-        'table'         => static::getTable(),
-        'field'         => 'is_recursive',
-        'name'          => __('Child entities'),
-        'datatype'      => 'bool',
-        'massiveaction' => false,
-        'forcegroupby'  => true,
-    ];
-
-    return $tab;
-}
-
-public function rawSearchOptions()
-{
-    return $this->getSearchOptions();
-}
-
-    public function defineTabs($options = [])
+    /**
+    * Obtenha o nome da tabela
+    * @param string $classname Nome da Classe (opcional)
+    * @return string Nome da tabela
+    */
+    public static function getTable($classname = null)
     {
-        $ong = [];
-        $this->addDefaultFormTab($ong);
-        $this->addStandardTab('Log', $ong, $options);
-        return $ong;
+        return 'glpi_plugin_newbase_companydata';
     }
 
+    /**
+    * Obtenha o ícone para menus
+    * @return string Classe de ícones do Font Awesome
+    */
+    public static function getIcon()
+    {
+        return 'fas fa-building';
+    }
+
+    /**
+    * Defina as opções de busca para o motor de busca do GLPI
+    * @return array Opções de pesquisa
+    */
+    public function rawSearchOptions()
+    {
+        $tab = [];
+
+        // Aba principal
+        $tab[] = [
+            'id'   => 'common',
+            'name' => __('Characteristics')
+        ];
+
+        // ID
+        $tab[] = [
+            'id'            => '2',
+            'table'         => $this->getTable(),
+            'field'         => 'id',
+            'name'          => __('ID'),
+            'massiveaction' => false,
+            'datatype'      => 'number'
+        ];
+
+        // Nome
+        $tab[] = [
+            'id'            => '1',
+            'table'         => $this->getTable(),
+            'field'         => 'name',
+            'name'          => __('Name'),
+            'datatype'      => 'itemlink',
+            'massiveaction' => false,
+        ];
+
+        // CNPJ
+        $tab[] = [
+            'id'       => '3',
+            'table'    => $this->getTable(),
+            'field'    => 'cnpj',
+            'name'     => __('CNPJ', 'newbase'),
+            'datatype' => 'string',
+        ];
+
+        // Corporate Name (Razão Social)
+        $tab[] = [
+            'id'       => '4',
+            'table'    => $this->getTable(),
+            'field'    => 'corporate_name',
+            'name'     => __('Corporate Name', 'newbase'),
+            'datatype' => 'string',
+        ];
+
+        // Fantasy Name (Nome Fantasia)
+        $tab[] = [
+            'id'       => '5',
+            'table'    => $this->getTable(),
+            'field'    => 'fantasy_name',
+            'name'     => __('Fantasy Name', 'newbase'),
+            'datatype' => 'string',
+        ];
+
+        // Branch (Filial)
+        $tab[] = [
+            'id'       => '6',
+            'table'    => $this->getTable(),
+            'field'    => 'branch',
+            'name'     => __('Branch', 'newbase'),
+            'datatype' => 'string',
+        ];
+
+        // Data de modificação
+        $tab[] = [
+            'id'            => '19',
+            'table'         => $this->getTable(),
+            'field'         => 'date_mod',
+            'name'          => __('Last update'),
+            'datatype'      => 'datetime',
+            'massiveaction' => false
+        ];
+
+        // Data de criação
+        $tab[] = [
+            'id'            => '121',
+            'table'         => $this->getTable(),
+            'field'         => 'date_creation',
+            'name'          => __('Creation date'),
+            'datatype'      => 'datetime',
+            'massiveaction' => false
+        ];
+
+        return $tab;
+    }
+
+    // =========== FORMULÁRIO ===============
+    /**
+    * Exibir formulário para empresa
+    * @param int   $ID ID do item (0 para novo)
+    * @param array $options Opções adicionais
+    * @return bool Succeso
+    */
     public function showForm($ID, array $options = [])
     {
-        global $CFG_GLPI;
+        // Verificar permissões
+        if (!$this->canView()) {
+            return false;
+        }
 
-        $this->initForm($ID, $options);
+        // Verificar acesso ao item
+        if ($ID > 0) {
+            $this->check($ID, READ);
+        } else {
+            $this->check(-1, CREATE);
+            $this->getEmpty();
+        }
+
+        // Iniciar formulário
         $this->showFormHeader($options);
 
         echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __('Name') . "</td>";
+
+        // Campo Nome
+        echo "<td>" . __('Name') . " <span class='red'>*</span></td>";
         echo "<td>";
-        echo Html::input('name', ['value' => $this->fields['name'], 'size' => 40]);
+        echo Html::input('name', [
+            'value' => $this->fields['name'] ?? '',
+            'size'  => 50,
+            'required' => true
+        ]);
         echo "</td>";
-        echo "<td>" . __('CNPJ', 'newbase') . "</td>";
+
+        // Campo CNPJ com integração com API
+        echo "<td>" . __('CNPJ', 'newbase') . " <span class='red'>*</span></td>";
         echo "<td>";
-        echo Html::input('cnpj', ['value' => $this->fields['cnpj'], 'size' => 20]);
+        echo Html::input('cnpj', [
+            'value' => $this->fields['cnpj'] ?? '',
+            'size'  => 20,
+            'id'    => 'cnpj_field',
+            'required' => true
+        ]);
+        echo " <button type='button' id='search_cnpj' class='btn btn-primary'>";
+        echo "<i class='fas fa-search'></i> " . __('Search', 'newbase');
+        echo "</button>";
         echo "</td>";
+
         echo "</tr>";
 
         echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __('Razão Social', 'newbase') . "</td>";
+
+        // Corporate Name (Razão Social)
+        echo "<td>" . __('Corporate Name', 'newbase') . "</td>";
         echo "<td>";
-        echo Html::input('corporate_name', ['value' => $this->fields['corporate_name'], 'size' => 40]);
+        echo Html::input('corporate_name', [
+            'value' => $this->fields['corporate_name'] ?? '',
+            'size'  => 50,
+            'id'    => 'corporate_name_field'
+        ]);
         echo "</td>";
-        echo "<td>" . __('Nome Fantasia', 'newbase') . "</td>";
+
+        // Fantasy Name (Nome Fantasia)
+        echo "<td>" . __('Fantasy Name', 'newbase') . "</td>";
         echo "<td>";
-        echo Html::input('fantasy_name', ['value' => $this->fields['fantasy_name'], 'size' => 40]);
+        echo Html::input('fantasy_name', [
+            'value' => $this->fields['fantasy_name'] ?? '',
+            'size'  => 50,
+            'id'    => 'fantasy_name_field'
+        ]);
         echo "</td>";
+
         echo "</tr>";
 
+        echo "<tr class='tab_bg_1'>";
+
+        // Branch (Filial)
+        echo "<td>" . __('Branch', 'newbase') . "</td>";
+        echo "<td>";
+        echo Html::input('branch', [
+            'value' => $this->fields['branch'] ?? '',
+            'size'  => 30
+        ]);
+        echo "</td>";
+
+        // Entidade (se houver múltiplas entidades)
+        echo "<td>" . __('Entity') . "</td>";
+        echo "<td>";
+        Entity::dropdown([
+            'entity' => $this->fields['entities_id'] ?? 0]);
+        echo "</td>";
+
+        echo "</tr>";
+
+        // JavaScript para integração com API do CNPJ
+        echo "<script type='text/javascript'>";
+        echo "
+        $(document).ready(function() {
+            // Format CNPJ while typing
+            $('#cnpj_field').mask('00.000.000/0000-00');
+
+            // Search CNPJ button
+            $('#search_cnpj').click(function() {
+                var cnpj = $('#cnpj_field').val().replace(/[^0-9]/g, '');
+
+                if (cnpj.length !== 14) {
+                    alert('" . __('Invalid CNPJ', 'newbase') . "');
+                    return;
+                }
+
+                // Show loading
+                $(this).prop('disabled', true).html('<i class=\"fas fa-spinner fa-spin\"></i> " . __('Searching...', 'newbase') . "');
+
+                // Call AJAX
+                $.ajax({
+                    url: '" . $this->getFormURL() . "',
+                    type: 'POST',
+                    data: {
+                        action: 'search_cnpj',
+                        cnpj: cnpj
+                    },
+                    success: function(data) {
+                        if (data.success) {
+                            $('#corporate_name_field').val(data.data.legal_name);
+                            $('#fantasy_name_field').val(data.data.fantasy_name);
+                            alert('" . __('Company data found!', 'newbase') . "');
+                        } else {
+                            alert('" . __('Company not found', 'newbase') . "');
+                        }
+                    },
+                    error: function() {
+                        alert('" . __('Error searching CNPJ', 'newbase') . "');
+                    },
+                    complete: function() {
+                        $('#search_cnpj').prop('disabled', false).html('<i class=\"fas fa-search\"></i> " . __('Search', 'newbase') . "');
+                    }
+                });
+            });
+        });
+        ";
+        echo "</script>";
+
+        // Fim do Formulário
         $this->showFormButtons($options);
 
         return true;
     }
 
+    // ======================== VALIDAÇÕES ===========================
+    /**
+    * Prepare os dados de entrada antes de adicionar ao banco de dados
+    * @param array $input Input data
+    * @return array|false Prepared input or false on error
+    */
     public function prepareInputForAdd($input)
     {
-        if (!isset($input['date_creation'])) {
-            $input['date_creation'] = $_SESSION['glpi_currenttime'];
+        //  Validar campos obrigatórios
+        if (empty($input['name'])) {
+            Session::addMessageAfterRedirect(
+                __('Name is required', 'newbase'),
+                false,
+                ERROR
+            );
+            return false;
         }
+
+        if (empty($input['cnpj'])) {
+            Session::addMessageAfterRedirect(
+                __('CNPJ is required', 'newbase'),
+                false,
+                ERROR
+            );
+            return false;
+        }
+
+        //  Limpe e valide o CNPJ
+        $input['cnpj'] = preg_replace('/[^0-9]/', '', $input['cnpj']);
+
+        if (!Common::validateCNPJ($input['cnpj'])) {
+            Session::addMessageAfterRedirect(
+                __('Invalid CNPJ', 'newbase'),
+                false,
+                ERROR
+            );
+            return false;
+        }
+
+        // Verifique se o CNPJ já existe
+        $existing = $this->find(['cnpj' => $input['cnpj']]);
+        if (count($existing) > 0) {
+            Session::addMessageAfterRedirect(
+                __('CNPJ already registered', 'newbase'),
+                false,
+                ERROR
+            );
+            return false;
+        }
+
         return $input;
     }
 
+    /**
+    * Prepare os dados de entrada antes de atualizar no banco de dados
+    * @param array $input Dados de entrada
+    * @return array|false Entrada preparada ou false em caso de erro
+    */
     public function prepareInputForUpdate($input)
     {
-        $input['date_mod'] = $_SESSION['glpi_currenttime'];
+        // Validar nome se fornecido
+        if (isset($input['name']) && empty($input['name'])) {
+            Session::addMessageAfterRedirect(
+                __('Name cannot be empty', 'newbase'),
+                false,
+                ERROR
+            );
+            return false;
+        }
+
+        // Validar CNPJ se fornecido
+        if (isset($input['cnpj'])) {
+            $input['cnpj'] = preg_replace('/[^0-9]/', '', $input['cnpj']);
+
+            if (!Common::validateCNPJ($input['cnpj'])) {
+                Session::addMessageAfterRedirect(
+                    __('Invalid CNPJ', 'newbase'),
+                    false,
+                    ERROR
+                );
+                return false;
+            }
+
+            // Verifique se o CNPJ já existe (excluindo o item atual)
+            $existing = $this->find([
+                'cnpj' => $input['cnpj'],
+                'id'   => ['!=', $input['id']]
+            ]);
+
+            if (count($existing) > 0) {
+                Session::addMessageAfterRedirect(
+                    __('CNPJ already registered', 'newbase'),
+                    false,
+                    ERROR
+                );
+                return false;
+            }
+        }
+
         return $input;
+    }
+
+    // ================== AÇÕES PÓS CRUD ==================
+    /**
+     * Ações após adicionar item ao banco de dados
+     * @return void
+     */
+    public function post_addItem()
+    {
+        // Ação de registro de log
+        \Toolbox::logInFile(
+            'newbase_plugin',
+            sprintf(
+                "Company added: ID=%d, Name=%s, CNPJ=%s\n",
+                $this->fields['id'],
+                $this->fields['name'],
+                $this->fields['cnpj']
+            )
+        );
+
+        // Adicionar entrada no histórico
+        if ($this->dohistory) {
+            $changes = [
+                0,
+                '',
+                sprintf(__('Company created: %s', 'newbase'), $this->fields['name'])
+            ];
+            \Log::history(
+                $this->fields['id'],
+                $this->getType(),
+                $changes,
+                0,
+                \Log::HISTORY_CREATE_ITEM
+            );
+        }
+    }
+
+    /**
+     * Ações após atualizar item no banco de dados
+     * @param int $history Ativar histórico (1 ou 0)
+     * @return void
+     */
+    public function post_updateItem($history = 1)
+    {
+        // Ação de registro de log
+        \Toolbox::logInFile(
+            'newbase_plugin',
+            sprintf(
+                "Company updated: ID=%d, Name=%s\n",
+                $this->fields['id'],
+                $this->fields['name']
+            )
+        );
+    }
+
+    /**
+     * Actions before deleting item from database
+     * @return bool Can delete?
+     */
+    public function pre_deleteItem()
+    {
+        // Verifique se a empresa tem endereços relacionados
+        $address = new Address();
+        $addresses = $address->find(['companydata_id' => $this->fields['id']]);
+
+        if (count($addresses) > 0) {
+            Session::addMessageAfterRedirect(
+                __('Cannot delete company with registered addresses', 'newbase'),
+                false,
+                ERROR
+            );
+            return false;
+        }
+
+        // Verifique se a empresa tem sistemas relacionados
+        $system = new System();
+        $systems = $system->find(['companydata_id' => $this->fields['id']]);
+
+        if (count($systems) > 0) {
+            Session::addMessageAfterRedirect(
+                __('Cannot delete company with registered systems', 'newbase'),
+                false,
+                ERROR
+            );
+            return false;
+        }
+
+        return true;
+    }
+
+    //================== MÉTODOS AJAX ====================
+    /**
+     * Lidar com solicitações AJAX
+     * @param array $params Request parameters
+     * @return void
+     */
+    public static function handleAjax($params)
+    {
+        header('Content-Type: application/json');
+
+        if (!isset($params['action'])) {
+            echo json_encode(['success' => false, 'message' => 'No action specified']);
+            return;
+        }
+
+        switch ($params['action']) {
+            case 'search_cnpj':
+                self::ajaxSearchCNPJ($params);
+                break;
+
+            default:
+                echo json_encode(['success' => false, 'message' => 'Invalid action']);
+        }
+    }
+
+    /**
+     * AJAX: Pesquisar empresa por CNPJ
+     * @param array $params Parâmetros
+     * @return void
+     */
+    private static function ajaxSearchCNPJ($params)
+    {
+        if (empty($params['cnpj'])) {
+            echo json_encode(['success' => false, 'message' => 'CNPJ required']);
+            return;
+        }
+
+        // Usa a função Common::searchCompanyByCNPJ()
+        $data = Common::searchCompanyByCNPJ($params['cnpj']);
+
+        if ($data) {
+            echo json_encode([
+                'success' => true,
+                'data'    => $data
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Company not found'
+            ]);
+        }
     }
 }

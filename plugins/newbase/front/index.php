@@ -1,20 +1,18 @@
 <?php
 /**
- * Dashboard page for Newbase Plugin
- *
- * @package   PluginNewbase
- * @author    João Lucas
- * @copyright Copyright (c) 2025 João Lucas
- * @license   GPLv2+
- * @since     2.0.0
- */
-
+* Dashboard page for Newbase Plugin
+* @package   PluginNewbase
+* @author    João Lucas
+* @copyright Copyright (c) 2026 João Lucas
+* @license   GPLv2+
+* @since     2.0.0
+*/
 declare(strict_types=1);
 
-use GlpiPlugin\Newbase\Task;
-use GlpiPlugin\Newbase\Config;
-
 include('../../../inc/includes.php');
+
+use GlpiPlugin\Newbase\Src\Task;
+use GlpiPlugin\Newbase\Config;
 
 // Check authentication
 Session::checkLoginUser();

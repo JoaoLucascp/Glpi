@@ -1429,7 +1429,7 @@ HTML;
             $menu = self::getMenuInfos();
 
             // Permit to plugins to add entry to others sector !
-            if (isset($PLUGIN_HOOKS[Hooks::MENU_TOADD]) && count($PLUGIN_HOOKS[Hooks::MENU_TOADD])) {
+            if (isset($PLUGIN_HOOKS[Hooks::MENU_TOADD]) && is_array($PLUGIN_HOOKS[Hooks::MENU_TOADD]) && count($PLUGIN_HOOKS[Hooks::MENU_TOADD])) {
                 foreach ($PLUGIN_HOOKS[Hooks::MENU_TOADD] as $plugin => $items) {
                     if (!Plugin::isPluginActive($plugin)) {
                         continue;

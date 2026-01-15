@@ -2,102 +2,71 @@
 
 declare(strict_types=1);
 
-namespace GlpiPlugin\Newbase;
-
-
+namespace GlpiPlugin\Newbase\Src;
+use Glpi\Toolbox\Sanitizer;
 use CommonDBTM;
 use Session;
 use Html;
 use Dropdown;
-use User;
 use CommonGLPI;
 
-use Glpi\Toolbox\Sanitizer;
-
 /**
- * System class for Newbase Plugin
- *
- * Manages communication systems (IPBX, PABX, Chatbot, IPBX Cloud, Telephone Lines)
- * associated with companies
- *
- * @package   PluginNewbase
- * @author    JoÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o Lucas
- * @copyright Copyright (c) 2025 JoÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o Lucas
- * @license   GPLv2+
- * @since     2.0.0
- */
-/**
- * Gerenciamento de sistemas telefonicos (IPBX, PABX, Chatbot)
- *
- * @package   PluginNewbase
- * @author    Joao Lucas
- * @copyright Copyright (c) 2025 Joao Lucas
- * @license   GPLv2+
- * @since     2.0.0
- */
-/**
- * Gerenciamento de sistemas telefonicos (IPBX, PABX, Chatbot)
- *
- * @package   PluginNewbase
- * @author    Joao Lucas
- * @copyright Copyright (c) 2025 Joao Lucas
- * @license   GPLv2+
- * @since     2.0.0
- */
+* System class
+* Gerenciamento de sistemas (IPBX, PABX, Chatbot)
+* @package   PluginNewbase
+* @author    Joao Lucas
+* @copyright Copyright (c) 2026 Joao Lucas
+* @license   GPLv2+
+* @since     2.0.0
+*/
 class System extends CommonDBTM
 {
-    // Right name for permissions
+    // Nome correto para permissões
     public static $rightname = 'plugin_newbase_system';
 
-    // Enable history
+    // Ativar histórico
     public $dohistory = true;
 
     /**
-     * Get table name
-     *
-     * @param string|null $classname Class name
-     * @return string
-     */
+    * Obter nome da tabela
+    * @param string|null $classname Nome da classe
+    * @return string
+    */
     public static function getTable($classname = null): string
     {
         if ($classname !== null && $classname !== self::class) {
             return parent::getTable($classname);
         }
-        return 'glpi_plugin_newbase_system';
+        return 'glpi_plugin_newbase_systems';
     }
 
     /**
-     * Get type name
-     *
-     * @param int $nb Number of items
-     * @return string
-     */
+    * Obter nome do tipo
+    * @param int $nb Numero do item
+    * @return string
+    */
     public static function getTypeName($nb = 0) {
         return _n('Sistema', 'Sistemas', $nb, 'newbase');
     }
 
-    /**
-     * ✅ Opções de busca
-     */
+    // Opções de busca
     public function rawSearchOptions() {
         $tab = [];
-        
-        $tab[] = [
-            'id'   => 'common',
-            'name' => self::getTypeName(2)
-        ];
-        
-        $tab[] = [
-            'id'            => '1',
+
+        // Grupo principal
+        $tab['common'] = self::getTypeName(2);
+
+        $tab[1] = [
+            'id'            => 1,
             'table'         => $this->getTable(),
             'field'         => 'id',
             'name'          => __('ID'),
             'datatype'      => 'number',
             'massiveaction' => false
         ];
-        
-        $tab[] = [
-            'id'            => '2',
+
+        $tab[2] = [
+            'id'            => 2,
             'table'         => $this->getTable(),
             'field'         => 'name',
             'name'          => __('Nome', 'newbase'),
@@ -105,148 +74,141 @@ class System extends CommonDBTM
             'massiveaction' => false,
             'autocomplete'  => true
         ];
-        
-        $tab[] = [
-            'id'            => '3',
+
+        $tab[3] = [
+            'id'            => 3,
             'table'         => $this->getTable(),
             'field'         => 'ip_address',
             'name'          => __('Endereço IP', 'newbase'),
             'datatype'      => 'string',
             'massiveaction' => false
         ];
-        
-        $tab[] = [
-            'id'            => '4',
+
+        $tab[4] = [
+            'id'            => 4,
             'table'         => $this->getTable(),
             'field'         => 'version',
             'name'          => __('Versão', 'newbase'),
             'datatype'      => 'string',
             'massiveaction' => false
         ];
-        
-        $tab[] = [
-            'id'            => '5',
+
+        $tab[5] = [
+            'id'            => 5,
             'table'         => $this->getTable(),
             'field'         => 'status',
             'name'          => __('Status'),
             'datatype'      => 'string',
             'massiveaction' => false
         ];
-        
+
         // Data de Criação
-        $tab[] = [
-            'id'            => '11',
+        $tab[11] = [
+            'id'            => 11,
             'table'         => $this->getTable(),
             'field'         => 'date_creation',
             'name'          => __('Data de criação'),
             'datatype'      => 'datetime',
             'massiveaction' => false
         ];
-        
+
         // Data de Modificação
-        $tab[] = [
-            'id'            => '12',
+        $tab[12] = [
+            'id'            => 12,
             'table'         => $this->getTable(),
             'field'         => 'date_mod',
             'name'          => __('Data de modificação'),
             'datatype'      => 'datetime',
             'massiveaction' => false
         ];
-        
+
         // Entidade
-        $tab[] = [
-            'id'            => '80',
+        $tab[80] = [
+            'id'            => 80,
             'table'         => 'glpi_entities',
             'field'         => 'completename',
             'name'          => __('Entidade'),
             'datatype'      => 'dropdown',
             'massiveaction' => false
         ];
-        
+
         // Recursivo
-        $tab[] = [
-            'id'            => '86',
+        $tab[86] = [
+            'id'            => 86,
             'table'         => $this->getTable(),
             'field'         => 'is_recursive',
             'name'          => __('Entidades filhas'),
             'datatype'      => 'bool',
             'massiveaction' => false
         ];
-        
+
         return $tab;
     }
-    
+
     public function getDefaultToDisplay() {
         return ['id', 'name', 'ip_address', 'version', 'status'];
     }
 
     /**
-     * Get foreign key field name
-     *
-     * @return string
-     */
+    * Obter o nome do campo de chave estrangeira
+    * @return string
+    */
     public static function getForeignKeyField(): string
     {
         return 'plugin_newbase_system_id';
     }
 
     /**
-     * Check if user can view item
-     *
-     * @return bool
-     */
+    * Verificar se o usuario pode visualizar o item
+    * @return bool
+    */
     public static function canView(): bool
     {
         return (bool) Session::haveRight(self::$rightname, READ);
     }
 
     /**
-     * Check if user can create item
-     *
-     * @return bool
-     */
+    * Verificar se o usuario pode criar um item
+    * @return bool
+    */
     public static function canCreate(): bool
     {
         return (bool) Session::haveRight(self::$rightname, CREATE);
     }
 
     /**
-     * Check if user can update item
-     *
-     * @return bool
-     */
+    * Verificar se o usuario pode atualizar o item
+    * @return bool
+    */
     public static function canUpdate(): bool
     {
         return (bool) Session::haveRight(self::$rightname, UPDATE);
     }
 
     /**
-     * Check if user can delete item
-     *
-     * @return bool
-     */
+    * Verificar se o usuario pode excluir o item
+    * @return bool
+    */
     public static function canDelete(): bool
     {
         return (bool) Session::haveRight(self::$rightname, DELETE);
     }
 
     /**
-     * Check if user can purge item
-     *
-     * @return bool
-     */
+    * Verificar se o usuario pode excluir o item
+    * @return bool
+    */
     public static function canPurge(): bool
     {
         return (bool) Session::haveRight(self::$rightname, PURGE);
     }
 
     /**
-     * Get tab name for item
-     *
-     * @param CommonGLPI $item         Item
-     * @param int        $withtemplate Template
-     * @return string
-     */
+    * Obter o nome da aba do item
+    * @param CommonGLPI $item Item
+    * @param int        $withtemplate Template
+    * @return string
+    */
     public function getTabNameForItem(CommonGLPI $item, $withtemplate = 0): string
     {
         if ($item instanceof CompanyData) {
@@ -262,13 +224,12 @@ class System extends CommonDBTM
     }
 
     /**
-     * Display tab content
-     *
-     * @param CommonGLPI $item         Item
-     * @param int        $tabnum       Tab number
-     * @param int        $withtemplate Template
-     * @return bool
-     */
+    * Exibir conteúdo da guia
+    * @param CommonGLPI $item Item
+    * @param int        $tabnum Numero da guia
+    * @param int        $withtemplate Template
+    * @return bool
+    */
     public static function displayTabContentForItem(CommonGLPI $item, $tabnum = 1, $withtemplate = 0): bool
     {
         if ($item instanceof CompanyData) {
@@ -279,12 +240,11 @@ class System extends CommonDBTM
     }
 
     /**
-     * Count systems for a company
-     *
-     * @param CommonGLPI $item Company item
-     * @return int
-     */
-    public static function countForItem(CommonGLPI $item): int
+    * Sistemas de contagem para uma empresa
+    * @param CommonGLPI $item Item da empresa
+    * @return int
+    */
+    public static function countForItem(CommonDBTM $item): int
     {
         global $DB;
 
@@ -292,7 +252,7 @@ class System extends CommonDBTM
             'COUNT' => 'cpt',
             'FROM'  => self::getTable(),
             'WHERE' => [
-                'plugin_newbase_companydata_id' => $item->getID()
+                'companydata_id' => $item->getId()
             ]
         ]);
 
@@ -301,23 +261,22 @@ class System extends CommonDBTM
     }
 
     /**
-     * Show systems for a company
-     *
-     * @param CompanyData $company Company item
-     * @return void
-     */
+    * Apresentar sistemas para uma empresa
+    * @param CompanyData $company Item da empresa
+    * @return void
+    */
     public static function showForCompany(CompanyData $company): void
     {
         global $DB, $CFG_GLPI;
 
-        $company_id = $company->getID();
+        $company_id = $company->getId();
         $canedit = $company->canUpdate();
 
         echo "<div class='spaced'>";
 
         if ($canedit) {
             echo "<div class='center firstbloc'>";
-            echo "<a class='btn btn-primary' href='" . $CFG_GLPI['root_doc'] . "/plugins/newbase/front/system.form.php?plugin_newbase_companydata_id=" . $company_id . "'>";
+            echo "<a class='btn btn-primary' href='" . $CFG_GLPI['root_doc'] . "/plugins/newbase/front/system.form.php?companydata_id=" . $company_id . "'>";
             echo "<i class='fas fa-plus'></i>&nbsp;" . __('Add system', 'newbase');
             echo "</a>";
             echo "</div>";
@@ -325,7 +284,7 @@ class System extends CommonDBTM
 
         $iterator = $DB->request([
             'FROM'  => self::getTable(),
-            'WHERE' => ['plugin_newbase_companydata_id' => $company_id],
+            'WHERE' => ['companydata_id' => $company_id],
             'ORDER' => 'name ASC'
         ]);
 
@@ -382,10 +341,9 @@ class System extends CommonDBTM
     }
 
     /**
-     * Get system types array
-     *
-     * @return array
-     */
+    * Obter matriz de tipos de sistema
+    * @return array
+    */
     public static function getSystemTypes(): array
     {
         return [
@@ -398,10 +356,9 @@ class System extends CommonDBTM
     }
 
     /**
-     * Get system statuses array
-     *
-     * @return array
-     */
+    * Obter matriz de status do sistema
+    * @return array
+    */
     public static function getSystemStatuses(): array
     {
         return [
@@ -411,12 +368,11 @@ class System extends CommonDBTM
     }
 
     /**
-     * Display form for system
-     *
-     * @param int   $ID      ID of the item
-     * @param array $options Options
-     * @return bool
-     */
+    * Exibir formulario para o sistema
+    * @param int   $ID ID do item
+    * @param array $options Opções
+    * @return bool
+    */
     public function showForm($ID, array $options = []): bool
     {
         if (!$this->canView()) {
@@ -479,36 +435,33 @@ class System extends CommonDBTM
     }
 
     /**
-     * Prepare input for add
-     *
-     * @param array $input Input data
-     * @return array|false
-     */
+    * Prepare a entrada para adição.
+    * @param array $input Dados de entrada
+    * @return array|false
+    */
     public function prepareInputForAdd($input)
     {
         return $this->validateInput($input);
     }
 
     /**
-     * Prepare input for update
-     *
-     * @param array $input Input data
-     * @return array|false
-     */
+    * Prepare os dados para a atualização
+    * @param array $input Dados de entrada
+    * @return array|false
+    */
     public function prepareInputForUpdate($input)
     {
         return $this->validateInput($input);
     }
 
     /**
-     * Validate input data
-     *
-     * @param array $input Input data
-     * @return array|false
-     */
+    * Validate Dados de entrada
+    * @param array $input Dados de entrada
+    * @return array|false
+    */
     private function validateInput(array $input)
     {
-        // Sanitize all string inputs using GLPI Sanitizer
+        // Higienize todas as entradas de string usando o GLPI Sanitizer
         foreach ($input as $key => $value) {
             if (is_string($value)) {
                 $input[$key] = Sanitizer::unsanitize($value); // Remove escapes + encode para output seguro
@@ -516,7 +469,7 @@ class System extends CommonDBTM
             }
         }
 
-        // Validate required fields
+        // Validar campos obrigatórios
         if (empty($input['plugin_newbase_companydata_id'])) {
             Session::addMessageAfterRedirect(
                 __('Company is required', 'newbase'),

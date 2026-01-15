@@ -12,6 +12,7 @@ return array(
     'GlpiPlugin\\Newbase\\Common' => $baseDir . '/src/Common.php',
     'GlpiPlugin\\Newbase\\CompanyData' => $baseDir . '/src/CompanyData.php',
     'GlpiPlugin\\Newbase\\Config' => $baseDir . '/src/Config.php',
+    'GlpiPlugin\\Newbase\\Menu' => $baseDir . '/src/Menu.php',
     'GlpiPlugin\\Newbase\\System' => $baseDir . '/src/System.php',
     'GlpiPlugin\\Newbase\\Task' => $baseDir . '/src/Task.php',
     'GlpiPlugin\\Newbase\\TaskSignature' => $baseDir . '/src/TaskSignature.php',

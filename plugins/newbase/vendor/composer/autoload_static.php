@@ -7,14 +7,14 @@ namespace Composer\Autoload;
 class ComposerStaticInit9c805e0428f2a34fed5c26d57fc22662
 {
     public static $prefixLengthsPsr4 = array (
-        'G' =>
+        'G' => 
         array (
             'GlpiPlugin\\Newbase\\' => 19,
         ),
     );
 
     public static $prefixDirsPsr4 = array (
-        'GlpiPlugin\\Newbase\\' =>
+        'GlpiPlugin\\Newbase\\' => 
         array (
             0 => __DIR__ . '/../..' . '/src',
         ),
@@ -27,6 +27,7 @@ class ComposerStaticInit9c805e0428f2a34fed5c26d57fc22662
         'GlpiPlugin\\Newbase\\Common' => __DIR__ . '/../..' . '/src/Common.php',
         'GlpiPlugin\\Newbase\\CompanyData' => __DIR__ . '/../..' . '/src/CompanyData.php',
         'GlpiPlugin\\Newbase\\Config' => __DIR__ . '/../..' . '/src/Config.php',
+        'GlpiPlugin\\Newbase\\Menu' => __DIR__ . '/../..' . '/src/Menu.php',
         'GlpiPlugin\\Newbase\\System' => __DIR__ . '/../..' . '/src/System.php',
         'GlpiPlugin\\Newbase\\Task' => __DIR__ . '/../..' . '/src/Task.php',
         'GlpiPlugin\\Newbase\\TaskSignature' => __DIR__ . '/../..' . '/src/TaskSignature.php',

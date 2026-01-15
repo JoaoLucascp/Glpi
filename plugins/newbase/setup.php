@@ -51,6 +51,7 @@ function plugin_init_newbase(): array
         ]);
         Plugin::registerClass(Common::class);
 
+        // Add to management menu
         $PLUGIN_HOOKS['menu_toadd']['newbase'] = [
             'management' => CompanyData::class,
         ];
@@ -160,6 +161,8 @@ function plugin_newbase_check_config($verbose = false): bool
     return true;
 }
 
+
+
 /**
  * Define os direitos do plugin
  */
@@ -168,68 +171,43 @@ function plugin_newbase_install_rights()
     global $DB;
 
     $rights = [
-        [
-            'itemtype' => 'plugin_newbase',
-            'name' => 'Newbase',
-            'comment' => 'Acesso ao plugin Newbase',
-        ],
-        [
-            'itemtype' => 'plugin_newbase_companydata',
-            'name' => 'Dados Pessoais',
-            'comment' => 'Gestão de dados pessoais',
-        ],
-        [
-            'itemtype' => 'plugin_newbase_system',
-            'name' => 'Sistemas',
-            'comment' => 'Gestão de sistemas',
-        ],
-        [
-            'itemtype' => 'plugin_newbase_task',
-            'name' => 'Tarefas',
-            'comment' => 'Gestão de tarefas',
-        ],
+        'plugin_newbase_companydata' => 'all', // ALLSTANDARDRIGHT
+        'plugin_newbase_task'        => 'all',
+        'plugin_newbase_system'      => 'all',
+        'plugin_newbase_config'      => ['read' => 'r', 'update' => 'w'], // READ+UPDATE
     ];
 
-    $right_names = array_column($rights, 'itemtype');
+    $profile = new Profile();
+    $profiles = $profile->find();
 
-    // Adicionar direitos apenas se não existirem
-    foreach ($right_names as $right_name) {
-        // Verificar se o direito já existe em algum perfil
-        $exists = $DB->request([
-            'FROM' => 'glpi_profilerights',
-            'WHERE' => ['name' => $right_name],
-            'LIMIT' => 1
-        ]);
+    foreach ($rights as $right => $options) {
+        // Add right to glpi_profilerights
+        ProfileRight::addProfileRights([$right]);
 
-        if (count($exists) === 0) {
-            // Adicionar direito apenas se não existir
-            ProfileRight::addProfileRights([$right_name]);
+        foreach ($profiles as $profile_id => $profile_data) {
+            $value = 0;
+            // Super-admin has all rights
+            if ($profile_data['name'] === 'Super-Admin') {
+                if ($right === 'plugin_newbase_config') {
+                    $value = READ + UPDATE;
+                } else if ($options === 'all') {
+                    $value = ALLSTANDARDRIGHT;
+                }
+            } else if ($profile_data['name'] === 'Central') {
+                 if ($right !== 'plugin_newbase_config') { // No config rights for Central
+                    $value = READ + CREATE + UPDATE + DELETE; // 15
+                }
+            } else if ($profile_data['name'] === 'Helpdesk') {
+                 if ($right !== 'plugin_newbase_config') { // No config rights for Helpdesk
+                    $value = READ; // 1
+                }
+            }
+
+            if ($value > 0) {
+                ProfileRight::updateProfileRights($profile_id, [$right => $value]);
+            }
         }
     }
-
-    // Conceder todos os direitos aos perfis de administrador
-    $profileright = new ProfileRight();
-
-    // Buscar perfis de admin (Super-Admin e Admin)
-    $admin_profiles = $DB->request([
-        'FROM' => 'glpi_profiles',
-        'WHERE' => [
-            'OR' => [
-                ['name' => 'Super-Admin'],
-                ['name' => 'Admin']
-            ]
-        ]
-    ]);
-
-    $rights_to_set = [];
-    foreach ($right_names as $name) {
-        $rights_to_set[$name] = ALLSTANDARDRIGHT;
-    }
-
-    foreach ($admin_profiles as $profile) {
-        ProfileRight::updateProfileRights($profile['id'], $rights_to_set);
-    }
-
     return true;
 }
 
@@ -319,7 +297,7 @@ function plugin_newbase_uninstall(): bool
             }
         }
 
-        // ✅ REABILITAR VERIFICAÇÃO DE FK
+        // REABILITAR VERIFICAÇÃO DE FK
         $DB->query("SET FOREIGN_KEY_CHECKS = 1");
 
         // Limpar direitos de perfil

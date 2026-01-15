@@ -1,58 +1,35 @@
 <?php
-
+/**
+* TaskSignature class
+* Gerencia assinaturas digitais para tarefas com funcionalidade de upload e exibição
+* @package   PluginNewbase
+* @author    Joao Lucas
+* @copyright Copyright (c) 2026 Joao Lucas
+* @license   GPLv2+
+* @since     2.0.0
+*/
 declare(strict_types=1);
 
-namespace GlpiPlugin\Newbase;
-
+namespace GlpiPlugin\Newbase\Src;
 
 use CommonDBTM;
 use Session;
 use Html;
 use Toolbox;
-use User;
-/**
- * TaskSignature class for Newbase Plugin
- *
- * Manages digital signatures for tasks with upload and display functionality
- *
- * @package   PluginNewbase
- * @author    JoÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o Lucas
- * @copyright Copyright (c) 2025 JoÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o Lucas
- * @license   GPLv2+
- * @since     2.0.0
- */
-/**
- * Gerenciamento de assinaturas digitais de tarefas
- *
- * @package   PluginNewbase
- * @author    Joao Lucas
- * @copyright Copyright (c) 2025 Joao Lucas
- * @license   GPLv2+
- * @since     2.0.0
- */
-/**
- * Gerenciamento de assinaturas digitais de tarefas
- *
- * @package   PluginNewbase
- * @author    Joao Lucas
- * @copyright Copyright (c) 2025 Joao Lucas
- * @license   GPLv2+
- * @since     2.0.0
- */
+
 class TaskSignature extends CommonDBTM
 {
-    // Right name for permissions
+    // Nome correto para permissões
     public static $rightname = 'plugin_newbase_task';
 
-    // Enable history
+    // Ativar histórico
     public $dohistory = true;
 
     /**
-     * Get table name
-     *
-     * @param string|null $classname Class name
-     * @return string
-     */
+    * Obter nome da tabela
+    * @param string|null $classname Nome da classe
+    * @return string
+    */
     public static function getTable($classname = null): string
     {
         if ($classname !== null && $classname !== self::class) {
@@ -62,72 +39,65 @@ class TaskSignature extends CommonDBTM
     }
 
     /**
-     * Get type name
-     *
-     * @param int $nb Number of items
-     * @return string
-     */
+    * Obter nome do tipo
+    * @param int $nb Numero do item
+    * @return string
+    */
     public static function getTypeName($nb = 0): string
     {
         return _n('Digital Signature', 'Digital Signatures', $nb, 'newbase');
     }
 
     /**
-     * Get foreign key field name
-     *
-     * @return string
-     */
+    * Obter o nome do campo de chave estrangeira
+    * @return string
+    */
     public static function getForeignKeyField(): string
     {
         return 'plugin_newbase_tasksignature_id';
     }
 
     /**
-     * Check if user can view item
-     *
-     * @return bool
-     */
+    * Verificar se o usuário pode visualizar o item
+    * @return bool
+    */
     public static function canView(): bool
     {
         return (bool) Session::haveRight(self::$rightname, READ);
     }
 
     /**
-     * Check if user can create item
-     *
-     * @return bool
-     */
+    * Verificar se o usuário pode criar um item
+    * @return bool
+    */
     public static function canCreate(): bool
     {
         return (bool) Session::haveRight(self::$rightname, CREATE);
     }
 
     /**
-     * Check if user can update item
-     *
-     * @return bool
-     */
+    * Verificar se o usuário pode atualizar o item
+    * @return bool
+    */
     public static function canUpdate(): bool
     {
         return (bool) Session::haveRight(self::$rightname, UPDATE);
     }
 
     /**
-     * Check if user can delete item
-     *
-     * @return bool
-     */
+    * Verificar se o usuário pode excluir o item
+    * @return bool
+    */
     public static function canDelete(): bool
     {
         return (bool) Session::haveRight(self::$rightname, DELETE);
     }
 
     /**
-     * Get signature for task
-     *
-     * @param int $task_id Task ID
-     * @return array|null Signature data or null
-     */
+    * Obter assinatura para a tarefa
+    * @param int $task_id ID da tarefa
+    * @return array|null Dados de assinatura ou nulos
+    */
     public static function getForTask(int $task_id): ?array
     {
         global $DB;
@@ -146,11 +116,10 @@ class TaskSignature extends CommonDBTM
     }
 
     /**
-     * Display signature for task
-     *
-     * @param Task $task Task item
-     * @return void
-     */
+    * Exibir assinatura da tarefa
+    * @param Task $task Item tarefa
+    * @return void
+    */
     public static function showForTask(Task $task): void
     {
         global $CFG_GLPI;
@@ -169,7 +138,7 @@ class TaskSignature extends CommonDBTM
             echo "<td>" . __('Signature', 'newbase') . "</td>";
             echo "<td>";
 
-            // Display signature image
+            // Exibir imagem de assinatura
             if (!empty($signature['signature_data'])) {
                 echo "<img src='data:" . $signature['signature_mime'] . ";base64," . base64_encode($signature['signature_data']) . "' ";
                 echo "alt='" . __('Digital Signature', 'newbase') . "' style='max-width: 400px; border: 1px solid #ccc; padding: 5px;' />";
@@ -212,7 +181,7 @@ class TaskSignature extends CommonDBTM
 
         echo "</table>";
 
-        // Signature canvas modal
+        // modal de tela de assinatura
         if ($task->canUpdate()) {
             echo "<div id='signature_modal' style='display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999;'>";
             echo "<div style='position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); background:white; padding:20px; border-radius:8px;'>";
@@ -234,7 +203,7 @@ class TaskSignature extends CommonDBTM
 
         echo "</div>";
 
-        // Add JavaScript for signature handling
+        // Adicione JavaScript para lidar com assinaturas
         if ($task->canUpdate()) {
             echo Html::scriptBlock("
                 var canvas, ctx, isDrawing = false;
@@ -358,11 +327,10 @@ class TaskSignature extends CommonDBTM
     }
 
     /**
-     * Prepare input for add
-     *
-     * @param array $input Input data
-     * @return array|false
-     */
+    * Prepare a entrada para adição
+    * @param array $input Dados de entrada
+    * @return array|false
+    */
     public function prepareInputForAdd($input)
     {
         // Validate task ID
@@ -379,10 +347,9 @@ class TaskSignature extends CommonDBTM
     }
 
     /**
-     * Actions done after add
-     *
-     * @return void
-     */
+    * Ações realizadas após a adição
+    * @return void
+    */
     public function post_addItem(): void
     {
         Toolbox::logInFile(
@@ -392,10 +359,9 @@ class TaskSignature extends CommonDBTM
     }
 
     /**
-     * Actions done after update
-     *
-     * @return void
-     */
+    * Ações realizadas após a atualização
+    * @return void
+    */
     public function post_updateItem($history = true): void
     {
         Toolbox::logInFile(

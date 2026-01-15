@@ -1,45 +1,103 @@
 <?php
-
 declare(strict_types=1);
 
-namespace GlpiPlugin\Newbase;
+namespace GlpiPlugin\Newbase\Src;
 
-use GlpiPlugin\Newbase\Config as PluginConfig;
+use CommonDBTM;
+use Session;
 use Toolbox;
 use Exception;
 
-/**
- * Common utility functions for Newbase Plugin
- *
- * Provides shared utility functions for the plugin
- *
- * @package   PluginNewbase
- * @author    João Lucas
- * @copyright Copyright (c) 2025 João Lucas
- * @license   GPLv2+
- * @since     2.0.0
- */
-class Common
+/*******************************************************************************
+* Funções utilitárias comuns para o plugin Newbase
+* Fornece funções utilitárias compartilhadas para o plugin
+*
+* @package   PluginNewbase
+* @author    João Lucas
+* @copyright Copyright © 2026 João Lucas
+* @license   GPLv2+
+* @since     2.0.0
+*
+* Plugin Newbase para GLPI.
+*******************************************************************************/
+class Common extends CommonDBTM
 {
     /**
-     * Calculate distance between two coordinates using Haversine formula
-     *
-     * @param float $lat1 Latitude of point 1
-     * @param float $lng1 Longitude of point 1
-     * @param float $lat2 Latitude of point 2
-     * @param float $lng2 Longitude of point 2
-     * @return float Distance in kilometers
-     */
+    * Gestão de direitos
+    * @var string
+    */
+    public static $rightname = 'plugin_newbase';
+
+    /**
+    * Ativar histórico
+    * @var bool
+    */
+    public $dohistory = true;
+
+    /**
+    * Obter nome de exibição
+    * @param bool $plural Return plural form
+    * @return string
+    */
+    public static function getDisplayName($plural = false)
+    {
+        return $plural ? __('Empresas', 'newbase') : __('Empresa', 'newbase');
+    }
+
+    /**
+    * Verificar se o usuário pode visualizar o item
+    * @return bool
+    */
+    public function canViewItem()
+    {
+        return Session::haveRight(static::$rightname, READ);
+    }
+
+    /**
+    * Verificar se o usuário pode criar um item.
+    * @return bool
+    */
+    public function canCreateItem()
+    {
+        return Session::haveRight(static::$rightname, CREATE);
+    }
+
+    /**
+    * Verificar se o usuário pode atualizar o item
+    * @return bool
+    */
+    public function canUpdateItem()
+    {
+        return Session::haveRight(static::$rightname, UPDATE);
+    }
+
+    /**
+    * Verificar se o usuário pode deletar o item
+    * @return bool
+    */
+    public function canDeleteItem()
+    {
+        return Session::haveRight(static::$rightname, DELETE);
+    }
+
+    /**
+    * Calcular distância entre duas coordenadas usando a fórmula de Haversine
+    * @param float $lat1 Latitude of point 1
+    * @param float $lng1 Longitude of point 1
+    * @param float $lat2 Latitude of point 2
+    * @param float $lng2 Longitude of point 2
+    * @return float Distance in kilometers
+    */
     public static function calculateDistance(float $lat1, float $lng1, float $lat2, float $lng2): float
     {
-        $earthRadius = 6371.0; // Earth radius in kilometers
+        $earthRadius = 6371.0; // Raio da Terra em quilômetros
 
         $dLat = deg2rad($lat2 - $lat1);
         $dLng = deg2rad($lng2 - $lng1);
 
         $a = sin($dLat / 2) * sin($dLat / 2) +
-             cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
-             sin($dLng / 2) * sin($dLng / 2);
+                cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
+                sin($dLng / 2) * sin($dLng / 2);
 
         $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
 
@@ -47,18 +105,15 @@ class Common
     }
 
     /**
-     * Search company by CNPJ via external API with fallback
-     *
-     * @param string $cnpj CNPJ without formatting
-     * @return array|null Company data or null on error
-     */
-    public static function searchCompanyByCNPJ(string $cnpj): ?array
+    * Procurar empresa por CNPJ em APIs brasileiras
+    * Tenta 3 APIs na ordem: BrasilAPI → ReceitaWS → MinhaReceita
+    * Retorna null se todas falharem
+    * @param string $cnpj CNPJ com ou sem formatação
+    * @return array|null Dados da empresa(legal_name, fantasy_name, email, phone)
+    */
+    public static function searchCompanyByCNPJ($cnpj): ?array
     {
-        // ✅ CORRIGIDO - usar PluginConfig ao invés de Config
-        if (!PluginConfig::isCNPJApiEnabled()) {
-            return null;
-        }
-
+        // Remove caracteres especiais
         $cnpj = preg_replace('/[^0-9]/', '', $cnpj);
 
         if (strlen($cnpj) !== 14) {
@@ -66,13 +121,13 @@ class Common
         }
 
         $companyData = [
-            'legal_name' => '',
-            'fantasy_name' => '',
-            'email' => '',
-            'phone' => ''
+            'legal_name'    => '',
+            'fantasy_name'  => '',
+            'email'         => '',
+            'phone'         => ''
         ];
 
-        // 1. Try BrasilAPI (first source)
+        // 1. Tentar BrasilAPI (Primeira fonte)
         $brasilApiUrl = "https://brasilapi.com.br/api/cnpj/v1/" . $cnpj;
         $data = self::fetchJson($brasilApiUrl);
 
@@ -83,7 +138,7 @@ class Common
             $companyData['phone'] = $data['telefone'] ?? $data['ddd_telefone_1'] ?? '';
         }
 
-        // 2. Try ReceitaWS if any important field is missing (especially email)
+        // 2. Tentar ReceitaWS se algum campo importante estiver faltando (especialmente email)
         if (empty($companyData['email']) || empty($companyData['legal_name'])) {
             $receitaWsUrl = "https://receitaws.com.br/v1/cnpj/" . $cnpj;
             $data = self::fetchJson($receitaWsUrl);
@@ -104,7 +159,7 @@ class Common
             }
         }
 
-        // 3. Try Minha Receita as third fallback if email is still empty
+        // 3. Tentar Minha Receita como terceira fallback se email ainda estiver vazio
         if (empty($companyData['email'])) {
             $minhaReceitaUrl = "https://minhareceita.org/" . $cnpj;
             $data = self::fetchJson($minhaReceitaUrl);
@@ -119,7 +174,7 @@ class Common
             }
         }
 
-        // Return null if we couldn't get at least the legal name
+        // Retornar null se não conseguirmos obter pelo menos o nome legal
         if (empty($companyData['legal_name'])) {
             return null;
         }
@@ -128,11 +183,10 @@ class Common
     }
 
     /**
-     * Fetch JSON from URL using cURL
-     *
-     * @param string $url URL to fetch
-     * @return array|null Decoded JSON or null on error
-     */
+    * Buscar dados JSON da URL usando cURL
+    * @param string $url URL para buscar
+    * @return array|null Decodificado JSON ou null em caso de erro
+    */
     private static function fetchJson(string $url): ?array
     {
         try {
@@ -156,22 +210,17 @@ class Common
         } catch (Exception $e) {
             Toolbox::logInFile('newbase_plugin', "Fetch error for $url: " . $e->getMessage() . "\n");
         }
+
         return null;
     }
 
     /**
-     * Search address by CEP via ViaCEP API
-     *
-     * @param string $cep CEP without formatting
-     * @return array|null Address data or null on error
-     */
+    * Procurar endereço por CEP via API ViaCEP
+    * @param string $cep CEP sem formatação
+    * @return array|null Dados do endereço ou null em caso de erro
+    */
     public static function searchAddressByCEP(string $cep): ?array
     {
-        // ✅ CORRIGIDO - usar PluginConfig
-        if (!PluginConfig::isCEPApiEnabled()) {
-            return null;
-        }
-
         $cep = preg_replace('/[^0-9]/', '', $cep);
 
         if (strlen($cep) !== 8) {
@@ -179,19 +228,15 @@ class Common
         }
 
         try {
-            // ✅ CORRIGIDO - usar PluginConfig
-            $api_url = PluginConfig::getCEPApiUrl() . $cep . '/json/';
+            $api_url = "https://viacep.com.br/ws/" . $cep . '/json/';
 
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, $api_url);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_TIMEOUT, 30);
             curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
-
-            // SSL options - more flexible for local development
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
             curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-
             curl_setopt($ch, CURLOPT_USERAGENT, 'GLPI Newbase Plugin/2.0.0');
             curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
             curl_setopt($ch, CURLOPT_MAXREDIRS, 3);
@@ -217,7 +262,7 @@ class Common
                 return null;
             }
 
-            // Get coordinates from CEP (approximate)
+            // Obter coordenadas do CEP (aproximadas)
             $coordinates = self::getCoordinatesFromAddress(
                 $data['logradouro'] ?? '',
                 $data['bairro'] ?? '',
@@ -226,14 +271,13 @@ class Common
             );
 
             return [
-                'street' => $data['logradouro'] ?? '',
+                'street'       => $data['logradouro'] ?? '',
                 'neighborhood' => $data['bairro'] ?? '',
-                'city' => $data['localidade'] ?? '',
-                'state' => $data['uf'] ?? '',
-                'latitude' => $coordinates['lat'] ?? null,
-                'longitude' => $coordinates['lng'] ?? null
+                'city'         => $data['localidade'] ?? '',
+                'state'        => $data['uf'] ?? '',
+                'latitude'     => $coordinates['lat'] ?? null,
+                'longitude'    => $coordinates['lng'] ?? null
             ];
-
         } catch (Exception $e) {
             Toolbox::logInFile('newbase_plugin', "ERROR in searchAddressByCEP(): " . $e->getMessage() . "\n");
             return null;
@@ -241,26 +285,19 @@ class Common
     }
 
     /**
-     * Get coordinates from address (geocoding)
-     * Using Nominatim (OpenStreetMap) - free and no API key required
-     *
-     * @param string $street Street name
-     * @param string $neighborhood Neighborhood
-     * @param string $city City
-     * @param string $state State
-     * @return array|null Coordinates or null
+     * Obter coordenadas a partir do endereço (geocoding)
+     * Usando Nominatim (OpenStreetMap) - gratuito e sem necessidade de chave API
+     * @param string $street Nome da rua
+     * @param string $neighborhood Bairro
+     * @param string $city Cidade
+     * @param string $state Estado
+     * @return array|null Coordenadas ou null
      */
     public static function getCoordinatesFromAddress(string $street, string $neighborhood, string $city, string $state): ?array
     {
-        // ✅ CORRIGIDO - usar PluginConfig
-        if (!PluginConfig::isGeolocationEnabled()) {
-            return null;
-        }
-
         try {
             $address = implode(', ', array_filter([$street, $neighborhood, $city, $state, 'Brasil']));
             $address = urlencode($address);
-
             $api_url = "https://nominatim.openstreetmap.org/search?q={$address}&format=json&limit=1";
 
             $ch = curl_init();
@@ -268,11 +305,8 @@ class Common
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_TIMEOUT, 30);
             curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
-
-            // SSL options - more flexible for local development
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
             curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-
             curl_setopt($ch, CURLOPT_USERAGENT, 'GLPI Newbase Plugin/2.0.0');
             curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
             curl_setopt($ch, CURLOPT_MAXREDIRS, 3);
@@ -300,7 +334,6 @@ class Common
                 'lat' => floatval($data[0]['lat']),
                 'lng' => floatval($data[0]['lon'])
             ];
-
         } catch (Exception $e) {
             Toolbox::logInFile('newbase_plugin', "ERROR in getCoordinatesFromAddress(): " . $e->getMessage() . "\n");
             return null;
@@ -308,11 +341,10 @@ class Common
     }
 
     /**
-     * Format CNPJ for display
-     *
-     * @param string $cnpj CNPJ without formatting
-     * @return string Formatted CNPJ
-     */
+    * Formate o CNPJ para exibição
+    * @param string $cnpj CNPJ sem formatação
+    * @return string CNPJ formatado
+    */
     public static function formatCNPJ(string $cnpj): string
     {
         $cnpj = preg_replace('/[^0-9]/', '', $cnpj);
@@ -329,11 +361,10 @@ class Common
     }
 
     /**
-     * Format CEP for display
-     *
-     * @param string $cep CEP without formatting
-     * @return string Formatted CEP
-     */
+    * Formate o CEP para exibição
+    * @param string $cep CEP sem formatação
+    * @return string CEP formatado
+    */
     public static function formatCEP(string $cep): string
     {
         $cep = preg_replace('/[^0-9]/', '', $cep);
@@ -346,20 +377,19 @@ class Common
     }
 
     /**
-     * Format phone for display
-     *
-     * @param string $phone Phone without formatting
-     * @return string Formatted phone
-     */
+    * Formate o telefone para exibição
+    * @param string $phone Telefone sem formatação
+    * @return string Telefone formatado
+    */
     public static function formatPhone(string $phone): string
     {
         $phone = preg_replace('/[^0-9]/', '', $phone);
 
         if (strlen($phone) === 11) {
-            // Mobile: (XX) XXXXX-XXXX
+            // Celular: (XX) XXXXX-XXXX
             return preg_replace('/(\d{2})(\d{5})(\d{4})/', '($1) $2-$3', $phone);
         } elseif (strlen($phone) === 10) {
-            // Landline: (XX) XXXX-XXXX
+            // Telefone fixo: (XX) XXXX-XXXX
             return preg_replace('/(\d{2})(\d{4})(\d{4})/', '($1) $2-$3', $phone);
         }
 
@@ -367,11 +397,10 @@ class Common
     }
 
     /**
-     * Validate CNPJ
-     *
-     * @param string $cnpj CNPJ without formatting
-     * @return bool
-     */
+    * Valide o CNPJ
+    * @param string $cnpj CNPJ sem formatação
+    * @return bool
+    */
     public static function validateCNPJ(string $cnpj): bool
     {
         $cnpj = preg_replace('/[^0-9]/', '', $cnpj);
@@ -384,12 +413,13 @@ class Common
             return false;
         }
 
-        // Validate first check digit
+        // Valide o primeiro dígito verificador
         $sum = 0;
         $weights = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
         for ($i = 0; $i < 12; $i++) {
             $sum += intval($cnpj[$i]) * $weights[$i];
         }
+
         $remainder = $sum % 11;
         $digit1 = $remainder < 2 ? 0 : 11 - $remainder;
 
@@ -397,12 +427,13 @@ class Common
             return false;
         }
 
-        // Validate second check digit
+        // Valide o segundo dígito verificador
         $sum = 0;
         $weights = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
         for ($i = 0; $i < 13; $i++) {
             $sum += intval($cnpj[$i]) * $weights[$i];
         }
+
         $remainder = $sum % 11;
         $digit2 = $remainder < 2 ? 0 : 11 - $remainder;
 

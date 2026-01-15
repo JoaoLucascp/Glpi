@@ -1,20 +1,17 @@
 <?php
-
 /**
- * System Form - Newbase Plugin
- *
- * @package   PluginNewbase
- * @author    João Lucas
- * @license   GPLv2+
- * @since     2.0.0
- */
-
+* System Form - Newbase Plugin
+* @package   PluginNewbase
+* @author    João Lucas
+* @license   GPLv2+
+* @since     2.0.0
+*/
 declare(strict_types=1);
 
 require_once __DIR__ . '/../../../inc/includes.php';
 
-use GlpiPlugin\Newbase\System;
-use GlpiPlugin\Newbase\CompanyData;
+use GlpiPlugin\Newbase\Src\System;
+use GlpiPlugin\Newbase\Src\CompanyData;
 
 global $CFG_GLPI, $DB;
 
