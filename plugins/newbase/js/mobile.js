@@ -1,12 +1,12 @@
 /**
- * Mobile-specific JavaScript for Newbase Plugin
- *
- * @package   PluginNewbase
- * @author    João Lucas
- * @copyright Copyright (c) 2025 João Lucas
- * @license   GPLv2+
- * @since     2.0.0
- */
+* Mobile-specific JavaScript for Newbase Plugin
+* @package   PluginNewbase
+* @author    João Lucas
+* @copyright Copyright (c) 2026 João Lucas
+* @license   GPLv2+
+* @since     2.0.0
+*/
+
 
 (function($) {
     'use strict';

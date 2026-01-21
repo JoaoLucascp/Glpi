@@ -1,12 +1,11 @@
 /**
- * Map JavaScript for Newbase Plugin (Leaflet integration)
- *
- * @package   PluginNewbase
- * @author    João Lucas
- * @copyright Copyright (c) 2025 João Lucas
- * @license   GPLv2+
- * @since     2.0.0
- */
+* Map JavaScript for Newbase Plugin (Leaflet integration)
+* @package   PluginNewbase
+* @author    João Lucas
+* @copyright Copyright (c) 2026 João Lucas
+* @license   GPLv2+
+* @since     2.0.0
+*/
 
 (function($) {
     'use strict';

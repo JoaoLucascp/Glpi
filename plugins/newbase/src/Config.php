@@ -1,8 +1,15 @@
 <?php
+/**
+* Config Class - Plugin Configuration Management
+* @package   PluginNewbase
+* @author    João Lucas
+* @copyright 2026 João Lucas
+* @license   GPLv2+
+* @version   2.0.0
+*/
 declare(strict_types=1);
 
-namespace GlpiPlugin\Newbase;
-
+namespace GlpiPlugin\Newbase\Src;
 use CommonDBTM;
 use Session;
 use Html;
@@ -76,7 +83,7 @@ class Config extends CommonDBTM
      * @param mixed  $default Default value if key not found
      * @return mixed
      */
-    public static function getConfigValue(string $key, $default = null)
+    public static function getConfigValue(string $key, $default = null): mixed
     {
         global $DB;
 
@@ -410,4 +417,5 @@ class Config extends CommonDBTM
         return self::getConfigValue('cep_api_url', 'https://viacep.com.br/ws/');
     }
 }
+
 

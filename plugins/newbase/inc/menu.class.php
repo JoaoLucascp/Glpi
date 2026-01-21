@@ -1,14 +1,17 @@
 <?php
-
 /**
  * Newbase Plugin - Menu Class (Legacy Style for GLPI 10.0.20)
- *
  * Esta classe usa o estilo legado (sem namespace) porque o GLPI 10.0.20
  * ainda espera encontrar classes de menu no formato antigo.
- *
- * @version 2.0.0
- * @license GPLv2+
- */
+* @package   PluginNewbase
+* @author    João Lucas
+* @license   GPLv2+
+* @since     2.0.0
+*/
+declare(strict_types=1);
+
+namespace GlpiPlugin\Newbase\Src;
+use CommonDBTM;
 
 if (!defined('GLPI_ROOT')) {
     die("Sorry. You can't access this file directly");
@@ -16,11 +19,11 @@ if (!defined('GLPI_ROOT')) {
 
 /**
  * Menu Class - Gerenciamento do menu do plugin
- * 
+ *
  * IMPORTANTE: Esta classe NÃO usa namespace porque o GLPI 10.0.20
  * procura por classes de menu no estilo legado (PluginNomeMenu)
  */
-class PluginNewbaseMenu
+class PluginNewbaseMenu extends CommonDBTM
 {
     /**
      * Retorna o nome do menu

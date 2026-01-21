@@ -3,11 +3,10 @@
 * Configuration page for Newbase Plugin
 * @package   PluginNewbase
 * @author    João Lucas
-* @copyright Copyright (c) 2025 João Lucas
+* @copyright Copyright (c) 2026 João Lucas
 * @license   GPLv2+
 * @since     2.0.0
 */
-
 declare(strict_types=1);
 
 use GlpiPlugin\Newbase\Config;

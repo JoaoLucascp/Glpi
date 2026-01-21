@@ -1,53 +1,48 @@
 <?php
 /**
- * AJAX endpoint for searching address by CEP
- *
- * @package   PluginNewbase
- * @author    João Lucas
- * @copyright Copyright (c) 2025 João Lucas
- * @license   GPLv2+
- * @since     2.0.0
- */
-
+* Endpoint AJAX para busca de endereço por CEP
+* @package   PluginNewbase
+* @author    João Lucas
+* @copyright Copyright (c) 2026 João Lucas
+* @license   GPLv2+
+* @since     2.0.0
+*/
 declare(strict_types=1);
 
-// Security check
+use GlpiPlugin\Newbase\Src\AddressHandler;
+
+include('../../../inc/includes.php');
+
+// Verificação de segurança
 if (!defined('GLPI_ROOT')) {
     define('GLPI_ROOT', dirname(dirname(dirname(dirname(__FILE__)))));
 }
 
-include(GLPI_ROOT . "/inc/includes.php");
-
-// Autoload composer dependencies if not already loaded (e.g., in a standalone AJAX file)
-require_once __DIR__ . '/../vendor/autoload.php';
-
-use GlpiPlugin\Newbase\Ajax\AddressHandler;
-
-// Check authentication
+// Verificar autenticação
 Session::checkLoginUser();
 
-// Check rights
+// Verificar permissões
 Session::checkRight('plugin_newbase_companydata', READ);
 
-// Validate CSRF token
+// Validar token CSRF
 Session::checkCSRF($_POST);
 
-// Set JSON header
+// Definir cabeçalho JSON
 header('Content-Type: application/json; charset=utf-8');
 
 try {
     $handler = new AddressHandler();
-    $response = $handler->handleSearch(); // Call the method in the new class
+    $response = $handler->handleSearch(); // Chamar o método na nova classe
     echo json_encode($response);
 
 } catch (Exception $e) {
-    // Error response
+    // Resposta de erro
     echo json_encode([
         'success' => false,
         'message' => __('Server error', 'newbase')
     ]);
 
-    // Keep Toolbox::logInFile for now, as it's what was in the original file
+    // Manter Toolbox::logInFile por enquanto, conforme estava no arquivo original
     \Toolbox::logInFile('newbase_plugin', "ERROR in ajax/searchAddress.php (main handler): " . $e->getMessage() . "\n");
 }
 

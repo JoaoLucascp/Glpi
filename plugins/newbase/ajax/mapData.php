@@ -1,22 +1,22 @@
 <?php
 /**
- * AJAX endpoint for getting map data (tasks with coordinates)
- *
- * @package   PluginNewbase
- * @author    João Lucas
- * @copyright Copyright (c) 2025 João Lucas
- * @license   GPLv2+
- * @since     2.0.0
- */
-
+* AJAX endpoint for getting map data (tasks with coordinates)
+* @package   PluginNewbase
+* @author    João Lucas
+* @copyright Copyright (c) 2026 João Lucas
+* @license   GPLv2+
+* @since     2.0.0
+*/
 declare(strict_types=1);
+
+use GlpiPlugin\Newbase\Src\Config;
+
+include('../../../inc/includes.php');
 
 // Security check
 if (!defined('GLPI_ROOT')) {
     define('GLPI_ROOT', dirname(dirname(dirname(dirname(__FILE__)))));
 }
-
-include(GLPI_ROOT . "/inc/includes.php");
 
 // Check authentication
 Session::checkLoginUser();
@@ -174,11 +174,11 @@ try {
 
     // Get map configuration
     $map_config = [
-        'provider' => PluginNewbaseConfig::getConfigValue('map_provider', 'leaflet'),
-        'default_zoom' => intval(PluginNewbaseConfig::getConfigValue('map_default_zoom', '13')),
+        'provider' => Config::getConfigValue('map_provider', 'leaflet'),
+        'default_zoom' => intval(Config::getConfigValue('map_default_zoom', '13')),
         'default_center' => [
-            'lat' => floatval(PluginNewbaseConfig::getConfigValue('map_default_lat', '-23.5505')),
-            'lng' => floatval(PluginNewbaseConfig::getConfigValue('map_default_lng', '-46.6333'))
+            'lat' => floatval(Config::getConfigValue('map_default_lat', '-23.5505')),
+            'lng' => floatval(Config::getConfigValue('map_default_lng', '-46.6333'))
         ]
     ];
 

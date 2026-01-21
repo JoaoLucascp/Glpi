@@ -3,21 +3,24 @@
 * TaskSignature class
 * Gerencia assinaturas digitais para tarefas com funcionalidade de upload e exibição
 * @package   PluginNewbase
-* @author    Joao Lucas
-* @copyright Copyright (c) 2026 Joao Lucas
+* @author    João Lucas
+* @copyright 2026 João Lucas
 * @license   GPLv2+
-* @since     2.0.0
+* @version   2.0.0
 */
 declare(strict_types=1);
 
 namespace GlpiPlugin\Newbase\Src;
-
-use CommonDBTM;
+use GlpiPlugin\Newbase\Src\Task;
+use GlpiPlugin\Newbase\Src\Common;
 use Session;
 use Html;
 use Toolbox;
 
-class TaskSignature extends CommonDBTM
+/**
+* Undocumented class
+*/
+class TaskSignature extends Common
 {
     // Nome correto para permissões
     public static $rightname = 'plugin_newbase_task';
@@ -370,4 +373,5 @@ class TaskSignature extends CommonDBTM
         );
     }
 }
+
 

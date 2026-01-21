@@ -1,11 +1,22 @@
 <?php
+/**
+* AddressHandler - AJAX handler for address lookup by CEP
+* @package   PluginNewbase
+* @author    João Lucas
+* @copyright Copyright (c) 2026 João Lucas
+* @license   GPLv2+
+* @since     2.0.0
+*/
 declare(strict_types=1);
 
-namespace GlpiPlugin\Newbase\Ajax;
+namespace GlpiPlugin\Newbase\Src;
 
-use GlpiPlugin\Newbase\Common;
+use GlpiPlugin\Newbase\Src\Common;
 
-class AddressHandler
+/**
+* Undocumented class
+*/
+class AddressHandler extends Common
 {
     /**
      * Handles the AJAX request to search for an address by CEP.

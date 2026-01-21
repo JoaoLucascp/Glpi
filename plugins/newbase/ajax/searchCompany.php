@@ -1,22 +1,22 @@
 <?php
 /**
  * AJAX endpoint for searching company by CNPJ
- *
- * @package   PluginNewbase
- * @author    João Lucas
- * @copyright Copyright (c) 2025 João Lucas
- * @license   GPLv2+
- * @since     2.0.0
- */
-
+* @package   PluginNewbase
+* @author    João Lucas
+* @copyright Copyright (c) 2026 João Lucas
+* @license   GPLv2+
+* @since     2.0.0
+*/
 declare(strict_types=1);
+
+use GlpiPlugin\Newbase\Src\Common;
+
+include('../../../inc/includes.php');
 
 // Security check
 if (!defined('GLPI_ROOT')) {
     define('GLPI_ROOT', dirname(dirname(dirname(dirname(__FILE__)))));
 }
-
-include(GLPI_ROOT . "/inc/includes.php");
 
 // Check authentication
 Session::checkLoginUser();
@@ -55,7 +55,7 @@ try {
     }
 
     // Validate CNPJ check digits
-    if (!PluginNewbaseCommon::validateCNPJ($cnpj)) {
+    if (!Common::validateCNPJ($cnpj)) {
         echo json_encode([
             'success' => false,
             'message' => __('Invalid CNPJ', 'newbase')
@@ -64,9 +64,9 @@ try {
     }
 
     // Search company via API
-    $companyData = PluginNewbaseCommon::searchCompanyByCNPJ($cnpj);
+    $companyData = Common::searchCompanyByCNPJ($cnpj);
 
-    if ($companyData === null) {
+    if ($companyData === false) {
         echo json_encode([
             'success' => false,
             'message' => __('Company not found or API error', 'newbase')
@@ -82,7 +82,7 @@ try {
             'legal_name' => $companyData['legal_name'] ?? '',
             'fantasy_name' => $companyData['fantasy_name'] ?? '',
             'email' => $companyData['email'] ?? '',
-            'phone' => PluginNewbaseCommon::formatPhone($companyData['phone'] ?? '')
+            'phone' => Common::formatPhone($companyData['phone'] ?? '')
         ],
         'message' => __('Company data loaded successfully', 'newbase')
     ]);

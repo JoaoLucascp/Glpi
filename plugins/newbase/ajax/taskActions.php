@@ -1,22 +1,24 @@
 <?php
 /**
- * AJAX endpoint for task actions (pause, resume, complete, etc)
- *
- * @package   PluginNewbase
- * @author    João Lucas
- * @copyright Copyright (c) 2025 João Lucas
- * @license   GPLv2+
- * @since     2.0.0
- */
-
+* AJAX endpoint for task actions (pause, resume, complete, etc)
+* @package   PluginNewbase
+* @author    João Lucas
+* @copyright Copyright (c) 2026 João Lucas
+* @license   GPLv2+
+* @since     2.0.0
+*/
 declare(strict_types=1);
+
+use GlpiPlugin\Newbase\Src\Task;
+use GlpiPlugin\Newbase\Src\TaskSignature;
+use GlpiPlugin\Newbase\Src\Config;
+
+include ('../../../inc/includes.php');
 
 // Security check
 if (!defined('GLPI_ROOT')) {
     define('GLPI_ROOT', dirname(dirname(dirname(dirname(__FILE__)))));
 }
-
-include(GLPI_ROOT . "/inc/includes.php");
 
 // Check authentication
 Session::checkLoginUser();
@@ -52,7 +54,7 @@ try {
     }
 
     // Load task
-    $task = new PluginNewbaseTask();
+    $task = new Task();
     if (!$task->getFromDB($task_id)) {
         echo json_encode([
             'success' => false,
@@ -122,8 +124,8 @@ try {
             }
 
             // Check if signature is required
-            if (PluginNewbaseConfig::getConfigValue('require_signature', '0') === '1') {
-                $signature = PluginNewbaseTaskSignature::getForTask($task_id);
+            if (Config::getConfigValue('require_signature', '0') === '1') {
+                $signature = TaskSignature::getForTask($task_id);
                 if (!$signature) {
                     echo json_encode([
                         'success' => false,

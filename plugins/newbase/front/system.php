@@ -1,32 +1,27 @@
 <?php
 /**
-* System list page for Newbase Plugin
+* Management page for Newbase Plugin
 * @package   PluginNewbase
 * @author    João Lucas
 * @copyright Copyright (c) 2026 João Lucas
 * @license   GPLv2+
 * @since     2.0.0
 */
-
 declare(strict_types=1);
+
+use GlpiPlugin\Newbase\Src\System;
 
 include('../../../inc/includes.php');
 
-// Check authentication
-Session::checkLoginUser();
+Session::checkRight('plugin_newbase', READ);
 
-// Check rights
-Session::checkRight('plugin_newbase_system', READ);
-
-// Start page
 Html::header(
-    __('Communication Systems', 'newbase'),
+    System::getTypeName(Session::getPluralNumber()),
     $_SERVER['PHP_SELF'],
-    "management",
-    "PluginNewbaseSystem"
+    'management',
+    System::class
 );
 
-// Create search instance
-Search::show('PluginNewbaseSystem');
+Search::show(System::class);
 
 Html::footer();

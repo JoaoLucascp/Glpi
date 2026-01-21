@@ -1,19 +1,20 @@
 <?php
 /**
-* Task Form - Newbase Plugin
+* Task form page for Newbase Plugin
 * @package   PluginNewbase
 * @author    João Lucas
+* @copyright Copyright (c) 2026 João Lucas
 * @license   GPLv2+
 * @since     2.0.0
 */
-
 declare(strict_types=1);
 
-include('../../../inc/includes.php');
-
 use GlpiPlugin\Newbase\Src\Task;
+use GlpiPlugin\Newbase\Src\Config;
 use GlpiPlugin\Newbase\Src\CompanyData;
-use GlpiPlugin\Newbase\Config;
+use CommonDBTM;
+
+include('../../../inc/includes.php');
 
 global $CFG_GLPI, $DB;
 

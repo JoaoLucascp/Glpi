@@ -1,13 +1,15 @@
 <?php
-
 /**
 * Newbase Plugin - Menu Class (SIMPLIFICADO)
-*
-* @version 2.0.0
-* @license GPLv2+
+* @package   PluginNewbase
+* @author    João Lucas
+* @copyright 2026 João Lucas
+* @license   GPLv2+
+* @version   2.0.0
 */
 
-namespace GlpiPlugin\Newbase;
+namespace GlpiPlugin\Newbase\Src;
+use GlpiPlugin\Newbase\Src\Common;
 
 if (!defined('GLPI_ROOT')) {
     die("Sorry. You can't access this file directly");
@@ -16,14 +18,14 @@ if (!defined('GLPI_ROOT')) {
 /**
  * Menu Class - Gerenciamento do menu do plugin
  */
-class Menu
+class Menu extends Common
 {
     /**
      * Retorna o nome do menu
      *
      * @return string
      */
-    public static function getMenuName()
+    public static function getMenuName(): string
     {
         return __('Newbase', 'newbase');
     }
@@ -33,7 +35,7 @@ class Menu
      *
      * @return array
      */
-    public static function getMenuContent()
+    public static function getMenuContent(): array
     {
         global $CFG_GLPI;
 

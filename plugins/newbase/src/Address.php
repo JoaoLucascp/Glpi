@@ -1,45 +1,619 @@
 <?php
 /**
-* Address class
-* Gerenciamento de enderecos com geocodificacao e busca por CEP
-*
+* Classe Address - Gerenciamento de Endereços para o Plugin Newbase
 * @package   PluginNewbase
-* @author    Joao Lucas
-* @copyright Copyright (c) 2026 Joao Lucas
+* @author    João Lucas
+* @copyright 2026 João Lucas
 * @license   GPLv2+
-* @since     2.0.0
+* @version   2.0.0
 */
-
 declare(strict_types=1);
 
 namespace GlpiPlugin\Newbase\Src;
 
-use CommonDBTM;
-use Session;
-use Html;
+use GlpiPlugin\Newbase\Src\Common;
+use GlpiPlugin\Newbase\Src\CompanyData;
 use CommonGLPI;
-class Address extends CommonDBTM
+use CommonDBTM;
+use Html;
+use Session;
+use Entity;
+
+/**
+* Address - Gerencia endereços de empresas com integração de CEP
+* Manipula operações CRUD para endereços com busca automática de CEP,
+* geocodificação e relacionamento com CompanyData
+*/
+class Address extends Common
 {
-    public static $rightname = 'plugin_newbase_companydata';
+    // ===== CONFIGURAÇÕES GLPI =====
+    /**
+    * Gerenciamento de permissões
+    * @var string
+    */
+    public static $rightname = 'plugin_newbase';
+
+    /**
+    * Habilitar rastreamento de histórico
+    * @var bool
+    */
     public $dohistory = true;
 
-    public static function getTable($classname = null)
-    {
-        if ($classname !== null && $classname !== self::class) {
-            return parent::getTable($classname);
-        }
-        return 'glpi_plugin_newbase_addresses';
-    }
+    // ===== RELACIONAMENTO =====
+    /**
+    * Nome do campo ID dos itens
+    * @var string
+    */
+    public static $items_id = 'companydata_id';
 
+    /**
+    * Tipo de item ao qual esta classe pertence
+    * @var string
+    */
+    public static $itemtype = 'GlpiPlugin\\Newbase\\Src\\CompanyData';
+
+    // ===== MÉTODOS GLPI OBRIGATÓRIOS =====
+    /**
+    * Obter o nome do tipo
+    * @param int $nb Número de itens
+    * @return string Nome do tipo
+    */
     public static function getTypeName($nb = 0): string
     {
-        return ($nb > 1) ? 'Endereços' : 'Endereço';
+        return $nb > 1 ? __('Addresses', 'newbase') : __('Address', 'newbase');
     }
 
     /**
-    * Obter o nome da aba do item
+    * Obter o nome da tabela
+    * @param string $classname Nome da classe (opcional)
+    * @return string Nome da tabela
     */
-    public function getTabNameForItem(CommonGLPI $item, $withtemplate = 0): string
+    public static function getTable($classname = null): string
+    {
+        return 'glpi_plugin_newbase_addresses';
+    }
+
+    /**
+    * Obter ícone para menus
+    * @return string Classe de ícone Font Awesome
+    */
+    public static function getIcon(): string
+    {
+        return 'fas fa-map-marker-alt';
+    }
+
+    /**
+    * Definir opções de busca para o motor de busca do GLPI
+    * @return array Opções de busca
+    */
+    public function rawSearchOptions()
+    {
+        $tab = [];
+
+        // Aba principal
+        $tab[] = [
+            'id'   => 'common',
+            'name' => __('Characteristics')
+        ];
+
+        // ID
+        $tab[] = [
+            'id'            => '2',
+            'table'         => $this->getTable(),
+            'field'         => 'id',
+            'name'          => __('ID'),
+            'massiveaction' => false,
+            'datatype'      => 'number'
+        ];
+
+        // Nome
+        $tab[] = [
+            'id'            => '1',
+            'table'         => $this->getTable(),
+            'field'         => 'name',
+            'name'          => __('Name'),
+            'datatype'      => 'itemlink',
+            'massiveaction' => false,
+        ];
+
+        // Empresa
+        $tab[] = [
+            'id'       => '3',
+            'table'    => CompanyData::getTable(),
+            'field'    => 'name',
+            'name'     => __('Company', 'newbase'),
+            'datatype' => 'dropdown',
+        ];
+
+        // CEP
+        $tab[] = [
+            'id'       => '4',
+            'table'    => $this->getTable(),
+            'field'    => 'cep',
+            'name'     => __('ZIP Code', 'newbase'),
+            'datatype' => 'string',
+        ];
+
+        // Rua
+        $tab[] = [
+            'id'       => '5',
+            'table'    => $this->getTable(),
+            'field'    => 'street',
+            'name'     => __('Street', 'newbase'),
+            'datatype' => 'string',
+        ];
+
+        // Número
+        $tab[] = [
+            'id'       => '6',
+            'table'    => $this->getTable(),
+            'field'    => 'number',
+            'name'     => __('Number', 'newbase'),
+            'datatype' => 'string',
+        ];
+
+        // Bairro
+        $tab[] = [
+            'id'       => '7',
+            'table'    => $this->getTable(),
+            'field'    => 'neighborhood',
+            'name'     => __('Neighborhood', 'newbase'),
+            'datatype' => 'string',
+        ];
+
+        // Cidade
+        $tab[] = [
+            'id'       => '8',
+            'table'    => $this->getTable(),
+            'field'    => 'city',
+            'name'     => __('City', 'newbase'),
+            'datatype' => 'string',
+        ];
+
+        // Estado
+        $tab[] = [
+            'id'       => '9',
+            'table'    => $this->getTable(),
+            'field'    => 'state',
+            'name'     => __('State', 'newbase'),
+            'datatype' => 'string',
+        ];
+
+        // Latitude
+        $tab[] = [
+            'id'       => '10',
+            'table'    => $this->getTable(),
+            'field'    => 'latitude',
+            'name'     => __('Latitude', 'newbase'),
+            'datatype' => 'decimal',
+        ];
+
+        // Longitude
+        $tab[] = [
+            'id'       => '11',
+            'table'    => $this->getTable(),
+            'field'    => 'longitude',
+            'name'     => __('Longitude', 'newbase'),
+            'datatype' => 'decimal',
+        ];
+
+        // Data de modificação
+        $tab[] = [
+            'id'            => '19',
+            'table'         => $this->getTable(),
+            'field'         => 'date_mod',
+            'name'          => __('Last update'),
+            'datatype'      => 'datetime',
+            'massiveaction' => false
+        ];
+
+        // Data de criação
+        $tab[] = [
+            'id'            => '121',
+            'table'         => $this->getTable(),
+            'field'         => 'date_creation',
+            'name'          => __('Creation date'),
+            'datatype'      => 'datetime',
+            'massiveaction' => false
+        ];
+
+        return $tab;
+    }
+
+    // ===== FORMULÁRIO =====
+    /**
+    * Exibir formulário para endereço
+    * @param int   $ID      ID do item (0 para novo)
+    * @param array $options Opções adicionais
+    * @return bool Sucesso
+    */
+    public function showForm($ID, array $options = []): bool
+    {
+        // Verificar permissões
+        if (!$this->canView()) {
+            return false;
+        }
+
+        // Verificar acesso ao item
+        if ($ID > 0) {
+            $this->check($ID, READ);
+        } else {
+            $this->check(-1, CREATE);
+            $this->getEmpty();
+        }
+
+        // Obter companydata_id da URL ou formulário
+        $companydata_id = $options['companydata_id'] ?? $_GET['companydata_id'] ?? $this->fields['companydata_id'] ?? 0;
+
+        // Iniciar formulário
+        $this->showFormHeader($options);
+
+        echo "<tr class='tab_bg_1'>";
+
+        // Campo Nome
+        echo "<td>" . __('Name') . " <span class='red'>*</span></td>";
+        echo "<td>";
+        echo Html::input('name', [
+            'value' => $this->fields['name'] ?? '',
+            'size'  => 50,
+            'required' => true
+        ]);
+        echo "</td>";
+
+        // Dropdown de Empresa
+        echo "<td>" . __('Company', 'newbase') . " <span class='red'>*</span></td>";
+        echo "<td>";
+        CompanyData::dropdown([
+            'name'   => 'companydata_id',
+            'value'  => $companydata_id,
+            'entity' => $_SESSION['glpiactive_entity'] ?? 0,
+            'required' => true
+        ]);
+        echo "</td>";
+
+        echo "</tr>";
+
+        echo "<tr class='tab_bg_1'>";
+
+        // Campo CEP com busca automática
+        echo "<td>" . __('ZIP Code', 'newbase') . " <span class='red'>*</span></td>";
+        echo "<td>";
+        echo Html::input('cep', [
+            'value' => $this->fields['cep'] ?? '',
+            'size'  => 15,
+            'id'    => 'cep_field',
+            'required' => true
+        ]);
+        echo " <button type='button' id='search_cep' class='btn btn-primary'>";
+        echo "<i class='fas fa-search'></i> " . __('Search CEP', 'newbase');
+        echo "</button>";
+        echo "</td>";
+
+        // Número
+        echo "<td>" . __('Number', 'newbase') . "</td>";
+        echo "<td>";
+        echo Html::input('number', [
+            'value' => $this->fields['number'] ?? '',
+            'size'  => 10
+        ]);
+        echo "</td>";
+
+        echo "</tr>";
+
+        echo "<tr class='tab_bg_1'>";
+
+        // Rua
+        echo "<td>" . __('Street', 'newbase') . "</td>";
+        echo "<td>";
+        echo Html::input('street', [
+            'value' => $this->fields['street'] ?? '',
+            'size'  => 50,
+            'id'    => 'street_field'
+        ]);
+        echo "</td>";
+
+        // Complemento
+        echo "<td>" . __('Complement', 'newbase') . "</td>";
+        echo "<td>";
+        echo Html::input('complement', [
+            'value' => $this->fields['complement'] ?? '',
+            'size'  => 30
+        ]);
+        echo "</td>";
+
+        echo "</tr>";
+
+        echo "<tr class='tab_bg_1'>";
+
+        // Bairro
+        echo "<td>" . __('Neighborhood', 'newbase') . "</td>";
+        echo "<td>";
+        echo Html::input('neighborhood', [
+            'value' => $this->fields['neighborhood'] ?? '',
+            'size'  => 30,
+            'id'    => 'neighborhood_field'
+        ]);
+        echo "</td>";
+
+        // Cidade
+        echo "<td>" . __('City', 'newbase') . "</td>";
+        echo "<td>";
+        echo Html::input('city', [
+            'value' => $this->fields['city'] ?? '',
+            'size'  => 30,
+            'id'    => 'city_field'
+        ]);
+        echo "</td>";
+
+        echo "</tr>";
+
+        echo "<tr class='tab_bg_1'>";
+
+        // Estado
+        echo "<td>" . __('State', 'newbase') . "</td>";
+        echo "<td>";
+        echo Html::input('state', [
+            'value' => $this->fields['state'] ?? '',
+            'size'  => 2,
+            'id'    => 'state_field',
+            'maxlength' => 2
+        ]);
+        echo "</td>";
+
+        // Entidade
+        echo "<td>" . __('Entity') . "</td>";
+        echo "<td>";
+        Entity::dropdown([
+            'name'   => 'entities_id',
+            'value'  => $this->fields['entities_id'] ?? 0,
+            'entity' => $_SESSION['glpiactive_entity'] ?? 0
+        ]);
+        echo "</td>";
+
+        echo "</tr>";
+
+        echo "<tr class='tab_bg_1'>";
+
+        // Latitude (apenas leitura - preenchimento automático)
+        echo "<td>" . __('Latitude', 'newbase') . "</td>";
+        echo "<td>";
+        echo Html::input('latitude', [
+            'value' => $this->fields['latitude'] ?? '',
+            'size'  => 15,
+            'id'    => 'latitude_field',
+            'readonly' => true
+        ]);
+        echo "</td>";
+
+        // Longitude (apenas leitura - preenchimento automático)
+        echo "<td>" . __('Longitude', 'newbase') . "</td>";
+        echo "<td>";
+        echo Html::input('longitude', [
+            'value' => $this->fields['longitude'] ?? '',
+            'size'  => 15,
+            'id'    => 'longitude_field',
+            'readonly' => true
+        ]);
+        echo "</td>";
+
+        echo "</tr>";
+
+        // JavaScript para busca automática de CEP
+        $plugin_root = \Plugin::getWebDir('newbase');
+
+        echo "<script type='text/javascript'>";
+        echo "
+        $(document).ready(function() {
+            // Formatar CEP enquanto digita
+            $('#cep_field').mask('00000-000');
+
+            // Formatar Estado para maiúsculas
+            $('#state_field').on('input', function() {
+                $(this).val($(this).val().toUpperCase());
+            });
+
+            // Botão de busca de CEP
+            $('#search_cep').click(function() {
+                var cep = $('#cep_field').val().replace(/[^0-9]/g, '');
+
+                if (cep.length !== 8) {
+                    alert('" . __('Invalid ZIP Code', 'newbase') . "');
+                    return;
+                }
+
+                // Mostrar carregando
+                var btn = $(this);
+                btn.prop('disabled', true).html('<i class=\"fas fa-spinner fa-spin\"></i> " . __('Searching...', 'newbase') . "');
+
+                // Chamar AJAX
+                $.ajax({
+                    url: '{$plugin_root}/ajax/searchAddress.php',
+                    type: 'POST',
+                    dataType: 'json',
+                    data: {
+                        cep: cep
+                    },
+                    success: function(response) {
+                        if (response.success && response.data) {
+                            var data = response.data;
+
+                            // Preencher campos de endereço
+                            $('#street_field').val(data.street || '');
+                            $('#neighborhood_field').val(data.neighborhood || '');
+                            $('#city_field').val(data.city || '');
+                            $('#state_field').val(data.state || '');
+
+                            // Preencher coordenadas se disponíveis
+                            if (data.latitude && data.longitude) {
+                                $('#latitude_field').val(data.latitude);
+                                $('#longitude_field').val(data.longitude);
+                            }
+
+                            alert('" . __('Address found! Please verify the data.', 'newbase') . "');
+                        } else {
+                            alert(response.message || '" . __('Address not found', 'newbase') . "');
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('AJAX Error:', error);
+                        alert('" . __('Error searching ZIP Code', 'newbase') . "');
+                    },
+                    complete: function() {
+                        btn.prop('disabled', false).html('<i class=\"fas fa-search\"></i> " . __('Search CEP', 'newbase') . "');
+                    }
+                });
+            });
+
+            // Busca automática ao sair do campo CEP (opcional)
+            $('#cep_field').blur(function() {
+                var cep = $(this).val().replace(/[^0-9]/g, '');
+                if (cep.length === 8 && !$('#street_field').val()) {
+                    $('#search_cep').click();
+                }
+            });
+        });
+        ";
+        echo "</script>";
+
+        // Finalizar formulário
+        $this->showFormButtons($options);
+
+        return true;
+    }
+
+    // ===== VALIDAÇÕES =====
+    /**
+    * Preparar dados de entrada antes de adicionar ao banco de dados
+    * @param array $input Dados de entrada
+    * @return array|false Entrada preparada ou false em caso de erro
+    */
+    public function prepareInputForAdd($input)
+    {
+        // Validar campos obrigatórios
+        if (empty($input['name'])) {
+            Session::addMessageAfterRedirect(
+                __('Name is required', 'newbase'),
+                false,
+                ERROR
+            );
+            return false;
+        }
+
+        if (empty($input['companydata_id'])) {
+            Session::addMessageAfterRedirect(
+                __('Company is required', 'newbase'),
+                false,
+                ERROR
+            );
+            return false;
+        }
+
+        if (empty($input['cep'])) {
+            Session::addMessageAfterRedirect(
+                __('ZIP Code is required', 'newbase'),
+                false,
+                ERROR
+            );
+            return false;
+        }
+
+        // Limpar e validar CEP
+        $input['cep'] = preg_replace('/[^0-9]/', '', $input['cep']);
+
+        if (strlen($input['cep']) !== 8) {
+            Session::addMessageAfterRedirect(
+                __('Invalid ZIP Code', 'newbase'),
+                false,
+                ERROR
+            );
+            return false;
+        }
+
+        // Validar estado (2 letras)
+        if (!empty($input['state'])) {
+            $input['state'] = strtoupper(substr($input['state'], 0, 2));
+        }
+
+        // Verificar se a empresa existe
+        $company = new CompanyData();
+        if (!$company->getFromDB($input['companydata_id'])) {
+            Session::addMessageAfterRedirect(
+                __('Company not found', 'newbase'),
+                false,
+                ERROR
+            );
+            return false;
+        }
+
+        return $input;
+    }
+
+    /**
+    * Preparar dados de entrada antes de atualizar no banco de dados
+    * @param array $input Dados de entrada
+    * @return array|false Entrada preparada ou false em caso de erro
+    */
+    public function prepareInputForUpdate($input)
+    {
+        // Validar nome se fornecido
+        if (isset($input['name']) && empty($input['name'])) {
+            Session::addMessageAfterRedirect(
+                __('Name cannot be empty', 'newbase'),
+                false,
+                ERROR
+            );
+            return false;
+        }
+
+        // Validar CEP se fornecido
+        if (isset($input['cep'])) {
+            $input['cep'] = preg_replace('/[^0-9]/', '', $input['cep']);
+
+            if (strlen($input['cep']) !== 8) {
+                Session::addMessageAfterRedirect(
+                    __('Invalid ZIP Code', 'newbase'),
+                    false,
+                    ERROR
+                );
+                return false;
+            }
+        }
+
+        // Validar estado se fornecido
+        if (isset($input['state']) && !empty($input['state'])) {
+            $input['state'] = strtoupper(substr($input['state'], 0, 2));
+        }
+
+        return $input;
+    }
+
+    // ===== AÇÕES PÓS CRUD =====
+    /**
+    * Ações após adicionar item ao banco de dados
+    * @return void
+    */
+    public function post_addItem()
+    {
+        // Logar ação
+        \Toolbox::logInFile(
+            'newbase_plugin',
+            sprintf(
+                "Address added: ID=%d, CEP=%s, Company=%d\n",
+                $this->fields['id'],
+                $this->fields['cep'],
+                $this->fields['companydata_id']
+            )
+        );
+    }
+
+    // ===== ABA EM COMPANYDATA =====
+    /**
+    * Obter nome da aba para o item
+    * @param CommonGLPI $item Item
+    * @param int $withtemplate Modo template
+    * @return string Nome da aba
+    */
+    public function getTabNameForItem(CommonGLPI $item, $withtemplate = 0)
     {
         if ($item instanceof CompanyData) {
             if ($_SESSION['glpishow_count_on_tabs']) {
@@ -55,7 +629,11 @@ class Address extends CommonDBTM
     }
 
     /**
-    * Exibir conteudo da guia
+    * Exibir conteúdo da aba para o item
+    * @param CommonGLPI $item Item
+    * @param int $tabnum Número da aba
+    * @param int $withtemplate Modo template
+    * @return bool Sucesso
     */
     public static function displayTabContentForItem(CommonGLPI $item, $tabnum = 1, $withtemplate = 0): bool
     {
@@ -68,6 +646,8 @@ class Address extends CommonDBTM
 
     /**
     * Contar endereços para uma empresa
+    * @param CommonDBTM $item Item da empresa
+    * @return int Contagem
     */
     public static function countForItem(CommonDBTM $item): int
     {
@@ -77,7 +657,8 @@ class Address extends CommonDBTM
             'COUNT' => 'cpt',
             'FROM'  => self::getTable(),
             'WHERE' => [
-                'companydata_id' => $item->getId()
+                'companydata_id' => $item->getID(),
+                'is_deleted'     => 0
             ]
         ]);
 
@@ -86,426 +667,122 @@ class Address extends CommonDBTM
     }
 
     /**
-    * Show addresses for a company - INTERFACE MELHORADA
+    * Mostrar endereços de uma empresa
+    * @param CompanyData $company Empresa
+    * @return void
     */
     public static function showForCompany(CompanyData $company): void
     {
-        global $DB, $CFG_GLPI;
+        global $DB;
 
         $company_id = $company->getID();
         $canedit = $company->canUpdate();
 
-        echo "<div class='spaced'>";
-
-        // Botao de adicionar
+        // Botão adicionar
         if ($canedit) {
-            echo "<div class='center firstbloc' style='margin-bottom: 15px;'>";
-            echo "<a class='btn btn-primary' href='" . $CFG_GLPI['root_doc'] .
-                "/plugins/newbase/front/address.form.php?companydata_id=" . $company_id . "'>";
-            echo "<i class='fas fa-plus'></i>&nbsp;Adicionar endereco";
+            echo "<div class='center firstbloc'>";
+            echo "<a class='btn btn-primary' href='" . self::getFormURL() . "?companydata_id=$company_id'>";
+            echo "<i class='fas fa-plus'></i> " . __('Add an address', 'newbase');
             echo "</a>";
             echo "</div>";
         }
 
+        // Obter endereços
         $iterator = $DB->request([
             'FROM'  => self::getTable(),
-            'WHERE' => ['companydata_id' => $company_id],
-            'ORDER' => 'id DESC'
+            'WHERE' => [
+                'companydata_id' => $company_id,
+                'is_deleted'     => 0
+            ],
+            'ORDER' => 'name'
         ]);
 
-        if (count($iterator)) {
-            echo "<table class='tab_cadre_fixehov'>";
-            echo "<tr class='noHover'>";
-            echo "<th colspan='9' style='text-align: left; padding: 10px;'>";
-            echo "<i class='fas fa-map-marker-alt'></i>&nbsp;";
-            echo self::getTypeName(count($iterator)) . " (" . count($iterator) . ")";
-            echo "</th>";
-            echo "</tr>";
+        if (count($iterator) === 0) {
+            echo "<div class='center'>";
+            echo "<p>" . __('No address registered for this company', 'newbase') . "</p>";
+            echo "</div>";
+            return;
+        }
+
+        // Exibir tabela
+        echo "<div class='table-responsive'>";
+        echo "<table class='tab_cadre_fixehov'>";
+        echo "<thead>";
+        echo "<tr>";
+        echo "<th>" . __('Name') . "</th>";
+        echo "<th>" . __('ZIP Code', 'newbase') . "</th>";
+        echo "<th>" . __('Street', 'newbase') . "</th>";
+        echo "<th>" . __('Number', 'newbase') . "</th>";
+        echo "<th>" . __('City', 'newbase') . "</th>";
+        echo "<th>" . __('State', 'newbase') . "</th>";
+        echo "<th>" . __('Coordinates', 'newbase') . "</th>";
+        if ($canedit) {
+            echo "<th>" . __('Actions') . "</th>";
+        }
+        echo "</tr>";
+        echo "</thead>";
+        echo "<tbody>";
+
+        foreach ($iterator as $data) {
+            $address = new self();
+            $address->getFromDB($data['id']);
 
             echo "<tr>";
-            echo "<th width='5%'>ID</th>";
-            echo "<th width='10%'>CEP</th>";
-            echo "<th width='25%'>Logradouro</th>";
-            echo "<th width='8%'>Numero</th>";
-            echo "<th width='15%'>Bairro</th>";
-            echo "<th width='15%'>Cidade</th>";
-            echo "<th width='5%'>UF</th>";
-            echo "<th width='12%'>Coordenadas</th>";
-            echo "<th width='5%'>AÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Âµes</th>";
+
+            // Nome
+            echo "<td>";
+            echo "<a href='" . $address->getFormURLWithID($data['id']) . "'>";
+            echo $data['name'];
+            echo "</a>";
+            echo "</td>";
+
+            // CEP
+            echo "<td>" . Common::formatCEP($data['cep']) . "</td>";
+
+            // Rua
+            echo "<td>" . ($data['street'] ?: '-') . "</td>";
+
+            // Número
+            echo "<td>" . ($data['number'] ?: 'S/N') . "</td>";
+
+            // Cidade
+            echo "<td>" . ($data['city'] ?: '-') . "</td>";
+
+            // Estado
+            echo "<td>" . ($data['state'] ?: '-') . "</td>";
+
+            // Coordenadas
+            echo "<td>";
+            if ($data['latitude'] && $data['longitude']) {
+                echo number_format((float)$data['latitude'], 6) . ", ";
+                echo number_format((float)$data['longitude'], 6);
+            } else {
+                echo "-";
+            }
+            echo "</td>";
+
+            // Ações
+            if ($canedit) {
+                echo "<td>";
+                echo "<a href='" . $address->getFormURLWithID($data['id']) . "' class='btn btn-sm btn-primary'>";
+                echo "<i class='fas fa-edit'></i>";
+                echo "</a> ";
+                echo Html::getSimpleForm(
+                    $address->getFormURL(),
+                    ['purge' => 'purge', 'id' => $data['id']],
+                    __('Delete permanently'),
+                    [],
+                    'fa-trash-alt'
+                );
+                echo "</td>";
+            }
+
             echo "</tr>";
-
-            foreach ($iterator as $data) {
-                echo "<tr class='tab_bg_1'>";
-
-                // ID
-                echo "<td>" . $data['id'] . "</td>";
-
-                // CEP
-                echo "<td>" . ($data['cep'] ?: '-') . "</td>";
-
-                // Logradouro
-                echo "<td>" . ($data['street'] ?: '-') . "</td>";
-
-                // Numero
-                echo "<td>" . ($data['number'] ?: 'S/N') . "</td>";
-
-                // Bairro
-                echo "<td>" . ($data['neighborhood'] ?: '-') . "</td>";
-
-                // Cidade
-                echo "<td>" . ($data['city'] ?: '-') . "</td>";
-
-                // Estado
-                echo "<td><strong>" . ($data['state'] ?: '-') . "</strong></td>";
-
-                // Coordenadas
-                echo "<td style='font-size: 0.85em;'>";
-                if ($data['latitude'] && $data['longitude']) {
-                    echo "<i class='fas fa-map-pin' style='color: #dc3545;'></i> ";
-                    echo number_format((float)$data['latitude'], 6) . ", " . number_format((float)$data['longitude'], 6);
-                } else {
-                    echo "<span style='color: #999;'>-</span>";
-                }
-                echo "</td>";
-
-                // Address
-                echo "<td class='center'>";
-                if ($canedit) {
-                    // Botao Editar
-                    echo "<a href='" . $CFG_GLPI['root_doc'] .
-                        "/plugins/newbase/front/address.form.php?id=" . $data['id'] . "' title='Editar'>";
-                    echo "<i class='fas fa-edit' style='color: #0066cc;'></i></a>&nbsp;";
-
-                    // Formulario de exclusao inline
-                    echo "<form method='post' action='" . $CFG_GLPI['root_doc'] . "/plugins/newbase/front/address.form.php' style='display:inline;'>";
-                    echo Html::hidden('id', ['value' => $data['id']]);
-                    echo Html::hidden('plugin_newbase_companydata_id', ['value' => $company_id]);
-                    echo "<button type='submit' name='delete' class='btn btn-link' style='color: #dc3545; padding: 0; border: 0;' ";
-                    echo "onclick='return confirm(\"Confirma a exclusao deste endereco?\")' title='Excluir'>";
-                    echo "<i class='fas fa-trash'></i>";
-                    echo "</button>";
-                    echo Html::hidden('_glpi_csrf_token', ['value' => Session::getNewCSRFToken()]);
-                    echo "</form>";
-                }
-                echo "</td>";
-                echo "</tr>";
-            }
-
-            echo "</table>";
-        } else {
-            // Nenhum endereco encontrado
-            echo "<div style='text-align: center; padding: 40px; background: #f8f9fa; border: 2px dashed #ddd; border-radius: 8px;'>";
-            echo "<i class='fas fa-map-marker-alt' style='font-size: 48px; color: #ccc;'></i>";
-            echo "<h3 style='color: #666; margin-top: 15px;'>Nenhum endereco cadastrado</h3>";
-            echo "<p style='color: #999;'>Clique no botao acima para adicionar o primeiro endereco desta empresa.</p>";
-            echo "</div>";
         }
 
+        echo "</tbody>";
+        echo "</table>";
         echo "</div>";
-    }
-
-    /**
-     * FORMULAIO MELHORADO COM BUSCA DE CEP + COORDENADAS
-     */
-    public function showForm($ID, array $options = []): bool
-    {
-        global $CFG_GLPI;
-
-        if (!$this->canView()) {
-            return false;
-        }
-
-        $this->initForm($ID, $options);
-        $this->showFormHeader($options);
-
-        // ========== SESSAO 1: EMPRESA ==========
-        echo "<tr class='tab_bg_1'><th colspan='4'>";
-        echo "<i class='fas fa-building'></i>&nbsp;EMPRESA";
-        echo "</th></tr>";
-
-        echo "<tr class='tab_bg_1'>";
-        echo "<td width='15%'>Empresa <span class='red'>*</span></td>";
-        echo "<td colspan='3'>";
-        CompanyData::dropdown([
-            'name' => 'companydata_id',
-            'value' => $this->fields['companydata_id'] ?? $options['companydata_id'] ?? 0,
-            'required' => true,
-            'display_emptychoice' => false
-        ]);
-        echo "</td>";
-        echo "</tr>";
-
-        // ========== SESSAO 2: ENDERECO ==========
-        echo "<tr class='tab_bg_1'><th colspan='4'>";
-        echo "<i class='fas fa-map-marker-alt'></i>&nbsp;ENDEREÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¡O";
-        echo "</th></tr>";
-
-        // Linha 1: CEP
-        echo "<tr class='tab_bg_1'>";
-        echo "<td>CEP <span class='red'>*</span></td>";
-        echo "<td colspan='3'>";
-        echo Html::input('cep', [
-            'value' => $this->fields['cep'] ?? '',
-            'required' => true,
-            'id' => 'cep_field',
-            'placeholder' => '00000-000'
-        ]);
-        echo "&nbsp;<button type='button' id='btn_buscar_cep' class='btn btn-sm btn-primary' title='Buscar endereco pelo CEP'>";
-        echo "<i class='fas fa-search'></i> Buscar CEP";
-        echo "</button>";
-        echo "</td>";
-        echo "</tr>";
-
-        // Linha 2: Logradouro e Numero
-        echo "<tr class='tab_bg_1'>";
-        echo "<td>Logradouro <span class='red'>*</span></td>";
-        echo "<td>";
-        echo Html::input('street', [
-            'value' => $this->fields['street'] ?? '',
-            'required' => true,
-            'id' => 'street_field'
-        ]);
-        echo "</td>";
-
-        echo "<td width='15%'>Numero</td>";
-        echo "<td width='35%'>";
-        echo Html::input('number', [
-            'value' => $this->fields['number'] ?? '',
-            'placeholder' => 'Ex: 123 ou S/N',
-            'style' => 'width: 100px;',
-            'id' => 'number_field'
-        ]);
-        echo "</td>";
-        echo "</tr>";
-
-        // Linha 3: Complemento e Bairro
-        echo "<tr class='tab_bg_1'>";
-        echo "<td>Complemento</td>";
-        echo "<td>";
-        echo Html::input('complement', [
-            'value' => $this->fields['complement'] ?? '',
-            'placeholder' => 'Apto, Sala, Bloco, etc.'
-        ]);
-        echo "</td>";
-
-        echo "<td>Bairro <span class='red'>*</span></td>";
-        echo "<td>";
-        echo Html::input('neighborhood', [
-            'value' => $this->fields['neighborhood'] ?? '',
-            'required' => true,
-            'id' => 'neighborhood_field'
-        ]);
-        echo "</td>";
-        echo "</tr>";
-
-        // Linha 4: Cidade, Estado e Pais
-        echo "<tr class='tab_bg_1'>";
-        echo "<td>Cidade <span class='red'>*</span></td>";
-        echo "<td>";
-        echo Html::input('city', [
-            'value' => $this->fields['city'] ?? '',
-            'required' => true,
-            'id' => 'city_field'
-        ]);
-        echo "</td>";
-
-        echo "<td>Estado (UF) <span class='red'>*</span></td>";
-        echo "<td>";
-        echo Html::input('state', [
-            'value' => $this->fields['state'] ?? '',
-            'required' => true,
-            'maxlength' => 2,
-            'placeholder' => 'SP',
-            'style' => 'width: 60px; text-transform: uppercase;',
-            'id' => 'state_field'
-        ]);
-        echo "&nbsp;&nbsp;Pais: ";
-        echo Html::input('country', [
-            'value' => $this->fields['country'] ?? 'Brasil',
-            'style' => 'width: 150px;',
-            'id' => 'country_field'
-        ]);
-        echo "</td>";
-        echo "</tr>";
-
-        // ========== SESSAO 3: GEOLOCALIZACAO ==========
-        echo "<tr class='tab_bg_1'><th colspan='4'>";
-        echo "<i class='fas fa-globe'></i>&nbsp;GEOLOCALIZACAO (Opcional)";
-        echo "</th></tr>";
-
-        echo "<tr class='tab_bg_1'>";
-        echo "<td>Latitude</td>";
-        echo "<td>";
-        echo Html::input('latitude', [
-            'value' => $this->fields['latitude'] ?? '',
-            'type' => 'number',
-            'step' => '0.00000001',
-            'placeholder' => '-23.5505199',
-            'id' => 'latitude_field'
-        ]);
-        echo "</td>";
-
-        echo "<td>Longitude</td>";
-        echo "<td id='longitude_container'>";
-        echo Html::input('longitude', [
-            'value' => $this->fields['longitude'] ?? '',
-            'type' => 'number',
-            'step' => '0.00000001',
-            'placeholder' => '-46.6333094',
-            'id' => 'longitude_field'
-        ]);
-        echo "</td>";
-        echo "</tr>";
-
-        $this->showFormButtons($options);
-
-    // ========== JAVASCRIPT MELHORADO COM GEOLOCALIZACAO ==========
-        echo Html::scriptBlock("
-        $(document).ready(function() {
-            // Mascara no CEP
-            $('#cep_field').mask('00000-000');
-
-            // Forca maiusculas no estado
-            $('#state_field').on('input', function() {
-                $(this).val($(this).val().toUpperCase());
-            });
-
-            //Funcao para buscar coordenadas via OpenStreetMap Nominatim
-            function buscarCoordenadas(endereco) {
-                var query = endereco.street + ', ' + endereco.number + ', ' +
-                        endereco.neighborhood + ', ' + endereco.city + ', ' +
-                        endereco.state + ', Brasil';
-
-                console.log('Buscando coordenadas para:', query);
-
-                // Delay de 1 segundo para respeitar rate limit do Nominatim (1 req/s)
-                setTimeout(function() {
-                    $.ajax({
-                        url: 'https://nominatim.openstreetmap.org/search',
-                        method: 'GET',
-                        dataType: 'json',
-                        data: {
-                            q: query,
-                            format: 'json',
-                            limit: 1,
-                            countrycodes: 'br'
-                        },
-                        headers: {
-                            'User-Agent': 'GLPI Plugin Newbase/2.0'
-                        },
-                        success: function(data) {
-                            if (data && data.length > 0) {
-                                var lat = parseFloat(data[0].lat).toFixed(8);
-                                var lon = parseFloat(data[0].lon).toFixed(8);
-
-                                $('#latitude_field').val(lat);
-                                $('#longitude_field').val(lon);
-
-                                console.log('Coordenadas encontradas:', lat, lon);
-                            } else {
-                                console.log('Coordenadas nao encontradas para este endereco');
-                            }
-                        },
-                        error: function(xhr, status, error) {
-                            console.log('Erro ao buscar coordenadas:', error);
-                        }
-                    });
-                }, 1000); // Delay de 1 segundo
-            }
-
-            // Buscar CEP via ViaCEP + Coordenadas automaticas
-            $('#btn_buscar_cep').on('click', function() {
-                var cep = $('#cep_field').val().replace(/\D/g, '');
-
-                if (cep.length !== 8) {
-                    alert('CEP invalido! Digite um CEP com 8 digitos.');
-                    return;
-                }
-
-                $(this).prop('disabled', true).html('<i class=\"fas fa-spinner fa-spin\"></i> Buscando...');
-
-                $.ajax({
-                    url: 'https://viacep.com.br/ws/' + cep + '/json/',
-                    method: 'GET',
-                    dataType: 'json',
-                    success: function(data) {
-                        if (data.erro) {
-                            alert('CEP nao encontrado!');
-                            return;
-                        }
-
-                        // Preenche os campos de endereco
-                        var street = data.logradouro || '';
-                        var neighborhood = data.bairro || '';
-                        var city = data.localidade || '';
-                        var state = data.uf || '';
-
-                        $('#street_field').val(street);
-                        $('#neighborhood_field').val(neighborhood);
-                        $('#city_field').val(city);
-                        $('#state_field').val(state);
-
-                        // Preenche automaticamente o Pais como Brasil
-                        $('#country_field').val('Brasil');
-
-                        alert( endereco carregado! Buscando coordenadas...');
-
-                        // Busca coordenadas automaticamente apos carregar o endereco
-                        var endereco = {
-                            street: street,
-                            number: $('#number_field').val() || 's/n',
-                            neighborhood: neighborhood,
-                            city: city,
-                            state: state
-                        };
-
-                        buscarCoordenadas(endereco);
-
-                        // Foca no campo Numero
-                        $('#number_field').focus();
-                    },
-                    error: function() {
-                        alert('Erro ao buscar CEP. Verifique sua conexao e tente novamente.');
-                    },
-                    complete: function() {
-                        $('#btn_buscar_cep').prop('disabled', false)
-                            .html('<i class=\"fas fa-search\"></i> Buscar CEP');
-                    }
-                });
-            });
-
-            // Botao manual para buscar coordenadas (caso usuario queira atualizar depois)
-            var btnGeoloc = $('<button type=\"button\" class=\"btn btn-sm btn-info\" style=\"margin-left: 10px;\" title=\"Buscar coordenadas do endereco\">' +
-                            '<i class=\"fas fa-map-marked-alt\"></i> Buscar Coordenadas</button>');
-
-            $('#longitude_container').append(btnGeoloc);
-
-            btnGeoloc.on('click', function() {
-                var endereco = {
-                    street: $('#street_field').val(),
-                    number: $('#number_field').val() || 's/n',
-                    neighborhood: $('#neighborhood_field').val(),
-                    city: $('#city_field').val(),
-                    state: $('#state_field').val()
-                };
-
-                if (!endereco.street || !endereco.city || !endereco.state) {
-                    alert('Preencha pelo menos Logradouro, Cidade e Estado antes de buscar coordenadas.');
-                    return;
-                }
-
-                $(this).prop('disabled', true).html('<i class=\"fas fa-spinner fa-spin\"></i> Buscando...');
-
-                buscarCoordenadas(endereco);
-
-                setTimeout(function() {
-                    btnGeoloc.prop('disabled', false).html('<i class=\"fas fa-map-marked-alt\"></i> Buscar Coordenadas');
-                }, 2000);
-            });
-        });
-        ");
-
-        return true;
     }
 }
 

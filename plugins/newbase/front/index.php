@@ -9,10 +9,10 @@
 */
 declare(strict_types=1);
 
-include('../../../inc/includes.php');
-
 use GlpiPlugin\Newbase\Src\Task;
 use GlpiPlugin\Newbase\Config;
+
+include('../../../inc/includes.php');
 
 // Check authentication
 Session::checkLoginUser();
@@ -256,8 +256,8 @@ if (Config::isGeolocationEnabled()) {
 
                                 var m = L.marker([marker.lat, marker.lng], {icon: icon}).addTo(map);
                                 m.bindPopup('<b>' + marker.title + '</b><br>' +
-                                           'Company: ' + marker.company + '<br>' +
-                                           'Status: ' + marker.status);
+                                        'Company: ' + marker.company + '<br>' +
+                                        'Status: ' + marker.status);
 
                                 bounds.push([marker.lat, marker.lng]);
                             });

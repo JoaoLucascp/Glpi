@@ -7,30 +7,42 @@ namespace Composer\Autoload;
 class ComposerStaticInit9c805e0428f2a34fed5c26d57fc22662
 {
     public static $prefixLengthsPsr4 = array (
-        'G' => 
+        'G' =>
         array (
-            'GlpiPlugin\\Newbase\\' => 19,
+            'GlpiPlugin\\Newbase\\Src\\' => 23,
         ),
     );
 
     public static $prefixDirsPsr4 = array (
-        'GlpiPlugin\\Newbase\\' => 
+        'GlpiPlugin\\Newbase\\Src\\' =>
         array (
             0 => __DIR__ . '/../..' . '/src',
         ),
     );
 
     public static $classMap = array (
+        'Address' => __DIR__ . '/../..' . '/src/GlobalAliases.php',
+        'CompanyData' => __DIR__ . '/../..' . '/src/GlobalAliases.php',
         'Composer\\InstalledVersions' => __DIR__ . '/..' . '/composer/InstalledVersions.php',
-        'GlpiPlugin\\Newbase\\Address' => __DIR__ . '/../..' . '/src/Address.php',
-        'GlpiPlugin\\Newbase\\Ajax\\AddressHandler' => __DIR__ . '/../..' . '/src/Ajax/AddressHandler.php',
-        'GlpiPlugin\\Newbase\\Common' => __DIR__ . '/../..' . '/src/Common.php',
-        'GlpiPlugin\\Newbase\\CompanyData' => __DIR__ . '/../..' . '/src/CompanyData.php',
-        'GlpiPlugin\\Newbase\\Config' => __DIR__ . '/../..' . '/src/Config.php',
-        'GlpiPlugin\\Newbase\\Menu' => __DIR__ . '/../..' . '/src/Menu.php',
-        'GlpiPlugin\\Newbase\\System' => __DIR__ . '/../..' . '/src/System.php',
-        'GlpiPlugin\\Newbase\\Task' => __DIR__ . '/../..' . '/src/Task.php',
-        'GlpiPlugin\\Newbase\\TaskSignature' => __DIR__ . '/../..' . '/src/TaskSignature.php',
+        'Config' => __DIR__ . '/../..' . '/src/GlobalAliases.php',
+        'GlpiPlugin\\Newbase\\Address' => __DIR__ . '/../..' . '/src/LegacyAliases.php',
+        'GlpiPlugin\\Newbase\\CompanyData' => __DIR__ . '/../..' . '/src/LegacyAliases.php',
+        'GlpiPlugin\\Newbase\\Config' => __DIR__ . '/../..' . '/src/LegacyAliases.php',
+        'GlpiPlugin\\Newbase\\Src\\Address' => __DIR__ . '/../..' . '/src/Address.php',
+        'GlpiPlugin\\Newbase\\Src\\Ajax\\AddressHandler' => __DIR__ . '/../..' . '/src/Ajax/AddressHandler.php',
+        'GlpiPlugin\\Newbase\\Src\\Common' => __DIR__ . '/../..' . '/src/Common.php',
+        'GlpiPlugin\\Newbase\\Src\\CompanyData' => __DIR__ . '/../..' . '/src/CompanyData.php',
+        'GlpiPlugin\\Newbase\\Src\\Config' => __DIR__ . '/../..' . '/src/Config.php',
+        'GlpiPlugin\\Newbase\\Src\\Menu' => __DIR__ . '/../..' . '/src/Menu.php',
+        'GlpiPlugin\\Newbase\\Src\\System' => __DIR__ . '/../..' . '/src/System.php',
+        'GlpiPlugin\\Newbase\\Src\\Task' => __DIR__ . '/../..' . '/src/Task.php',
+        'GlpiPlugin\\Newbase\\Src\\TaskSignature' => __DIR__ . '/../..' . '/src/TaskSignature.php',
+        'GlpiPlugin\\Newbase\\System' => __DIR__ . '/../..' . '/src/LegacyAliases.php',
+        'GlpiPlugin\\Newbase\\Task' => __DIR__ . '/../..' . '/src/LegacyAliases.php',
+        'GlpiPlugin\\Newbase\\TaskSignature' => __DIR__ . '/../..' . '/src/LegacyAliases.php',
+        'System' => __DIR__ . '/../..' . '/src/GlobalAliases.php',
+        'Task' => __DIR__ . '/../..' . '/src/GlobalAliases.php',
+        'TaskSignature' => __DIR__ . '/../..' . '/src/GlobalAliases.php',
     );
 
     public static function getInitializer(ClassLoader $loader)

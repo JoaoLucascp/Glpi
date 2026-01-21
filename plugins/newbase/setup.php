@@ -1,55 +1,54 @@
 <?php
-
 /**
- * Setup file for Newbase Plugin
- *
- * @package   PluginNewbase
- */
+* Newbase Plugin Setup
+* @package   Newbase
+*@author    João Lucas
+* @copyright 2026 João Lucas
+* @license   GPLv2+
+* @version   2.0.0
+*/
 
 declare(strict_types=1);
 
-use GlpiPlugin\Newbase\CompanyData;
-use GlpiPlugin\Newbase\Address;
-use GlpiPlugin\Newbase\System;
-use GlpiPlugin\Newbase\Task;
-use GlpiPlugin\Newbase\TaskSignature;
-use GlpiPlugin\Newbase\Config;
-use GlpiPlugin\Newbase\Common;
+// Load Composer autoloader
+if (file_exists(__DIR__ . '/vendor/autoload.php')) {
+    require_once __DIR__ . '/vendor/autoload.php';
+}
 
-// Plugin dir e versao
+// Import classes with full namespace
+use GlpiPlugin\Newbase\Src\CompanyData;
+use GlpiPlugin\Newbase\Src\Address;
+use GlpiPlugin\Newbase\Src\System;
+use GlpiPlugin\Newbase\Src\Task;
+use GlpiPlugin\Newbase\Src\TaskSignature;
+use GlpiPlugin\Newbase\Src\Config;
+
+// Define constants
 define('PLUGIN_NEWBASE_VERSION', '2.0.0');
 define('PLUGIN_NEWBASE_DIR', __DIR__);
-
-// GLPI version range
-const NEWBASE_MIN_GLPI = '10.0.20';
-const NEWBASE_MAX_GLPI = '10.0.99';
+define('NEWBASE_MIN_GLPI', '10.0.0');
+define('NEWBASE_MAX_GLPI', '10.1.0');
 
 /**
- * Inicializa o plugin
+ * Initialize plugin
  */
-function plugin_init_newbase(): array
-{
-    global $PLUGIN_HOOKS, $CFG_GLPI;
-
-    if (file_exists(__DIR__ . '/vendor/autoload.php')) {
-        require_once __DIR__ . '/vendor/autoload.php';
-    }
+function plugin_init_newbase() {
+    global $PLUGIN_HOOKS;
 
     $PLUGIN_HOOKS['csrf_compliant']['newbase'] = true;
 
-    $plugin = new Plugin();
-    if ($plugin->isActivated('newbase')) {
+    if (Plugin::isPluginActive('newbase')) {
+
+        // Register classes with full namespace
         Plugin::registerClass(CompanyData::class, [
             'addtabon' => ['Entity'],
         ]);
+
         Plugin::registerClass(Address::class);
         Plugin::registerClass(System::class);
         Plugin::registerClass(Task::class);
         Plugin::registerClass(TaskSignature::class);
-        Plugin::registerClass(Config::class, [
-            'notificationtemplates_types' => true,
-        ]);
-        Plugin::registerClass(Common::class);
+        Plugin::registerClass(Config::class);
 
         // Add to management menu
         $PLUGIN_HOOKS['menu_toadd']['newbase'] = [
@@ -57,15 +56,16 @@ function plugin_init_newbase(): array
         ];
 
         $PLUGIN_HOOKS['config_page']['newbase'] = 'front/config.php';
-
         $PLUGIN_HOOKS['use_massive_action']['newbase'] = 1;
 
+        // Add CSS
         $PLUGIN_HOOKS['add_css']['newbase'] = [
             'css/newbase.css',
             'css/responsive.css',
             'css/forms.css',
         ];
 
+        // Add JavaScript
         $PLUGIN_HOOKS['add_javascript']['newbase'] = [
             'js/jquery.mask.min.js',
             'js/newbase.js',
@@ -76,41 +76,24 @@ function plugin_init_newbase(): array
             'js/mobile.js',
         ];
 
+        // Item purge hook
         $PLUGIN_HOOKS['item_purge']['newbase'] = [
             'Entity' => [CompanyData::class, 'cleanForEntity'],
         ];
     }
-
-    return [
-        'name'  => __('Newbase - Personal Data Management', 'newbase'),
-        'version' => PLUGIN_NEWBASE_VERSION,
-        'author'  => 'Joao Lucas',
-        'license' => 'GPLv2+',
-        'homepage' => 'https://github.com/joaolucas/newbase',
-        'requirements' => [
-            'glpi' => [
-                'min' => NEWBASE_MIN_GLPI,
-                'max' => NEWBASE_MAX_GLPI,
-            ],
-            'php' => [
-                'min' => '8.1',
-            ],
-        ],
-    ];
 }
 
 /**
- * Versao para GLPI
+ * Get plugin version
  */
-function plugin_version_newbase(): array
-{
+function plugin_version_newbase(): array {
     return [
-        'name'  => __('Newbase - Personal Data Management', 'newbase'),
-        'version' => PLUGIN_NEWBASE_VERSION,
-        'author'  => 'Joao Lucas',
-        'license' => 'GPLv2+',
-        'homepage' => 'https://github.com/joaolucas/newbase',
-        'requirements' => [
+        'name'           => __('Newbase - Company Management', 'newbase'),
+        'version'        => PLUGIN_NEWBASE_VERSION,
+        'author'         => 'João Lucas',
+        'license'        => 'GPLv2+',
+        'homepage'       => 'https://github.com/newtel/newbase',
+        'requirements'   => [
             'glpi' => [
                 'min' => NEWBASE_MIN_GLPI,
                 'max' => NEWBASE_MAX_GLPI,
@@ -125,8 +108,7 @@ function plugin_version_newbase(): array
 /**
  * Check prerequisites
  */
-function plugin_newbase_check_prerequisites(): bool
-{
+function plugin_newbase_check_prerequisites(): bool {
     if (version_compare(PHP_VERSION, '8.1', '<')) {
         echo "This plugin requires PHP >= 8.1";
         return false;
@@ -153,54 +135,39 @@ function plugin_newbase_check_prerequisites(): bool
 /**
  * Check config
  */
-function plugin_newbase_check_config($verbose = false): bool
-{
+function plugin_newbase_check_config($verbose = false): bool {
     if ($verbose && !defined('GLPI_PRUNE_LOGS')) {
         echo __('Installed / not configured', 'newbase');
     }
     return true;
 }
 
-
-
 /**
- * Define os direitos do plugin
+ * Install plugin rights
  */
-function plugin_newbase_install_rights()
-{
+function plugin_newbase_install_rights() {
     global $DB;
 
     $rights = [
-        'plugin_newbase_companydata' => 'all', // ALLSTANDARDRIGHT
-        'plugin_newbase_task'        => 'all',
-        'plugin_newbase_system'      => 'all',
-        'plugin_newbase_config'      => ['read' => 'r', 'update' => 'w'], // READ+UPDATE
+        'plugin_newbase' => ALLSTANDARDRIGHT,
     ];
 
     $profile = new Profile();
     $profiles = $profile->find();
 
-    foreach ($rights as $right => $options) {
-        // Add right to glpi_profilerights
+    foreach ($rights as $right => $default_value) {
         ProfileRight::addProfileRights([$right]);
 
         foreach ($profiles as $profile_id => $profile_data) {
             $value = 0;
+
             // Super-admin has all rights
             if ($profile_data['name'] === 'Super-Admin') {
-                if ($right === 'plugin_newbase_config') {
-                    $value = READ + UPDATE;
-                } else if ($options === 'all') {
-                    $value = ALLSTANDARDRIGHT;
-                }
-            } else if ($profile_data['name'] === 'Central') {
-                 if ($right !== 'plugin_newbase_config') { // No config rights for Central
-                    $value = READ + CREATE + UPDATE + DELETE; // 15
-                }
-            } else if ($profile_data['name'] === 'Helpdesk') {
-                 if ($right !== 'plugin_newbase_config') { // No config rights for Helpdesk
-                    $value = READ; // 1
-                }
+                $value = ALLSTANDARDRIGHT;
+            } else if ($profile_data['name'] === 'Admin') {
+                $value = ALLSTANDARDRIGHT;
+            } else if ($profile_data['name'] === 'Technician') {
+                $value = READ + CREATE + UPDATE;
             }
 
             if ($value > 0) {
@@ -208,25 +175,25 @@ function plugin_newbase_install_rights()
             }
         }
     }
+
     return true;
 }
 
 /**
- * Install
+ * Install plugin
  */
-function plugin_newbase_install(): bool
-{
+function plugin_newbase_install(): bool {
     global $DB;
 
     $migration = new Migration(PLUGIN_NEWBASE_VERSION);
 
-    // DESABILITAR VERIFICAÇÃO DE FK NO INÍCIO
+    // Disable foreign key checks
     $DB->query("SET FOREIGN_KEY_CHECKS = 0");
 
     $sqlFile = PLUGIN_NEWBASE_DIR . '/install/mysql/2.0.0.sql';
+
     if (!file_exists($sqlFile)) {
-        echo "Arquivo SQL nao encontrado: $sqlFile\n";
-        // REABILITAR FK ANTES DE RETORNAR ERRO
+        echo "SQL file not found: $sqlFile\n";
         $DB->query("SET FOREIGN_KEY_CHECKS = 1");
         return false;
     }
@@ -243,78 +210,63 @@ function plugin_newbase_install(): bool
         try {
             $DB->query($command);
         } catch (Throwable $e) {
-            echo "Erro na instalacao: " . $e->getMessage() . "\n";
-            // REABILITAR FK ANTES DE RETORNAR ERRO
+            echo "Installation error: " . $e->getMessage() . "\n";
             $DB->query("SET FOREIGN_KEY_CHECKS = 1");
             return false;
         }
     }
 
-    // REABILITAR FK NO FINAL (SUCESSO)
+    // Re-enable foreign key checks
     $DB->query("SET FOREIGN_KEY_CHECKS = 1");
 
     $migration->executeMigration();
 
     plugin_newbase_install_rights();
-
     return true;
 }
 
 /**
- * Uninstall - Remove todas as tabelas e dados do plugin
+ * Uninstall plugin
  */
-function plugin_newbase_uninstall(): bool
-{
+function plugin_newbase_uninstall(): bool {
     global $DB;
 
     try {
-        // DESABILITAR VERIFICAÇÃO DE FK NO INÍCIO
+        // Disable foreign key checks
         $DB->query("SET FOREIGN_KEY_CHECKS = 0");
 
-        // Lista de tabelas em ordem reversa de dependência
+        // List of tables in reverse dependency order
         $tables = [
-            // Tabelas no plural (versão atual)
             'glpi_plugin_newbase_tasksignatures',
             'glpi_plugin_newbase_tasks',
             'glpi_plugin_newbase_systems',
             'glpi_plugin_newbase_addresses',
             'glpi_plugin_newbase_configs',
-            'glpi_plugin_newbase_companydatas',
-
-            // Tabelas no singular (versões antigas - se existirem)
-            'glpi_plugin_newbase_tasksignature',
-            'glpi_plugin_newbase_task',
-            'glpi_plugin_newbase_system',
-            'glpi_plugin_newbase_address',
-            'glpi_plugin_newbase_config',
             'glpi_plugin_newbase_companydata',
         ];
 
-        // Remover cada tabela
+        // Drop each table
         foreach ($tables as $table) {
             if ($DB->tableExists($table)) {
                 $DB->query("DROP TABLE `$table`");
             }
         }
 
-        // REABILITAR VERIFICAÇÃO DE FK
+        // Re-enable foreign key checks
         $DB->query("SET FOREIGN_KEY_CHECKS = 1");
 
-        // Limpar direitos de perfil
+        // Clean profile rights
         $DB->query("DELETE FROM `glpi_profilerights` WHERE `name` LIKE 'plugin_newbase%'");
 
-        // Limpar preferências de exibição
-        $DB->query("DELETE FROM `glpi_displaypreferences` WHERE `itemtype` LIKE 'PluginNewbase%'");
+        // Clean display preferences
+        $DB->query("DELETE FROM `glpi_displaypreferences` WHERE `itemtype` LIKE '%Newbase%'");
 
-        // Limpar logs relacionados
-        $DB->query("DELETE FROM `glpi_logs` WHERE `itemtype` LIKE 'PluginNewbase%'");
+        // Clean logs
+        $DB->query("DELETE FROM `glpi_logs` WHERE `itemtype` LIKE '%Newbase%'");
 
         return true;
-
     } catch (Throwable $e) {
-        // Garantir que FK seja reabilitada mesmo em caso de erro
         $DB->query("SET FOREIGN_KEY_CHECKS = 1");
-
         Toolbox::logError('Newbase uninstall error: ' . $e->getMessage());
         return false;
     }

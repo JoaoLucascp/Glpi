@@ -1,22 +1,24 @@
 <?php
 /**
- * AJAX endpoint for uploading digital signature
- *
- * @package   PluginNewbase
- * @author    João Lucas
- * @copyright Copyright (c) 2025 João Lucas
- * @license   GPLv2+
- * @since     2.0.0
- */
-
+* AJAX endpoint for uploading digital signature
+* @package   PluginNewbase
+* @author    João Lucas
+* @copyright Copyright (c) 2026 João Lucas
+* @license   GPLv2+
+* @since     2.0.0
+*/
 declare(strict_types=1);
+
+use GlpiPlugin\Newbase\Src\Task;
+use GlpiPlugin\Newbase\Src\TaskSignature;
+use GlpiPlugin\Newbase\Src\Config;
+
+include('../../../inc/includes.php');
 
 // Security check
 if (!defined('GLPI_ROOT')) {
     define('GLPI_ROOT', dirname(dirname(dirname(dirname(__FILE__)))));
 }
-
-include(GLPI_ROOT . "/inc/includes.php");
 
 // Check authentication
 Session::checkLoginUser();
@@ -52,7 +54,7 @@ try {
     }
 
     // Check if signature feature is enabled
-    if (!PluginNewbaseConfig::isSignatureEnabled()) {
+    if (!Config::isSignatureEnabled()) {
         echo json_encode([
             'success' => false,
             'message' => __('Digital signature feature is disabled', 'newbase')
@@ -61,7 +63,7 @@ try {
     }
 
     // Load task
-    $task = new PluginNewbaseTask();
+    $task = new Task();
     if (!$task->getFromDB($task_id)) {
         echo json_encode([
             'success' => false,
@@ -122,9 +124,9 @@ try {
     }
 
     // Check if signature already exists
-    $existing_signature = PluginNewbaseTaskSignature::getForTask($task_id);
+    $existing_signature = TaskSignature::getForTask($task_id);
 
-    $signature = new PluginNewbaseTaskSignature();
+    $signature = new TaskSignature();
 
     if ($existing_signature) {
         // Update existing signature

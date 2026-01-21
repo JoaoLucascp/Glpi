@@ -1,21 +1,20 @@
 -- Newbase Plugin - Database Installation
 -- Version: 2.0.0
 -- Compatible with GLPI 10.0.20+
-
+SET FOREIGN_KEY_CHECKS = 0;
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 SET time_zone = "+00:00";
 
------------------------------------------------------------------------------------------------
 -- ┌──────────────────────────────────────────────────────────────────────────────────────────┐
--- | Tipo               | O Que Armazena           | Exemplo                                  |
--- | ------------------ | ------------------------ | ---------------------------------------- |
--- | INT                | Números inteiros         | ID (1, 2, 3, 100)                        |
--- | VARCHAR(255)       | Texto com tamanho máximo | Nome da empresa                          |
--- | TEXT               | Texto longo sem limite   | Descrição, comentários                   |
--- | DECIMAL(10,2)      | Número com decimais      | Preço (1.234,56) ou Quilometragem (5.34) |
--- | TIMESTAMP          | Data e hora              | 2026-01-12 12:05:00                      |
--- | BOOLEAN ou TINYINT | Verdadeiro/Falso         | Ativo: 0 ou 1                            |
--- | LONGBLOB           | Arquivo binário          | Assinatura digital, foto                 |
+-- - Tipo               - O Que Armazena           - Exemplo                                  -
+-- - ------------------ - ------------------------ - ---------------------------------------- -
+-- - INT                - Números inteiros         - ID (1, 2, 3, 100)                        -
+-- - VARCHAR(255)       - Texto com tamanho máximo - Nome da empresa                          -
+-- - TEXT               - Texto longo sem limite   - Descrição, comentários                   -
+-- - DECIMAL(10,2)      - Número com decimais      - Preço (1.234,56) ou Quilometragem (5.34) -
+-- - TIMESTAMP          - Data e hora              - 2026-01-12 12:05:00                      -
+-- - BOOLEAN ou TINYINT - Verdadeiro/Falso         - Ativo: 0 ou 1                            -
+-- - LONGBLOB           - Arquivo binário          - Assinatura digital, foto                 -
 -- └──────────────────────────────────────────────────────────────────────────────────────────┘
 
 -- Tabela 1: glpi_plugin_newbase_companydata (Empresas)
@@ -23,25 +22,25 @@ SET time_zone = "+00:00";
 
 -- Estrutura (simplificada):
 -- ┌───────────────────────────────────────────────────────────────┐
--- │ glpi_plugin_newbase_companydata                               │
+-- - glpi_plugin_newbase_companydata                               -
 -- ├───────────────────────────────────────────────────────────────┤
--- │ id            | INT          | Número único da empresa        │
--- │ name          | VARCHAR(255) | Nome da empresa (Razão Social) │
--- │ cnpj          | VARCHAR(20)  | CNPJ (14 dígitos)              │
--- │ phone         | VARCHAR(20)  | Telefone                       │
--- │ email         | VARCHAR(255) | E-mail                         │
--- │ website       | VARCHAR(255) | Site da empresa                │
--- │ responsible   | VARCHAR(255) | Responsável                    │
--- │ date_creation | TIMESTAMP    | Data de criação                │
--- │ date_mod      | TIMESTAMP    | Data de modificação            │
+-- - id            - INT          - Número único da empresa        -
+-- - name          - VARCHAR(255) - Nome da empresa (Razão Social) -
+-- - cnpj          - VARCHAR(20)  - CNPJ (14 dígitos)              -
+-- - phone         - VARCHAR(20)  - Telefone                       -
+-- - email         - VARCHAR(255) - E-mail                         -
+-- - website       - VARCHAR(255) - Site da empresa                -
+-- - responsible   - VARCHAR(255) - Responsável                    -
+-- - date_creation - TIMESTAMP    - Data de criação                -
+-- - date_mod      - TIMESTAMP    - Data de modificação            -
 -- └───────────────────────────────────────────────────────────────┘
 -- Exemplo de DADOS nesta tabela:
 -- ┌────┬─────────────────┬────────────────────┬────────────────┐
--- │ id │ name            │ cnpj               │ phone          │
+-- - id - name            - cnpj               - phone          -
 -- ├────┼─────────────────┼────────────────────┼────────────────┤
--- │  1 │ Newtel Soluções │ 12.345.678/0001-90 │ (27) 3000-1111 │
+-- -  1 - Newtel Soluções - 12.345.678/0001-90 - (27) 3000-1111 -
 -- └────┴─────────────────┴────────────────────┴────────────────┘
--- ---------------------------------------------------------------------
+--
 
 DROP TABLE IF EXISTS `glpi_plugin_newbase_companydata`;
 
@@ -62,39 +61,37 @@ PRIMARY KEY (`id`),
     KEY `cnpj` (`cnpj`),
     KEY `entities_id` (`entities_id`),
     KEY `is_deleted` (`is_deleted`),
-    KEY `date_mod` (`date_mod`)
-    CONSTRAINT `fk_company_entities`
+    KEY `date_mod` (`date_mod`),
+    CONSTRAINT `fk_company_entity`
     FOREIGN KEY (`entities_id`)
     REFERENCES `glpi_entities` (`id`)
     ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
 
--- --------------------------------------------------------
 -- Tabela 2: glpi_plugin_newbase_addresses (Endereços)
 -- Esta tabela armazena endereços das empresas.
 
 -- Estrutura: (simplificada)
 -- ┌───────────────────────────────────────────────┐
--- │ glpi_plugin_newbase_addresses                 │
+-- - glpi_plugin_newbase_addresses                 -
 -- ├───────────────────────────────────────────────┤
--- │ id             | INT | Número único           │
--- │ companydata_id | INT | ID da empresa          │
--- │ street         | VARCHAR(255) | Rua           │
--- │ number         | VARCHAR(20) | Número         │
--- │ neighborhood   | VARCHAR(100) | Bairro        │
--- │ city           | VARCHAR(100) | Cidade        │
--- │ state          | VARCHAR(2) | Estado (ES, RJ) │
--- │ cep            | VARCHAR(10) | CEP            │
--- │ latitude       | DECIMAL(10,8) | Latitude     │
--- │ longitude      | DECIMAL(11,8) | Longitude    │
+-- - id             - INT - Número único           -
+-- - companydata_id - INT - ID da empresa          -
+-- - street         - VARCHAR(255) - Rua           -
+-- - number         - VARCHAR(20) - Número         -
+-- - neighborhood   - VARCHAR(100) - Bairro        -
+-- - city           - VARCHAR(100) - Cidade        -
+-- - state          - VARCHAR(2) - Estado (ES, RJ) -
+-- - cep            - VARCHAR(10) - CEP            -
+-- - latitude       - DECIMAL(10,8) - Latitude     -
+-- - longitude      - DECIMAL(11,8) - Longitude    -
 -- └───────────────────────────────────────────────┘
 -- Exemplo de DADOS:
 -- ┌────┬────────────────┬───────────────────┬───────────┐
--- │ id │ companydata_id │ street │ city     │ cep       │
+-- - id - companydata_id - street - city     - cep       -
 -- ├────┼────────────────┼────────┼──────────┼───────────┤
--- │ 1  │ 1              │ Rua A  │ Linhares │ 29900-000 │
+-- - 1  - 1              - Rua A  - Linhares - 29900-000 -
 -- └────┴────────────────┴────────┴──────────┴───────────┘
--- --------------------------------------------------------
 
 DROP TABLE IF EXISTS `glpi_plugin_newbase_addresses`;
 
@@ -128,82 +125,90 @@ PRIMARY KEY (`id`),
     ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
 
--- --------------------------------------------------------
 -- Tabela 3: glpi_plugin_newbase_systems (Sistemas Telefônicos)
 -- Armazena sistemas telefônicos como PABX, IPBX, Chatbot, etc.
 
 -- Estrutura: (simplificada)
 -- ┌────────────────────────────────────────────────┐
--- │ glpi_plugin_newbase_systems                    │
+-- - glpi_plugin_newbase_systems                    -
 -- ├────────────────────────────────────────────────┤
--- │ id       INT   | INT | Número único            │
--- │ companydata_id | INT | Qual empresa tem este   │
--- │ name           | VARCHAR(255) | Nome do sistema│
--- │ system_type    | VARCHAR(100) | PABX/IPBX/etc  │
--- │ ip_address     | VARCHAR(15) | IP do servidor  │
--- │ port           | INT | Porta (padrão: 80)      │
--- │ description    | VARCHAR(255) | Descrição              │
+-- - id             - INT - Número único            -
+-- - companydata_id - INT - Qual empresa tem este   -
+-- - name           - VARCHAR(255) - Nome do sistema-
+-- - system_type    - VARCHAR(100) - PABX/IPBX/etc  -
+-- - ip_address     - VARCHAR(15) - IP do servidor  -
+-- - port           - INT - Porta (padrão: 80)      -
+-- - description    - VARCHAR(255) - Descrição              -
 -- └────────────────────────────────────────────────┘
 -- Exemplo:
 -- A Newtel (ID=1) tem:
 -- - PABX da INTelbrDECIMAL (ID sistema = 1)
 -- - IPBX Cloud da Asterisk (ID sistema = 2)
 -- - Chatbot no WhatsApp    (ID sistema = 3)
--- --------------------------------------------------------
 
 DROP TABLE IF EXISTS `glpi_plugin_newbase_systems`;
 
 CREATE TABLE `glpi_plugin_newbase_systems` (
     `id` INT unsigned NOT NULL AUTO_INCREMENT,
-    `companydata_id` INT unsigned NOT NULL DEFAULT '0',
+    `companydata_id` INT unsigned NOT NULL DEFAULT 0,
     `name` VARCHAR(255) DEFAULT NULL,
     `system_type` VARCHAR(100) DEFAULT NULL,
-    `description` VARCHAR(255)DEFAULT NULL,
-    `ip_address` VARCHAR(15) DEFAULT NULL,
-    `port` INT DEFAULT NULL,
-    `username` VARCHAR(255) DEFAULT NULL,
-    `password` VARCHAR(255) DEFAULT NULL,
-    `entities_id` INT unsigned NOT NULL DEFAULT '0',
-    `is_recursive` TINYINT NOT NULL DEFAULT '0',
-    `is_deleted` TINYINT NOT NULL DEFAULT '0',
+    `description` TEXT,
+    `pabx_brand` VARCHAR(100) DEFAULT NULL,
+    `pabx_model` VARCHAR(100) DEFAULT NULL,
+    `pabx_extensions` INT DEFAULT NULL,
+    `ipbx_ip` VARCHAR(15) DEFAULT NULL,
+    `ipbx_port` INT DEFAULT 5060,
+    `ipbx_version` VARCHAR(20) DEFAULT NULL,
+    `ipbx_users` INT DEFAULT NULL,
+    `cloud_url` VARCHAR(255) DEFAULT NULL,
+    `cloud_username` VARCHAR(100) DEFAULT NULL,
+    `cloud_api_token` VARCHAR(255) DEFAULT NULL,
+    `chatbot_platform` VARCHAR(50) DEFAULT NULL,
+    `chatbot_phone` VARCHAR(20) DEFAULT NULL,
+    `chatbot_api_key` VARCHAR(255) DEFAULT NULL,
+    `landline_number` VARCHAR(20) DEFAULT NULL,
+    `landline_operator` VARCHAR(100) DEFAULT NULL,
+    `entities_id` INT unsigned NOT NULL DEFAULT 0,
+    `is_recursive` TINYINT NOT NULL DEFAULT 0,
+    `is_deleted` TINYINT NOT NULL DEFAULT 0,
     `date_creation` TIMESTAMP NULL DEFAULT NULL,
     `date_mod` TIMESTAMP NULL DEFAULT NULL,
-PRIMARY KEY (`id`),
+    PRIMARY KEY (`id`),
     KEY `name` (`name`),
     KEY `companydata_id` (`companydata_id`),
+    KEY `system_type` (`system_type`),
     KEY `entities_id` (`entities_id`),
-    KEY `is_deleted` (`is_deleted`)
+    KEY `is_deleted` (`is_deleted`),
+    CONSTRAINT `fk_system_entity`
+    FOREIGN KEY (`entities_id`)
+    REFERENCES `glpi_entities` (`id`)
+    ON DELETE CASCADE,
     CONSTRAINT `fk_system_company`
     FOREIGN KEY (`companydata_id`)
     REFERENCES `glpi_plugin_newbase_companydata` (`id`)
     ON DELETE CASCADE
-    CONSTRAINT `fk_system_entity`
-    FOREIGN KEY (`entities_id`)
-    REFERENCES `glpi_entities` (`id`)
-    ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
 
--- --------------------------------------------------------
 -- Tabela 4: glpi_plugin_newbase_tasks (Tarefas)
 -- Armazena tarefas com informações de localização, status, etc.
 
 -- Estrutura: (INTplificada)
 -- ┌───────────────────────────────────────────┐
--- │ glpi_plugin_newbase_tasks                 │
+-- - glpi_plugin_newbase_tasks                 -
 -- ├───────────────────────────────────────────┤
--- │ id              | INT | Número único      │
--- │ title           | VARCHAR(255) | Título   │
--- │ description     | VARCHAR(255) | Descrição│
--- │ status          | VARCHAR(50) | Aberta/...│
--- │ start_latitude  | DECIMAL(10,8) | Início  │
--- │ start_longitude | DECIMAL(11,8) | Início  │
--- │ end_latitude    | DECIMAL(10,8) | Fim     │
--- │ end_longitude   | DECIMAL(11,8) | Fim     │
--- │ mileage         | DECIMAL(10,2) | Quilom. │
--- │ date_creation   | TIMESTAMP | Data criação│
+-- - id              - INT - Número único      -
+-- - title           - VARCHAR(255) - Título   -
+-- - description     - VARCHAR(255) - Descrição-
+-- - status          - VARCHAR(50) - Aberta/...-
+-- - start_latitude  - DECIMAL(10,8) - Início  -
+-- - start_longitude - DECIMAL(11,8) - Início  -
+-- - end_latitude    - DECIMAL(10,8) - Fim     -
+-- - end_longitude   - DECIMAL(11,8) - Fim     -
+-- - mileage         - DECIMAL(10,2) - Quilom. -
+-- - date_creation   - TIMESTAMP - Data criação-
 -- └───────────────────────────────────────────┘
 -- Exemplo: Uma tarefa de visita técnica com coordenadas GPS de saída e chegada.
----------------------------------------------------------------------------------
 
 DROP TABLE IF EXISTS `glpi_plugin_newbase_tasks`;
 
@@ -239,35 +244,33 @@ PRIMARY KEY (`id`),
     CONSTRAINT `fk_task_company`
     FOREIGN KEY (`companydata_id`)
     REFERENCES `glpi_plugin_newbase_companydata` (`id`)
-    ON DELETE CASCADE
+    ON DELETE CASCADE,
     CONSTRAINT `fk_task_entity`
     FOREIGN KEY (`entities_id`)
     REFERENCES `glpi_entities` (`id`)
-    ON DELETE CASCADE
+    ON DELETE CASCADE,
     CONSTRAINT `fk_task_address`
     FOREIGN KEY (`address_id`)
     REFERENCES `glpi_plugin_newbase_addresses` (`id`)
-    ON DELETE CASCADE
+    ON DELETE CASCADE,
     CONSTRAINT `fk_task_user`
     FOREIGN KEY (`users_id`)
     REFERENCES `glpi_users` (`id`)
     ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
 
----------------------------------------------------------
 -- Tabela 5: glpi_newbase_tasksignatures (Assinaturas)
 -- Armazena assinaturas digitais das tarefas concluídas.
 
 -- Estrutura: (simplificada)
 -- ┌─────────────────────────────────────────────┐
--- │ glpi_newbase_tasksignatures                 │
+-- - glpi_newbase_tasksignatures                 -
 -- ├─────────────────────────────────────────────┤
--- │ id          | INT | Número único            │
--- │ task_id     | INT | Qual tarefa (ligação)   │
--- │ signature   | LONGBLOB | Dados da assinatura│
--- │ date_signed | TIMESTAMP | Data da assinatura│
+-- - id          - INT - Número único            -
+-- - task_id     - INT - Qual tarefa (ligação)   -
+-- - signature   - LONGBLOB - Dados da assinatura-
+-- - date_signed - TIMESTAMP - Data da assinatura-
 -- └─────────────────────────────────────────────┘
----------------------------------------------------------
 
 DROP TABLE IF EXISTS `glpi_plugin_newbase_tasksignatures`;
 
@@ -277,17 +280,14 @@ CREATE TABLE `glpi_plugin_newbase_tasksignatures` (
     `signature` longblob,
     `date_signed` TIMESTAMP NULL DEFAULT NULL,
 PRIMARY KEY (`id`),
-    KEY `task_id` (`task_id`)
+    KEY `task_id` (`task_id`),
     CONSTRAINT `fk_signature_task`
     FOREIGN KEY (`task_id`)
     REFERENCES `glpi_plugin_newbase_tasks` (`id`)
     ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
 
--- --------------------------------------------------------
 -- Tabela: glpi_plugin_newbase_configs
--- INT-----------------------------------------------INT---
-
 DROP TABLE IF EXISTS `glpi_plugin_newbase_configs`;
 
 CREATE TABLE `glpi_plugin_newbase_configs` (

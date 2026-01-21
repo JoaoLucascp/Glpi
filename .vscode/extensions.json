@@ -1,5 +1,7 @@
 {
     "recommendations": [
-        "xdebug.php-debug"
+        "xdebug.php-debug",
+        "keysight-technologies.ael",
+        "peacefixation.asterisksyntaxhighlighter"
     ]
 }

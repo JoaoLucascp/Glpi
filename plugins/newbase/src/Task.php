@@ -1,29 +1,31 @@
 <?php
-
+/**
+* Classe de tarefas para o plugin Newbase
+* Gerencia tarefas com geolocalização, rastreamento de status, cálculo de quilometragem e atribuição a usuários
+* Gerenciamento de tarefas com geolocalização e assinatura digital
+* @package   PluginNewbase
+* @author    João Lucas
+* @copyright 2026 João Lucas
+* @license   GPLv2+
+* @version   2.0.0
+*/
 declare(strict_types=1);
 
 namespace GlpiPlugin\Newbase\Src;
-
-
+use GlpiPlugin\Newbase\Src\Common;
 use CommonDBTM;
 use Session;
 use Html;
 use Dropdown;
 use User;
 use CommonGLPI;
-use Glpi\Toolbox\Sanitizer;
+use CompanyData;
+use Sanitizer;
 
 /**
-* Classe de tarefas para o plugin Newbase
-* Gerencia tarefas com geolocalização, rastreamento de status, cálculo de quilometragem e atribuição a usuários
-* Gerenciamento de tarefas com geolocalização e assinatura digital
-* @package   PluginNewbase
-* @author    Joao Lucas
-* @copyright Copyright (c) 2026 Joao Lucas
-* @license   GPLv2+
-* @since     2.0.0
+* Classe Task - Gerenciamento de tarefas com geolocalização e rastreamento de status
 */
-class Task extends CommonDBTM
+class Task extends Common
 {
     // Nome correto para permissões
     public static $rightname = 'plugin_newbase_task';
@@ -49,7 +51,8 @@ class Task extends CommonDBTM
     * @param int $nb Numero do item
     * @return string
     */
-    public static function getTypeName($nb = 0) {
+    public static function getTypeName($nb = 0): string
+    {
         return _n('Tarefa', 'Tarefas', $nb, 'newbase');
     }
 
@@ -292,7 +295,7 @@ class Task extends CommonDBTM
             'COUNT' => 'cpt',
             'FROM'  => self::getTable(),
             'WHERE' => [
-                'plugin_newbase_companydata_id' => $item->getId()
+                'plugin_newbase_companydata_id' => $id = $item->getID()
             ]
         ]);
 
@@ -601,4 +604,5 @@ class Task extends CommonDBTM
         return $input;
     }
 }
+
 

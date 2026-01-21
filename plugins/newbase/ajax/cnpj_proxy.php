@@ -1,16 +1,17 @@
 <?php
-
-declare(strict_types=1);
 /**
- * Proxy para buscar dados de CNPJ
- *
- * Este arquivo resolve o problema de CORS fazendo a requisiÃ§Ã£o do lado do servidor.
- * Busca em mÃºltiplas APIs para garantir o preenchimento do email.
- *
- * @package   PluginNewbase
- * @author    JoÃ£o Lucas
- * @license   GPLv2+
- */
+* Proxy para buscar dados de CNPJ
+* Este arquivo resolve o problema de CORS fazendo a requisição do lado do servidor.
+* Busca em múltiplas APIs para garantir o preenchimento do email.
+* @package   PluginNewbase
+* @author    João Lucas
+* @copyright Copyright (c) 2026 João Lucas
+* @license   GPLv2+
+* @since     2.0.0
+*/
+declare (strict_types=1);
+
+include('../../../inc/includes.php');
 
 // Evita acesso direto
 if (!defined('GLPI_ROOT')) {
@@ -24,7 +25,7 @@ if (empty($_POST['cnpj'])) {
     http_response_code(400);
     echo json_encode([
         'success' => false,
-        'error' => 'CNPJ nÃ£o informado'
+        'error' => 'CNPJ não informado'
     ]);
     exit;
 }
@@ -35,7 +36,7 @@ if (strlen($cnpj) !== 14) {
     http_response_code(400);
     echo json_encode([
         'success' => false,
-        'error' => 'CNPJ invÃ¡lido'
+        'error' => 'CNPJ invalido'
     ]);
     exit;
 }
@@ -145,7 +146,7 @@ if (!$dadosBrasilAPI && !$dadosReceitaWS) {
     http_response_code(404);
     echo json_encode([
         'success' => false,
-        'error' => 'CNPJ nÃ£o encontrado em nenhuma API'
+        'error' => 'CNPJ não encontrado em nenhuma API'
     ]);
     exit;
 }
@@ -156,7 +157,7 @@ $resultado = mesclarDados($dadosBrasilAPI, $dadosReceitaWS);
 // Log para debug
 Toolbox::logInFile(
     'newbase_cnpj',
-    "CNPJ: {$cnpj} | Email: " . ($resultado['email'] ?: 'NÃƒO ENCONTRADO') .
+    "CNPJ: {$cnpj} | Email: " . ($resultado['email'] ?: 'NÃO ENCONTRADO') .
     " | Fontes: " . implode(', ', $resultado['fonte']) . "\n"
 );
 

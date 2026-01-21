@@ -9,10 +9,10 @@
 */
 declare(strict_types=1);
 
-include('../../../inc/includes.php');
-
 use GlpiPlugin\Newbase\Src\CompanyData;
 use GlpiPlugin\Newbase\Src\Task;
+
+include('../../../inc/includes.php');
 
 // Check authentication
 Session::checkLoginUser();

@@ -1,24 +1,22 @@
 <?php
 /**
- * AJAX endpoint for calculating mileage between two coordinates
- *
- * @package   PluginNewbase
- * @author    João Lucas
- * @copyright Copyright (c) 2025 João Lucas
- * @license   GPLv2+
- * @since     2.0.0
- */
-
+* AJAX endpoint for calculating mileage between two coordinates
+* @package   PluginNewbase
+* @author    João Lucas
+* @copyright Copyright (c) 2026 João Lucas
+* @license   GPLv2+
+* @since     2.0.0
+*/
 declare(strict_types=1);
+
+use GlpiPlugin\Newbase\Src\Common;
+
+include('../../../inc/includes.php');
 
 // Security check
 if (!defined('GLPI_ROOT')) {
     define('GLPI_ROOT', dirname(dirname(dirname(dirname(__FILE__)))));
 }
-
-include(GLPI_ROOT . "/inc/includes.php");
-
-use GlpiPlugin\Newbase\Common;
 
 // Check authentication
 Session::checkLoginUser();

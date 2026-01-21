@@ -39,8 +39,12 @@
     },
     "autoload": {
         "psr-4": {
-            "GlpiPlugin\\Newbase\\": "src/"
-        }
+            "GlpiPlugin\\Newbase\\Src\\": "src/"
+        },
+        "classmap": [
+            "src/LegacyAliases.php",
+            "src/GlobalAliases.php"
+        ]
     },
     "config": {
         "optimize-autoloader": true,

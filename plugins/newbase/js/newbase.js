@@ -1,12 +1,12 @@
 /**
- * Main JavaScript file for Newbase Plugin
- *
- * @package   PluginNewbase
- * @author    João Lucas
- * @copyright Copyright (c) 2025 João Lucas
- * @license   GPLv2+
- * @since     2.0.0
- */
+* Main JavaScript file for Newbase Plugin
+* @package   PluginNewbase
+* @author    João Lucas
+* @copyright Copyright (c) 2026 João Lucas
+* @license   GPLv2+
+* @since     2.0.0
+*/
+
 
 (function($) {
     'use strict';

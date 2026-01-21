@@ -1,17 +1,15 @@
 <?php
 /**
-* CompanyData Class - Gerencia informações da empresa para o Plugin Newbase
-* @package   Newbase
+* CompanyData Class - Company Management
+* @package   PluginNewbase
 * @author    João Lucas
-* @copyright 2026 By João Lucas
+* @copyright 2026 João Lucas
 * @license   GPLv2+
 * @version   2.0.0
 */
-
 declare(strict_types=1);
 
 namespace GlpiPlugin\Newbase\Src;
-
 use GlpiPlugin\Newbase\Src\Common;
 use GlpiPlugin\Newbase\Src\Address;
 use GlpiPlugin\Newbase\Src\System;
@@ -20,9 +18,7 @@ use Html;
 use Entity;
 
 /**
-* CompanyData - Gerencia informações da empresa
-* Lidar com operações CRUD para empresas com validação de CNPJ,
-* integração API, e gerenciamento de relacionamentos
+* CompanyData - Manage company information
 */
 class CompanyData extends Common
 {
@@ -45,7 +41,7 @@ class CompanyData extends Common
     * @param int $nb Número de itens
     * @return string Nome do tipo
     */
-    public static function getTypeName($nb = 0)
+    public static function getTypeName($nb = 0): string
     {
         return $nb > 1 ? __('Companies', 'newbase') : __('Company', 'newbase');
     }
@@ -55,7 +51,7 @@ class CompanyData extends Common
     * @param string $classname Nome da Classe (opcional)
     * @return string Nome da tabela
     */
-    public static function getTable($classname = null)
+    public static function getTable($classname = null): string
     {
         return 'glpi_plugin_newbase_companydata';
     }
@@ -64,7 +60,7 @@ class CompanyData extends Common
     * Obtenha o ícone para menus
     * @return string Classe de ícones do Font Awesome
     */
-    public static function getIcon()
+    public static function getIcon(): string
     {
         return 'fas fa-building';
     }
@@ -169,7 +165,7 @@ class CompanyData extends Common
     * @param array $options Opções adicionais
     * @return bool Succeso
     */
-    public function showForm($ID, array $options = [])
+    public function showForm($ID, array $options = []): bool
     {
         // Verificar permissões
         if (!$this->canView()) {
@@ -280,23 +276,25 @@ class CompanyData extends Common
 
                 // Call AJAX
                 $.ajax({
-                    url: '" . $this->getFormURL() . "',
+                    url: CFG_GLPI['root_doc'] + '/plugins/newbase/ajax/searchCompany.php',
                     type: 'POST',
                     data: {
-                        action: 'search_cnpj',
-                        cnpj: cnpj
+                        cnpj: cnpj,
+                        '_token': '" . Session::getNewCSRFToken() . "'
                     },
-                    success: function(data) {
-                        if (data.success) {
-                            $('#corporate_name_field').val(data.data.legal_name);
-                            $('#fantasy_name_field').val(data.data.fantasy_name);
-                            alert('" . __('Company data found!', 'newbase') . "');
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.success) {
+                            $('#corporate_name_field').val(response.data.legal_name);
+                            $('#fantasy_name_field').val(response.data.fantasy_name);
+                            alert(response.message);
                         } else {
-                            alert('" . __('Company not found', 'newbase') . "');
+                            alert(response.message);
                         }
                     },
-                    error: function() {
+                    error: function(xhr, status, error) {
                         alert('" . __('Error searching CNPJ', 'newbase') . "');
+                        console.error('AJAX Error:', error);
                     },
                     complete: function() {
                         $('#search_cnpj').prop('disabled', false).html('<i class=\"fas fa-search\"></i> " . __('Search', 'newbase') . "');
@@ -509,7 +507,7 @@ class CompanyData extends Common
      * @param array $params Request parameters
      * @return void
      */
-    public static function handleAjax($params)
+    public static function handleAjax($params): void
     {
         header('Content-Type: application/json');
 
@@ -556,3 +554,4 @@ class CompanyData extends Common
         }
     }
 }
+

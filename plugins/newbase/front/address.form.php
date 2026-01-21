@@ -1,20 +1,18 @@
 <?php
-
 /**
- * Address Form - Newbase Plugin
- *
- * @package   PluginNewbase
- * @author    João Lucas
- * @license   GPLv2+
- * @since     2.0.0
- */
-
+* Address Form - Newbase Plugin
+* @package   PluginNewbase
+* @author    João Lucas
+* @copyright Copyright (c) 2026 João Lucas
+* @license   GPLv2+
+* @since     2.0.0
+*/
 declare(strict_types=1);
-
-require_once __DIR__ . '/../../../inc/includes.php';
 
 use GlpiPlugin\Newbase\Address;
 use GlpiPlugin\Newbase\CompanyData;
+
+include('../../../inc/includes.php');
 
 global $CFG_GLPI, $DB;
 

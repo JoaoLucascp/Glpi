@@ -99,8 +99,9 @@ Plugins
         ├── Address.php
         ├── Common.php
         ├── CompanyData.php
-        ├── CompanyData.php.backup_20260108082626
         ├── Config.php
+        ├── GlobalAliases.php
+        ├── LegacyAliases.php
         ├── Menu.php
         ├── System.php
         ├── Task.php
@@ -132,7 +133,7 @@ Plugins
     └── VERSION
 
 
-Exemplo de Ativação no GLPI:**
+Exemplo de Ativação no GLPI:
 
 1. Acesse: http://glpi.test/public
 2. login como administrador (Login: glpi, Senha: glpi)

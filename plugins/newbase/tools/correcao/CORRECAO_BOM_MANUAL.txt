@@ -33,8 +33,7 @@
 ║                                                                               ║
 ║  Arquivos criados:                                                            ║
 ║  1. REMOVER_BOM.ps1                ← Script PowerShell                        ║
-║  2. EXECUTAR_REMOVER_BOM.bat       ← Execute este! (duplo clique)            ║
-║  3. CORRECAO_BOM_MANUAL.md         ← Guia completo (este arquivo)            ║
+║  2. CORRECAO_BOM_MANUAL.md         ← Guia completo (este arquivo)            ║
 ║                                                                               ║
 ╠═══════════════════════════════════════════════════════════════════════════════╣
 ║                                                                               ║
@@ -42,13 +41,7 @@
 ║  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  ║
 ║                                                                               ║
 ║  PASSO 1: EXECUTAR SCRIPT                                                     ║
-║  ────────────────────────                                                     ║
-║                                                                               ║
-║  Opção A (Mais Fácil):                                                        ║
-║  1. Vá para: D:\laragon\www\glpi\plugins\newbase\                            ║
-║  2. Duplo clique em: EXECUTAR_REMOVER_BOM.bat                                 ║
-║  3. Aguarde a mensagem de sucesso                                             ║
-║                                                                               ║
+║  ────────────────────────                                                     ║                                                                          ║
 ║  Opção B (PowerShell):                                                        ║
 ║  1. Clique direito em: REMOVER_BOM.ps1                                        ║
 ║  2. "Executar com PowerShell"                                                 ║
