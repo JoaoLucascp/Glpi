@@ -1,14 +1,15 @@
 <?php
 
 /**
- * Newbase Plugin - Installation Hooks (CORRIGIDO)
- *
- * IMPORTANTE: As funções plugin_newbase_install() e plugin_newbase_uninstall()
- * estão declaradas no setup.php. Este arquivo contém apenas funções auxiliares.
- *
- * @version 2.0.0
- * @license GPLv2+
- */
+* Newbase Plugin - Installation Hooks
+* IMPORTANTE: As funções plugin_newbase_install() e plugin_newbase_uninstall()
+* estão declaradas no setup.php. Este arquivo contém apenas funções auxiliares.
+* @package   PluginNewbase
+* @author    João Lucas
+* @copyright 2026 João Lucas
+* @license   GPLv2+
+* @version   2.0.0
+*/
 
 // Prevenir acesso direto
 if (!defined('GLPI_ROOT')) {
@@ -40,7 +41,7 @@ function plugin_newbase_createDirectories()
 
     foreach ($directories as $dir) {
         if (!is_dir($dir)) {
-            if (!mkdir($dir, 0755, true)) {
+            if (!mkdir($dir, 0o755, true)) {
                 return false;
             }
         }

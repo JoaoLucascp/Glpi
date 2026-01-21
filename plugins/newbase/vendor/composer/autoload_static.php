@@ -6,6 +6,10 @@ namespace Composer\Autoload;
 
 class ComposerStaticInit9c805e0428f2a34fed5c26d57fc22662
 {
+    public static $files = array (
+        '9b38cf48e83f5d8f60375221cd213eee' => __DIR__ . '/..' . '/phpstan/phpstan/bootstrap.php',
+    );
+
     public static $prefixLengthsPsr4 = array (
         'G' =>
         array (
@@ -29,7 +33,7 @@ class ComposerStaticInit9c805e0428f2a34fed5c26d57fc22662
         'GlpiPlugin\\Newbase\\CompanyData' => __DIR__ . '/../..' . '/src/LegacyAliases.php',
         'GlpiPlugin\\Newbase\\Config' => __DIR__ . '/../..' . '/src/LegacyAliases.php',
         'GlpiPlugin\\Newbase\\Src\\Address' => __DIR__ . '/../..' . '/src/Address.php',
-        'GlpiPlugin\\Newbase\\Src\\Ajax\\AddressHandler' => __DIR__ . '/../..' . '/src/Ajax/AddressHandler.php',
+        'GlpiPlugin\\Newbase\\Src\\AddressHandler' => __DIR__ . '/../..' . '/src/AddressHandler.php',
         'GlpiPlugin\\Newbase\\Src\\Common' => __DIR__ . '/../..' . '/src/Common.php',
         'GlpiPlugin\\Newbase\\Src\\CompanyData' => __DIR__ . '/../..' . '/src/CompanyData.php',
         'GlpiPlugin\\Newbase\\Src\\Config' => __DIR__ . '/../..' . '/src/Config.php',

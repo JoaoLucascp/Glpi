@@ -1,4 +1,5 @@
 <?php
+
 /**
 * AJAX endpoint for getting map data (tasks with coordinates)
 * @package   PluginNewbase
@@ -41,8 +42,8 @@ try {
     $where = [
         'OR' => [
             ['latitude_start' => ['<>', null]],
-            ['latitude_end' => ['<>', null]]
-        ]
+            ['latitude_end' => ['<>', null]],
+        ],
     ];
 
     if ($company_id > 0) {
@@ -70,26 +71,26 @@ try {
         'SELECT' => [
             'glpi_plugin_newbase_task.*',
             'glpi_plugin_newbase_companydata.name AS company_name',
-            'glpi_users.name AS user_name'
+            'glpi_users.name AS user_name',
         ],
         'FROM' => 'glpi_plugin_newbase_task',
         'LEFT JOIN' => [
             'glpi_plugin_newbase_companydata' => [
                 'ON' => [
                     'glpi_plugin_newbase_task' => 'plugin_newbase_companydata_id',
-                    'glpi_plugin_newbase_companydata' => 'id'
-                ]
+                    'glpi_plugin_newbase_companydata' => 'id',
+                ],
             ],
             'glpi_users' => [
                 'ON' => [
                     'glpi_plugin_newbase_task' => 'assigned_to',
-                    'glpi_users' => 'id'
-                ]
-            ]
+                    'glpi_users' => 'id',
+                ],
+            ],
         ],
         'WHERE' => $where,
         'ORDER' => 'date_start DESC',
-        'LIMIT' => 500 // Safety limit
+        'LIMIT' => 500, // Safety limit
     ]);
 
     $tasks = [];
@@ -105,7 +106,7 @@ try {
             'user_name' => $row['user_name'],
             'date_start' => $row['date_start'],
             'date_end' => $row['date_end'],
-            'mileage' => $row['mileage']
+            'mileage' => $row['mileage'],
         ];
 
         // Add start point marker
@@ -120,7 +121,7 @@ try {
                 'status' => $row['status'],
                 'company' => $row['company_name'],
                 'user' => $row['user_name'],
-                'date' => $row['date_start']
+                'date' => $row['date_start'],
             ];
         }
 
@@ -136,22 +137,22 @@ try {
                 'status' => $row['status'],
                 'company' => $row['company_name'],
                 'user' => $row['user_name'],
-                'date' => $row['date_end'] ?? $row['date_start']
+                'date' => $row['date_end'] ?? $row['date_start'],
             ];
         }
 
         // Add route if both coordinates exist
-        if ($row['latitude_start'] && $row['longitude_start'] &&
-            $row['latitude_end'] && $row['longitude_end']) {
+        if ($row['latitude_start'] && $row['longitude_start']
+            && $row['latitude_end'] && $row['longitude_end']) {
             $task_data['route'] = [
                 'start' => [
                     'lat' => floatval($row['latitude_start']),
-                    'lng' => floatval($row['longitude_start'])
+                    'lng' => floatval($row['longitude_start']),
                 ],
                 'end' => [
                     'lat' => floatval($row['latitude_end']),
-                    'lng' => floatval($row['longitude_end'])
-                ]
+                    'lng' => floatval($row['longitude_end']),
+                ],
             ];
         }
 
@@ -168,7 +169,7 @@ try {
             'north' => max($lats),
             'south' => min($lats),
             'east' => max($lngs),
-            'west' => min($lngs)
+            'west' => min($lngs),
         ];
     }
 
@@ -178,8 +179,8 @@ try {
         'default_zoom' => intval(Config::getConfigValue('map_default_zoom', '13')),
         'default_center' => [
             'lat' => floatval(Config::getConfigValue('map_default_lat', '-23.5505')),
-            'lng' => floatval(Config::getConfigValue('map_default_lng', '-46.6333'))
-        ]
+            'lng' => floatval(Config::getConfigValue('map_default_lng', '-46.6333')),
+        ],
     ];
 
     // Success response
@@ -190,8 +191,8 @@ try {
             'tasks' => $tasks,
             'bounds' => $bounds,
             'config' => $map_config,
-            'count' => count($markers)
-        ]
+            'count' => count($markers),
+        ],
     ]);
 
     Toolbox::logInFile('newbase_plugin', "Map data loaded: " . count($markers) . " markers\n");
@@ -200,7 +201,7 @@ try {
     // Error response
     echo json_encode([
         'success' => false,
-        'message' => __('Server error', 'newbase')
+        'message' => __('Server error', 'newbase'),
     ]);
 
     Toolbox::logInFile('newbase_plugin', "ERROR in mapData.php: " . $e->getMessage() . "\n");

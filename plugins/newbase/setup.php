@@ -1,8 +1,9 @@
 <?php
+
 /**
 * Newbase Plugin Setup
-* @package   Newbase
-*@author    João Lucas
+* @package   PluginNewbase
+* @author    João Lucas
 * @copyright 2026 João Lucas
 * @license   GPLv2+
 * @version   2.0.0
@@ -32,7 +33,8 @@ define('NEWBASE_MAX_GLPI', '10.1.0');
 /**
  * Initialize plugin
  */
-function plugin_init_newbase() {
+function plugin_init_newbase()
+{
     global $PLUGIN_HOOKS;
 
     $PLUGIN_HOOKS['csrf_compliant']['newbase'] = true;
@@ -86,7 +88,8 @@ function plugin_init_newbase() {
 /**
  * Get plugin version
  */
-function plugin_version_newbase(): array {
+function plugin_version_newbase(): array
+{
     return [
         'name'           => __('Newbase - Company Management', 'newbase'),
         'version'        => PLUGIN_NEWBASE_VERSION,
@@ -108,7 +111,8 @@ function plugin_version_newbase(): array {
 /**
  * Check prerequisites
  */
-function plugin_newbase_check_prerequisites(): bool {
+function plugin_newbase_check_prerequisites(): bool
+{
     if (version_compare(PHP_VERSION, '8.1', '<')) {
         echo "This plugin requires PHP >= 8.1";
         return false;
@@ -135,17 +139,20 @@ function plugin_newbase_check_prerequisites(): bool {
 /**
  * Check config
  */
-function plugin_newbase_check_config($verbose = false): bool {
+function plugin_newbase_check_config($verbose = false): bool
+{
     if ($verbose && !defined('GLPI_PRUNE_LOGS')) {
         echo __('Installed / not configured', 'newbase');
     }
+
     return true;
 }
 
 /**
  * Install plugin rights
  */
-function plugin_newbase_install_rights() {
+function plugin_newbase_install_rights()
+{
     global $DB;
 
     $rights = [
@@ -164,9 +171,9 @@ function plugin_newbase_install_rights() {
             // Super-admin has all rights
             if ($profile_data['name'] === 'Super-Admin') {
                 $value = ALLSTANDARDRIGHT;
-            } else if ($profile_data['name'] === 'Admin') {
+            } elseif ($profile_data['name'] === 'Admin') {
                 $value = ALLSTANDARDRIGHT;
-            } else if ($profile_data['name'] === 'Technician') {
+            } elseif ($profile_data['name'] === 'Technician') {
                 $value = READ + CREATE + UPDATE;
             }
 
@@ -182,7 +189,8 @@ function plugin_newbase_install_rights() {
 /**
  * Install plugin
  */
-function plugin_newbase_install(): bool {
+function plugin_newbase_install(): bool
+{
     global $DB;
 
     $migration = new Migration(PLUGIN_NEWBASE_VERSION);
@@ -228,7 +236,8 @@ function plugin_newbase_install(): bool {
 /**
  * Uninstall plugin
  */
-function plugin_newbase_uninstall(): bool {
+function plugin_newbase_uninstall(): bool
+{
     global $DB;
 
     try {

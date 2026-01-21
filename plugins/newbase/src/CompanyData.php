@@ -1,4 +1,5 @@
 <?php
+
 /**
 * CompanyData Class - Company Management
 * @package   PluginNewbase
@@ -10,6 +11,7 @@
 declare(strict_types=1);
 
 namespace GlpiPlugin\Newbase\Src;
+
 use GlpiPlugin\Newbase\Src\Common;
 use GlpiPlugin\Newbase\Src\Address;
 use GlpiPlugin\Newbase\Src\System;
@@ -76,7 +78,7 @@ class CompanyData extends Common
         // Aba principal
         $tab[] = [
             'id'   => 'common',
-            'name' => __('Characteristics')
+            'name' => __('Characteristics'),
         ];
 
         // ID
@@ -86,7 +88,7 @@ class CompanyData extends Common
             'field'         => 'id',
             'name'          => __('ID'),
             'massiveaction' => false,
-            'datatype'      => 'number'
+            'datatype'      => 'number',
         ];
 
         // Nome
@@ -108,7 +110,7 @@ class CompanyData extends Common
             'datatype' => 'string',
         ];
 
-        // Corporate Name (Razão Social)
+        // Razão Social
         $tab[] = [
             'id'       => '4',
             'table'    => $this->getTable(),
@@ -117,7 +119,7 @@ class CompanyData extends Common
             'datatype' => 'string',
         ];
 
-        // Fantasy Name (Nome Fantasia)
+        // Nome Fantasia
         $tab[] = [
             'id'       => '5',
             'table'    => $this->getTable(),
@@ -126,7 +128,7 @@ class CompanyData extends Common
             'datatype' => 'string',
         ];
 
-        // Branch (Filial)
+        // Filial
         $tab[] = [
             'id'       => '6',
             'table'    => $this->getTable(),
@@ -142,7 +144,7 @@ class CompanyData extends Common
             'field'         => 'date_mod',
             'name'          => __('Last update'),
             'datatype'      => 'datetime',
-            'massiveaction' => false
+            'massiveaction' => false,
         ];
 
         // Data de criação
@@ -152,7 +154,70 @@ class CompanyData extends Common
             'field'         => 'date_creation',
             'name'          => __('Creation date'),
             'datatype'      => 'datetime',
-            'massiveaction' => false
+            'massiveaction' => false,
+        ];
+
+        // Website
+        $tab[] = [
+            'id' => '7',
+            'table' => $this->getTable(),
+            'field' => 'website',
+            'name' => __('Website', 'newbase'),
+            'datatype' => 'string',
+        ];
+
+        // Email
+        $tab[] = [
+            'id' => '8',
+            'table' => $this->getTable(),
+            'field' => 'email',
+            'name' => __('Email'),
+            'datatype' => 'email',
+        ];
+
+        // Phone
+        $tab[] = [
+            'id' => '9',
+            'table' => $this->getTable(),
+            'field' => 'phone',
+            'name' => __('Phone'),
+            'datatype' => 'string',
+        ];
+
+        // CEP
+        $tab[] = [
+            'id' => '10',
+            'table' => $this->getTable(),
+            'field' => 'cep',
+            'name' => __('ZIP Code', 'newbase'),
+            'datatype' => 'string',
+        ];
+
+        // Endereço
+        $tab[] = [
+            'id' => '11',
+            'table' => $this->getTable(),
+            'field' => 'address',
+            'name' => __('Address'),
+            'datatype' => 'string',
+        ];
+
+        // City
+        $tab[] = [
+            'id' => '12',
+            'table' => $this->getTable(),
+            'field' => 'city',
+            'name' => __('City'),
+            'datatype' => 'string',
+        ];
+
+        // State
+        $tab[] = [
+            'id' => '13',
+            'table' => $this->getTable(),
+            'field' => 'state',
+            'name' => __('State'),
+            'datatype' => 'string',
         ];
 
         return $tab;
@@ -182,132 +247,103 @@ class CompanyData extends Common
 
         // Iniciar formulário
         $this->showFormHeader($options);
-
         echo "<tr class='tab_bg_1'>";
-
         // Campo Nome
-        echo "<td>" . __('Name') . " <span class='red'>*</span></td>";
+        echo "<td>" . __('Name') . "</td>";
         echo "<td>";
-        echo Html::input('name', [
+        Html::input('name', [
             'value' => $this->fields['name'] ?? '',
             'size'  => 50,
-            'required' => true
         ]);
         echo "</td>";
+        echo "</tr>";
 
         // Campo CNPJ com integração com API
+        echo "<tr class='tab_bg_1'>";
         echo "<td>" . __('CNPJ', 'newbase') . " <span class='red'>*</span></td>";
         echo "<td>";
-        echo Html::input('cnpj', [
+        Html::input('cnpj', [
             'value' => $this->fields['cnpj'] ?? '',
             'size'  => 20,
-            'id'    => 'cnpj_field',
-            'required' => true
+            'required' => true,
         ]);
-        echo " <button type='button' id='search_cnpj' class='btn btn-primary'>";
-        echo "<i class='fas fa-search'></i> " . __('Search', 'newbase');
-        echo "</button>";
         echo "</td>";
+        echo "<tr>";
 
-        echo "</tr>";
-
+        // Razão Social
         echo "<tr class='tab_bg_1'>";
-
-        // Corporate Name (Razão Social)
         echo "<td>" . __('Corporate Name', 'newbase') . "</td>";
         echo "<td>";
-        echo Html::input('corporate_name', [
+        Html::input('corporate_name', [
             'value' => $this->fields['corporate_name'] ?? '',
             'size'  => 50,
-            'id'    => 'corporate_name_field'
         ]);
         echo "</td>";
+        echo "<tr>";
 
-        // Fantasy Name (Nome Fantasia)
+        // Nome Fantasia
+        echo "<tr class='tab_bg_1'>";
         echo "<td>" . __('Fantasy Name', 'newbase') . "</td>";
         echo "<td>";
-        echo Html::input('fantasy_name', [
+        Html::input('fantasy_name', [
             'value' => $this->fields['fantasy_name'] ?? '',
             'size'  => 50,
-            'id'    => 'fantasy_name_field'
         ]);
         echo "</td>";
-
         echo "</tr>";
 
+        // Filial
         echo "<tr class='tab_bg_1'>";
-
-        // Branch (Filial)
-        echo "<td>" . __('Branch', 'newbase') . "</td>";
+        echo "<td>" . __('Filial', 'newbase') . "</td>";
         echo "<td>";
-        echo Html::input('branch', [
-            'value' => $this->fields['branch'] ?? '',
-            'size'  => 30
+        Html::input('filial', [
+            'value' => $this->fields['filial'] ?? '',
+            'size'  => 20,
         ]);
         echo "</td>";
+        echo "</tr>";
 
-        // Entidade (se houver múltiplas entidades)
+        // CEP
+        echo "<tr class='tab_bg_1'>";
+        echo "<td>" . __('ZIP Code', 'newbase') . "</td>";
+        echo "<td>";
+        Html::input('cep', [
+            'value' => $this->fields['cep'] ?? '',
+            'size'  => 15,
+            'placeholder' => '00000-000',
+        ]);
+        echo "<button type='button' onclick='searchByCEP(this) '>buscar</button>";
+        echo "</td>";
+        echo "</tr>";
+
+        // Entidade
+        echo "<tr class='tab_bg_1'>";
         echo "<td>" . __('Entity') . "</td>";
         echo "<td>";
         Entity::dropdown([
-            'entity' => $this->fields['entities_id'] ?? 0]);
+            'entity' => $this->fields['entities_id'] ?? 0,
+        ]);
         echo "</td>";
-
         echo "</tr>";
 
-        // JavaScript para integração com API do CNPJ
-        echo "<script type='text/javascript'>";
-        echo "
-        $(document).ready(function() {
-            // Format CNPJ while typing
-            $('#cnpj_field').mask('00.000.000/0000-00');
-
-            // Search CNPJ button
-            $('#search_cnpj').click(function() {
-                var cnpj = $('#cnpj_field').val().replace(/[^0-9]/g, '');
-
-                if (cnpj.length !== 14) {
-                    alert('" . __('Invalid CNPJ', 'newbase') . "');
-                    return;
-                }
-
-                // Show loading
-                $(this).prop('disabled', true).html('<i class=\"fas fa-spinner fa-spin\"></i> " . __('Searching...', 'newbase') . "');
-
-                // Call AJAX
-                $.ajax({
-                    url: CFG_GLPI['root_doc'] + '/plugins/newbase/ajax/searchCompany.php',
-                    type: 'POST',
-                    data: {
-                        cnpj: cnpj,
-                        '_token': '" . Session::getNewCSRFToken() . "'
-                    },
-                    dataType: 'json',
-                    success: function(response) {
-                        if (response.success) {
-                            $('#corporate_name_field').val(response.data.legal_name);
-                            $('#fantasy_name_field').val(response.data.fantasy_name);
-                            alert(response.message);
-                        } else {
-                            alert(response.message);
-                        }
-                    },
-                    error: function(xhr, status, error) {
-                        alert('" . __('Error searching CNPJ', 'newbase') . "');
-                        console.error('AJAX Error:', error);
-                    },
-                    complete: function() {
-                        $('#search_cnpj').prop('disabled', false).html('<i class=\"fas fa-search\"></i> " . __('Search', 'newbase') . "');
-                    }
-                });
-            });
-        });
-        ";
+        echo "<script>";
+        echo "function searchByCNPJ(input) {";
+        echo "    const cnpj = input.value.replace(/\D/g, '');";
+        echo "    if (cnpj.length === 14) {";
+        echo "        // Chamar AJAX para buscar dados";
+        echo "        fetch('../../../front/companydata.php?action=search_cnpj&cnpj=' + cnpj)";
+        echo "            .then(r => r.json())";
+        echo "            .then(data => {";
+        echo "                document.querySelector('[name=corporate_name]').value = data.corporate_name;";
+        echo "                document.querySelector('[name=fantasy_name]').value = data.fantasy_name;";
+        echo "                document.querySelector('[name=email]').value = data.email;";
+        echo "                document.querySelector('[name=phone]').value = data.phone;";
+        echo "            });";
+        echo "    }";
+        echo "}";
         echo "</script>";
-
         // Fim do Formulário
         $this->showFormButtons($options);
-
         return true;
     }
 
@@ -397,7 +433,7 @@ class CompanyData extends Common
             // Verifique se o CNPJ já existe (excluindo o item atual)
             $existing = $this->find([
                 'cnpj' => $input['cnpj'],
-                'id'   => ['!=', $input['id']]
+                'id'   => ['!=', $input['id']],
             ]);
 
             if (count($existing) > 0) {
@@ -436,7 +472,7 @@ class CompanyData extends Common
             $changes = [
                 0,
                 '',
-                sprintf(__('Company created: %s', 'newbase'), $this->fields['name'])
+                sprintf(__('Company created: %s', 'newbase'), $this->fields['name']),
             ];
             \Log::history(
                 $this->fields['id'],
@@ -544,14 +580,36 @@ class CompanyData extends Common
         if ($data) {
             echo json_encode([
                 'success' => true,
-                'data'    => $data
+                'data'    => $data,
             ]);
         } else {
             echo json_encode([
                 'success' => false,
-                'message' => 'Company not found'
+                'message' => 'Company not found',
             ]);
         }
     }
-}
 
+    /**
+    * Obtenha campos pesquisáveis para integrações externas
+    * @return array Campos pesquisáveis
+    */
+    public static function getSearchableFields()
+    {
+        return [
+            'name'           => __('Name'),
+            'cnpj'           => __('CNPJ', 'newbase'),
+            'corporate_name' => __('Corporate Name', 'newbase'),
+            'fantasy_name'   => __('Fantasy Name', 'newbase'),
+            'email'          => __('Email'),
+            'phone'          => __('Phone'),
+        ];
+    }
+
+    // Buscar dados automaticamente pelo CNPJ
+    public function fetchFromReceitaFederal(string $cnpj)
+    {
+        $url = "https://www.receitafederal.gov.br/api/cnpj/{$cnpj}";
+        // Implementar chamada API e preenchimento automático
+    }
+}

@@ -1,4 +1,5 @@
 <?php
+
 /**
 * Classe de tarefas para o plugin Newbase
 * Gerencia tarefas com geolocalização, rastreamento de status, cálculo de quilometragem e atribuição a usuários
@@ -12,6 +13,7 @@
 declare(strict_types=1);
 
 namespace GlpiPlugin\Newbase\Src;
+
 use GlpiPlugin\Newbase\Src\Common;
 use CommonDBTM;
 use Session;
@@ -57,7 +59,8 @@ class Task extends Common
     }
 
     // Opções de busca
-    public function rawSearchOptions() {
+    public function rawSearchOptions()
+    {
         $tab = [];
 
         // Grupo principal
@@ -69,7 +72,7 @@ class Task extends Common
             'field'         => 'id',
             'name'          => __('ID'),
             'datatype'      => 'number',
-            'massiveaction' => false
+            'massiveaction' => false,
         ];
 
         $tab[2] = [
@@ -79,7 +82,7 @@ class Task extends Common
             'name'          => __('Nome', 'newbase'),
             'datatype'      => 'string',
             'massiveaction' => false,
-            'autocomplete'  => true
+            'autocomplete'  => true,
         ];
 
         $tab[3] = [
@@ -88,7 +91,7 @@ class Task extends Common
             'field'         => 'description',
             'name'          => __('Descrição'),
             'datatype'      => 'text',
-            'massiveaction' => false
+            'massiveaction' => false,
         ];
 
         $tab[4] = [
@@ -97,7 +100,7 @@ class Task extends Common
             'field'         => 'date_start',
             'name'          => __('Data de início', 'newbase'),
             'datatype'      => 'datetime',
-            'massiveaction' => false
+            'massiveaction' => false,
         ];
 
         $tab[5] = [
@@ -106,7 +109,7 @@ class Task extends Common
             'field'         => 'date_end',
             'name'          => __('Data de término', 'newbase'),
             'datatype'      => 'datetime',
-            'massiveaction' => false
+            'massiveaction' => false,
         ];
 
         $tab[6] = [
@@ -115,7 +118,7 @@ class Task extends Common
             'field'         => 'status',
             'name'          => __('Status'),
             'datatype'      => 'string',
-            'massiveaction' => false
+            'massiveaction' => false,
         ];
 
         // Data de Criação
@@ -125,7 +128,7 @@ class Task extends Common
             'field'         => 'date_creation',
             'name'          => __('Data de criação'),
             'datatype'      => 'datetime',
-            'massiveaction' => false
+            'massiveaction' => false,
         ];
 
         // Data de Modificação
@@ -135,7 +138,7 @@ class Task extends Common
             'field'         => 'date_mod',
             'name'          => __('Data de modificação'),
             'datatype'      => 'datetime',
-            'massiveaction' => false
+            'massiveaction' => false,
         ];
 
         // Entidade
@@ -145,7 +148,7 @@ class Task extends Common
             'field'         => 'completename',
             'name'          => __('Entidade'),
             'datatype'      => 'dropdown',
-            'massiveaction' => false
+            'massiveaction' => false,
         ];
 
         // Recursivo
@@ -155,13 +158,14 @@ class Task extends Common
             'field'         => 'is_recursive',
             'name'          => __('Entidades filhas'),
             'datatype'      => 'bool',
-            'massiveaction' => false
+            'massiveaction' => false,
         ];
 
         return $tab;
     }
 
-    public function getDefaultToDisplay() {
+    public function getDefaultToDisplay()
+    {
         return ['id', 'name', 'description', 'date_start', 'date_end', 'status'];
     }
 
@@ -235,7 +239,7 @@ class Task extends Common
             $menu['options']['task'] = [
                 'title' => self::getTypeName(Session::getPluralNumber()),
                 'page'  => '/plugins/newbase/front/task.php',
-                'icon'  => 'ti ti-checklist'
+                'icon'  => 'ti ti-checklist',
             ];
         }
 
@@ -295,12 +299,12 @@ class Task extends Common
             'COUNT' => 'cpt',
             'FROM'  => self::getTable(),
             'WHERE' => [
-                'plugin_newbase_companydata_id' => $id = $item->getID()
-            ]
+                'plugin_newbase_companydata_id' => $id = $item->getID(),
+            ],
         ]);
 
         $result = $iterator->current();
-        return (int)($result['cpt'] ?? 0);
+        return (int) ($result['cpt'] ?? 0);
     }
 
     /**
@@ -332,12 +336,12 @@ class Task extends Common
                 'glpi_users' => [
                     'ON' => [
                         self::getTable() => 'assigned_to',
-                        'glpi_users' => 'id'
-                    ]
-                ]
+                        'glpi_users' => 'id',
+                    ],
+                ],
             ],
             'WHERE' => ['plugin_newbase_companydata_id' => $company_id],
-            'ORDER' => 'date_start DESC'
+            'ORDER' => 'date_start DESC',
         ]);
 
         if (count($iterator)) {
@@ -374,7 +378,7 @@ class Task extends Common
                 echo "<td>" . ($data['username'] ?? '-') . "</td>";
                 echo "<td>" . Html::convDateTime($data['date_start']) . "</td>";
                 echo "<td>" . ($data['date_end'] ? Html::convDateTime($data['date_end']) : '-') . "</td>";
-                echo "<td>" . ($data['mileage'] ? number_format((float)$data['mileage'], 2, ',', '.') : '-') . "</td>";
+                echo "<td>" . ($data['mileage'] ? number_format((float) $data['mileage'], 2, ',', '.') : '-') . "</td>";
                 echo "<td>";
                 if ($canedit) {
                     echo "<a href='" . $CFG_GLPI['root_doc'] . "/plugins/newbase/front/task.form.php?id=" . $data['id'] . "'>";
@@ -405,7 +409,7 @@ class Task extends Common
             'open' => __('Open', 'newbase'),
             'in_progress' => __('In Progress', 'newbase'),
             'paused' => __('Paused', 'newbase'),
-            'completed' => __('Completed', 'newbase')
+            'completed' => __('Completed', 'newbase'),
         ];
     }
 
@@ -432,7 +436,7 @@ class Task extends Common
         CompanyData::dropdown([
             'name' => 'plugin_newbase_companydata_id',
             'value' => $this->fields['plugin_newbase_companydata_id'] ?? $options['plugin_newbase_companydata_id'] ?? 0,
-            'required' => true
+            'required' => true,
         ]);
         echo "</td>";
 
@@ -440,7 +444,7 @@ class Task extends Common
         echo "<td>";
         echo Html::input('title', [
             'value' => $this->fields['title'] ?? '',
-            'required' => true
+            'required' => true,
         ]);
         echo "</td>";
         echo "</tr>";
@@ -449,7 +453,7 @@ class Task extends Common
         echo "<td>" . __('Status', 'newbase') . "</td>";
         echo "<td>";
         Dropdown::showFromArray('status', self::getTaskStatuses(), [
-            'value' => $this->fields['status'] ?? 'open'
+            'value' => $this->fields['status'] ?? 'open',
         ]);
         echo "</td>";
 
@@ -458,7 +462,7 @@ class Task extends Common
         User::dropdown([
             'name' => 'assigned_to',
             'value' => $this->fields['assigned_to'] ?? 0,
-            'right' => 'all'
+            'right' => 'all',
         ]);
         echo "</td>";
         echo "</tr>";
@@ -467,14 +471,14 @@ class Task extends Common
         echo "<td>" . __('Start Date', 'newbase') . "</td>";
         echo "<td>";
         Html::showDateTimeField('date_start', [
-            'value' => $this->fields['date_start'] ?? date('Y-m-d H:i:s')
+            'value' => $this->fields['date_start'] ?? date('Y-m-d H:i:s'),
         ]);
         echo "</td>";
 
         echo "<td>" . __('End Date', 'newbase') . "</td>";
         echo "<td>";
         Html::showDateTimeField('date_end', [
-            'value' => $this->fields['date_end'] ?? ''
+            'value' => $this->fields['date_end'] ?? '',
         ]);
         echo "</td>";
         echo "</tr>";
@@ -486,7 +490,7 @@ class Task extends Common
             'name' => 'description',
             'value' => $this->fields['description'] ?? '',
             'rows' => 5,
-            'cols' => 80
+            'cols' => 80,
         ]);
         echo "</td>";
         echo "</tr>";
@@ -502,7 +506,7 @@ class Task extends Common
         echo Html::input('lat_start', [
             'value' => $this->fields['lat_start'] ?? '',
             'type' => 'number',
-            'step' => '0.00000001'
+            'step' => '0.00000001',
         ]);
         echo "</td>";
         echo "<td>" . __('Start Longitude', 'newbase') . "</td>";
@@ -510,7 +514,7 @@ class Task extends Common
         echo Html::input('lng_start', [
             'value' => $this->fields['lng_start'] ?? '',
             'type' => 'number',
-            'step' => '0.00000001'
+            'step' => '0.00000001',
         ]);
         echo "</td>";
         echo "</tr>";
@@ -521,7 +525,7 @@ class Task extends Common
         echo Html::input('lat_end', [
             'value' => $this->fields['lat_end'] ?? '',
             'type' => 'number',
-            'step' => '0.00000001'
+            'step' => '0.00000001',
         ]);
         echo "</td>";
         echo "<td>" . __('End Longitude', 'newbase') . "</td>";
@@ -529,7 +533,7 @@ class Task extends Common
         echo Html::input('lng_end', [
             'value' => $this->fields['lng_end'] ?? '',
             'type' => 'number',
-            'step' => '0.00000001'
+            'step' => '0.00000001',
         ]);
         echo "</td>";
         echo "</tr>";
@@ -540,7 +544,7 @@ class Task extends Common
         echo Html::input('mileage', [
             'value' => $this->fields['mileage'] ?? '',
             'type' => 'number',
-            'step' => '0.01'
+            'step' => '0.01',
         ]);
         echo "</td>";
         echo "</tr>";
@@ -604,5 +608,3 @@ class Task extends Common
         return $input;
     }
 }
-
-

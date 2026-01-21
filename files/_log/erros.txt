@@ -93,9 +93,7 @@ Plugins
         ├── pt_BR.mo
         ├── pt_BR.po
     └── 📁src
-        └── 📁Ajax
-            ├── .php-cs-fixer.dist.php
-            ├── AddressHandler.php
+        ├── AddressHandler.php
         ├── Address.php
         ├── Common.php
         ├── CompanyData.php

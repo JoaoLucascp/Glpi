@@ -1,4 +1,5 @@
 <?php
+
 /**
 * Address Form - Newbase Plugin
 * @package   PluginNewbase
@@ -21,7 +22,7 @@ Session::checkLoginUser();
 $address = new Address();
 
 if (isset($_POST['add'])) {
-    $company_id = (int)($_POST['plugin_newbase_companydata_id'] ?? 0);
+    $company_id = (int) ($_POST['plugin_newbase_companydata_id'] ?? 0);
 
     if ($company_id <= 0) {
         Session::addMessageAfterRedirect(
@@ -98,7 +99,7 @@ if (isset($_POST['add'])) {
             false,
             'success'
         );
-        $company_id = (int)($_POST['plugin_newbase_companydata_id'] ?? 0);
+        $company_id = (int) ($_POST['plugin_newbase_companydata_id'] ?? 0);
         if ($company_id > 0) {
             Html::redirect($CFG_GLPI['root_doc'] . '/plugins/newbase/front/companydata.form.php?id=' . $company_id);
         }
@@ -120,7 +121,7 @@ if (isset($_POST['add'])) {
             false,
             'success'
         );
-        $company_id = (int)($_POST['plugin_newbase_companydata_id'] ?? 0);
+        $company_id = (int) ($_POST['plugin_newbase_companydata_id'] ?? 0);
         if ($company_id > 0) {
             Html::redirect($CFG_GLPI['root_doc'] . '/plugins/newbase/front/companydata.form.php?id=' . $company_id);
         }
@@ -135,8 +136,8 @@ if (isset($_POST['add'])) {
     }
 }
 
-$id = (int)($_GET['id'] ?? $_POST['id'] ?? 0);
-$company_id = (int)($_GET['plugin_newbase_companydata_id'] ?? $_POST['plugin_newbase_companydata_id'] ?? 0);
+$id = (int) ($_GET['id'] ?? $_POST['id'] ?? 0);
+$company_id = (int) ($_GET['plugin_newbase_companydata_id'] ?? $_POST['plugin_newbase_companydata_id'] ?? 0);
 
 Html::header(
     Address::getTypeName(1),

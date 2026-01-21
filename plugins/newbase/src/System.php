@@ -1,4 +1,5 @@
 <?php
+
 /**
 * System Class - Gerenciamento de sistema para o plugin Newbase
 * @package   PluginNewbase
@@ -93,7 +94,7 @@ class System extends Common
             'ipbx'       => __('IPBX', 'newbase'),
             'ipbx_cloud' => __('IPBX Cloud', 'newbase'),
             'chatbot'    => __('Chatbot', 'newbase'),
-            'landline'   => __('Landline', 'newbase')
+            'landline'   => __('Landline', 'newbase'),
         ];
     }
 
@@ -108,7 +109,7 @@ class System extends Common
         // Aba principal
         $tab[] = [
             'id'   => 'common',
-            'name' => __('Characteristics')
+            'name' => __('Characteristics'),
         ];
 
         // ID
@@ -118,7 +119,7 @@ class System extends Common
             'field'         => 'id',
             'name'          => __('ID'),
             'massiveaction' => false,
-            'datatype'      => 'number'
+            'datatype'      => 'number',
         ];
 
         // Name
@@ -165,7 +166,7 @@ class System extends Common
             'field'         => 'date_mod',
             'name'          => __('Last update'),
             'datatype'      => 'datetime',
-            'massiveaction' => false
+            'massiveaction' => false,
         ];
 
         // Data de criação
@@ -175,7 +176,7 @@ class System extends Common
             'field'         => 'date_creation',
             'name'          => __('Creation date'),
             'datatype'      => 'datetime',
-            'massiveaction' => false
+            'massiveaction' => false,
         ];
 
         return $tab;
@@ -217,7 +218,7 @@ class System extends Common
         echo Html::input('name', [
             'value' => $this->fields['name'] ?? '',
             'size'  => 50,
-            'required' => true
+            'required' => true,
         ]);
         echo "</td>";
 
@@ -228,7 +229,7 @@ class System extends Common
             'name'   => 'companydata_id',
             'value'  => $companydata_id,
             'entity' => $_SESSION['glpiactive_entity'] ?? 0,
-            'required' => true
+            'required' => true,
         ]);
         echo "</td>";
 
@@ -257,7 +258,7 @@ class System extends Common
         Entity::dropdown([
             'name'   => 'entities_id',
             'value'  => $this->fields['entities_id'] ?? 0,
-            'entity' => $_SESSION['glpiactive_entity'] ?? 0
+            'entity' => $_SESSION['glpiactive_entity'] ?? 0,
         ]);
         echo "</td>";
 
@@ -272,7 +273,7 @@ class System extends Common
             'name'  => 'description',
             'value' => $this->fields['description'] ?? '',
             'cols'  => 80,
-            'rows'  => 3
+            'rows'  => 3,
         ]);
         echo "</td>";
 
@@ -289,7 +290,7 @@ class System extends Common
         echo "<td>";
         echo Html::input('pabx_brand', [
             'value' => $this->fields['pabx_brand'] ?? '',
-            'size'  => 30
+            'size'  => 30,
         ]);
         echo "</td>";
 
@@ -297,7 +298,7 @@ class System extends Common
         echo "<td>";
         echo Html::input('pabx_model', [
             'value' => $this->fields['pabx_model'] ?? '',
-            'size'  => 30
+            'size'  => 30,
         ]);
         echo "</td>";
         echo "</tr>";
@@ -308,7 +309,7 @@ class System extends Common
         echo Html::input('pabx_extensions', [
             'value' => $this->fields['pabx_extensions'] ?? '',
             'size'  => 20,
-            'type'  => 'number'
+            'type'  => 'number',
         ]);
         echo "</td>";
         echo "<td></td><td></td>";
@@ -324,7 +325,7 @@ class System extends Common
         echo "<td>";
         echo Html::input('ipbx_ip', [
             'value' => $this->fields['ipbx_ip'] ?? '',
-            'size'  => 20
+            'size'  => 20,
         ]);
         echo "</td>";
 
@@ -333,7 +334,7 @@ class System extends Common
         echo Html::input('ipbx_port', [
             'value' => $this->fields['ipbx_port'] ?? '5060',
             'size'  => 10,
-            'type'  => 'number'
+            'type'  => 'number',
         ]);
         echo "</td>";
         echo "</tr>";
@@ -343,7 +344,7 @@ class System extends Common
         echo "<td>";
         echo Html::input('ipbx_version', [
             'value' => $this->fields['ipbx_version'] ?? '',
-            'size'  => 20
+            'size'  => 20,
         ]);
         echo "</td>";
 
@@ -352,7 +353,7 @@ class System extends Common
         echo Html::input('ipbx_users', [
             'value' => $this->fields['ipbx_users'] ?? '',
             'size'  => 10,
-            'type'  => 'number'
+            'type'  => 'number',
         ]);
         echo "</td>";
         echo "</tr>";
@@ -367,7 +368,7 @@ class System extends Common
         echo "<td>";
         echo Html::input('cloud_url', [
             'value' => $this->fields['cloud_url'] ?? '',
-            'size'  => 50
+            'size'  => 50,
         ]);
         echo "</td>";
 
@@ -375,7 +376,7 @@ class System extends Common
         echo "<td>";
         echo Html::input('cloud_username', [
             'value' => $this->fields['cloud_username'] ?? '',
-            'size'  => 30
+            'size'  => 30,
         ]);
         echo "</td>";
         echo "</tr>";
@@ -386,7 +387,7 @@ class System extends Common
         echo Html::input('cloud_api_token', [
             'value' => $this->fields['cloud_api_token'] ?? '',
             'size'  => 80,
-            'type'  => 'password'
+            'type'  => 'password',
         ]);
         echo "</td>";
         echo "</tr>";
@@ -403,7 +404,7 @@ class System extends Common
             'whatsapp' => 'WhatsApp',
             'telegram' => 'Telegram',
             'messenger' => 'Facebook Messenger',
-            'other' => __('Other', 'newbase')
+            'other' => __('Other', 'newbase'),
         ];
         echo "<select name='chatbot_platform'>";
         echo "<option value=''>-- " . __('Select', 'newbase') . " --</option>";
@@ -418,7 +419,7 @@ class System extends Common
         echo "<td>";
         echo Html::input('chatbot_phone', [
             'value' => $this->fields['chatbot_phone'] ?? '',
-            'size'  => 20
+            'size'  => 20,
         ]);
         echo "</td>";
         echo "</tr>";
@@ -429,7 +430,7 @@ class System extends Common
         echo Html::input('chatbot_api_key', [
             'value' => $this->fields['chatbot_api_key'] ?? '',
             'size'  => 80,
-            'type'  => 'password'
+            'type'  => 'password',
         ]);
         echo "</td>";
         echo "</tr>";
@@ -445,7 +446,7 @@ class System extends Common
         echo Html::input('landline_number', [
             'value' => $this->fields['landline_number'] ?? '',
             'size'  => 20,
-            'id'    => 'landline_number_field'
+            'id'    => 'landline_number_field',
         ]);
         echo "</td>";
 
@@ -453,7 +454,7 @@ class System extends Common
         echo "<td>";
         echo Html::input('landline_operator', [
             'value' => $this->fields['landline_operator'] ?? '',
-            'size'  => 30
+            'size'  => 30,
         ]);
         echo "</td>";
         echo "</tr>";
@@ -687,12 +688,12 @@ class System extends Common
             'FROM'  => self::getTable(),
             'WHERE' => [
                 'companydata_id' => $item->getID(),
-                'is_deleted'     => 0
-            ]
+                'is_deleted'     => 0,
+            ],
         ]);
 
         $result = $iterator->current();
-        return (int)($result['cpt'] ?? 0);
+        return (int) ($result['cpt'] ?? 0);
     }
 
     /**
@@ -721,9 +722,9 @@ class System extends Common
             'FROM'  => self::getTable(),
             'WHERE' => [
                 'companydata_id' => $company_id,
-                'is_deleted'     => 0
+                'is_deleted'     => 0,
             ],
-            'ORDER' => 'name'
+            'ORDER' => 'name',
         ]);
 
         if (count($iterator) === 0) {
@@ -841,4 +842,3 @@ class System extends Common
         return Session::haveRight(self::$rightname, PURGE);
     }
 }
-

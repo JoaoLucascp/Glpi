@@ -1,4 +1,5 @@
 <?php
+
 /**
 * Classe Address - Gerenciamento de Endereços para o Plugin Newbase
 * @package   PluginNewbase
@@ -93,7 +94,7 @@ class Address extends Common
         // Aba principal
         $tab[] = [
             'id'   => 'common',
-            'name' => __('Characteristics')
+            'name' => __('Characteristics'),
         ];
 
         // ID
@@ -103,7 +104,7 @@ class Address extends Common
             'field'         => 'id',
             'name'          => __('ID'),
             'massiveaction' => false,
-            'datatype'      => 'number'
+            'datatype'      => 'number',
         ];
 
         // Nome
@@ -204,7 +205,7 @@ class Address extends Common
             'field'         => 'date_mod',
             'name'          => __('Last update'),
             'datatype'      => 'datetime',
-            'massiveaction' => false
+            'massiveaction' => false,
         ];
 
         // Data de criação
@@ -214,7 +215,7 @@ class Address extends Common
             'field'         => 'date_creation',
             'name'          => __('Creation date'),
             'datatype'      => 'datetime',
-            'massiveaction' => false
+            'massiveaction' => false,
         ];
 
         return $tab;
@@ -256,7 +257,7 @@ class Address extends Common
         echo Html::input('name', [
             'value' => $this->fields['name'] ?? '',
             'size'  => 50,
-            'required' => true
+            'required' => true,
         ]);
         echo "</td>";
 
@@ -267,7 +268,7 @@ class Address extends Common
             'name'   => 'companydata_id',
             'value'  => $companydata_id,
             'entity' => $_SESSION['glpiactive_entity'] ?? 0,
-            'required' => true
+            'required' => true,
         ]);
         echo "</td>";
 
@@ -282,7 +283,7 @@ class Address extends Common
             'value' => $this->fields['cep'] ?? '',
             'size'  => 15,
             'id'    => 'cep_field',
-            'required' => true
+            'required' => true,
         ]);
         echo " <button type='button' id='search_cep' class='btn btn-primary'>";
         echo "<i class='fas fa-search'></i> " . __('Search CEP', 'newbase');
@@ -294,7 +295,7 @@ class Address extends Common
         echo "<td>";
         echo Html::input('number', [
             'value' => $this->fields['number'] ?? '',
-            'size'  => 10
+            'size'  => 10,
         ]);
         echo "</td>";
 
@@ -308,7 +309,7 @@ class Address extends Common
         echo Html::input('street', [
             'value' => $this->fields['street'] ?? '',
             'size'  => 50,
-            'id'    => 'street_field'
+            'id'    => 'street_field',
         ]);
         echo "</td>";
 
@@ -317,7 +318,7 @@ class Address extends Common
         echo "<td>";
         echo Html::input('complement', [
             'value' => $this->fields['complement'] ?? '',
-            'size'  => 30
+            'size'  => 30,
         ]);
         echo "</td>";
 
@@ -331,7 +332,7 @@ class Address extends Common
         echo Html::input('neighborhood', [
             'value' => $this->fields['neighborhood'] ?? '',
             'size'  => 30,
-            'id'    => 'neighborhood_field'
+            'id'    => 'neighborhood_field',
         ]);
         echo "</td>";
 
@@ -341,7 +342,7 @@ class Address extends Common
         echo Html::input('city', [
             'value' => $this->fields['city'] ?? '',
             'size'  => 30,
-            'id'    => 'city_field'
+            'id'    => 'city_field',
         ]);
         echo "</td>";
 
@@ -356,7 +357,7 @@ class Address extends Common
             'value' => $this->fields['state'] ?? '',
             'size'  => 2,
             'id'    => 'state_field',
-            'maxlength' => 2
+            'maxlength' => 2,
         ]);
         echo "</td>";
 
@@ -366,7 +367,7 @@ class Address extends Common
         Entity::dropdown([
             'name'   => 'entities_id',
             'value'  => $this->fields['entities_id'] ?? 0,
-            'entity' => $_SESSION['glpiactive_entity'] ?? 0
+            'entity' => $_SESSION['glpiactive_entity'] ?? 0,
         ]);
         echo "</td>";
 
@@ -381,7 +382,7 @@ class Address extends Common
             'value' => $this->fields['latitude'] ?? '',
             'size'  => 15,
             'id'    => 'latitude_field',
-            'readonly' => true
+            'readonly' => true,
         ]);
         echo "</td>";
 
@@ -392,7 +393,7 @@ class Address extends Common
             'value' => $this->fields['longitude'] ?? '',
             'size'  => 15,
             'id'    => 'longitude_field',
-            'readonly' => true
+            'readonly' => true,
         ]);
         echo "</td>";
 
@@ -658,12 +659,12 @@ class Address extends Common
             'FROM'  => self::getTable(),
             'WHERE' => [
                 'companydata_id' => $item->getID(),
-                'is_deleted'     => 0
-            ]
+                'is_deleted'     => 0,
+            ],
         ]);
 
         $result = $iterator->current();
-        return (int)($result['cpt'] ?? 0);
+        return (int) ($result['cpt'] ?? 0);
     }
 
     /**
@@ -692,9 +693,9 @@ class Address extends Common
             'FROM'  => self::getTable(),
             'WHERE' => [
                 'companydata_id' => $company_id,
-                'is_deleted'     => 0
+                'is_deleted'     => 0,
             ],
-            'ORDER' => 'name'
+            'ORDER' => 'name',
         ]);
 
         if (count($iterator) === 0) {
@@ -754,8 +755,8 @@ class Address extends Common
             // Coordenadas
             echo "<td>";
             if ($data['latitude'] && $data['longitude']) {
-                echo number_format((float)$data['latitude'], 6) . ", ";
-                echo number_format((float)$data['longitude'], 6);
+                echo number_format((float) $data['latitude'], 6) . ", ";
+                echo number_format((float) $data['longitude'], 6);
             } else {
                 echo "-";
             }
@@ -785,4 +786,3 @@ class Address extends Common
         echo "</div>";
     }
 }
-

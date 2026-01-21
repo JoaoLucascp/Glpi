@@ -1,4 +1,5 @@
 <?php
+
 /**
 * Common Class - Base class for all Newbase entities
 * @package   PluginNewbase
@@ -10,6 +11,7 @@
 declare(strict_types=1);
 
 namespace GlpiPlugin\Newbase\Src;
+
 use CommonDBTM;
 use Toolbox;
 use Exception;
@@ -65,7 +67,7 @@ abstract class Common extends CommonDBTM
     */
     public static function getTable($classname = null): string
     {
-        $classname = $classname ?? static::class;
+        $classname ??= static::class;
         $class = explode('\\', $classname);
         $class = end($class);
         return 'glpi_plugin_newbase_' . strtolower($class);
@@ -226,13 +228,13 @@ abstract class Common extends CommonDBTM
 
         // Calculate first check digit
         $firstDigit = self::calculateCNPJCheckDigit(substr($cnpj, 0, 12), 5);
-        if ((int)$cnpj[12] !== $firstDigit) {
+        if ((int) $cnpj[12] !== $firstDigit) {
             return false;
         }
 
         // Calculate second check digit
         $secondDigit = self::calculateCNPJCheckDigit(substr($cnpj, 0, 13), 6);
-        if ((int)$cnpj[13] !== $secondDigit) {
+        if ((int) $cnpj[13] !== $secondDigit) {
             return false;
         }
 
@@ -251,7 +253,7 @@ abstract class Common extends CommonDBTM
         $multiplier = $multiplierStart;
 
         for ($i = 0; $i < strlen($base); $i++) {
-            $sum += (int)$base[$i] * $multiplier;
+            $sum += (int) $base[$i] * $multiplier;
             $multiplier--;
             if ($multiplier < 2) {
                 $multiplier = 9;
@@ -285,8 +287,8 @@ abstract class Common extends CommonDBTM
                 'http' => [
                     'method' => 'GET',
                     'header' => 'User-Agent: GLPI-Newbase/2.0.0',
-                    'timeout' => 10
-                ]
+                    'timeout' => 10,
+                ],
             ];
 
             $context = stream_context_create($options);
@@ -308,7 +310,7 @@ abstract class Common extends CommonDBTM
                 'fantasy_name' => $data['fantasia'] ?? $data['fantasy_name'] ?? '',
                 'cnpj' => $data['cnpj'] ?? $cnpj,
                 'status' => $data['situacao'] ?? '',
-                'opening_date' => $data['data_abertura'] ?? ''
+                'opening_date' => $data['data_abertura'] ?? '',
             ];
 
         } catch (\Exception $e) {
@@ -356,10 +358,9 @@ abstract class Common extends CommonDBTM
         $cep = preg_replace('/[^0-9]/', '', $cep);
 
         if (strlen($cep) === 8) {
-        return substr($cep, 0, 5) . '-' . substr($cep, 5);
+            return substr($cep, 0, 5) . '-' . substr($cep, 5);
         }
 
         return $cep;
     }
 }
-

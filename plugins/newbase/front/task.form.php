@@ -1,4 +1,5 @@
 <?php
+
 /**
 * Task form page for Newbase Plugin
 * @package   PluginNewbase
@@ -27,13 +28,13 @@ if (isset($_POST['add'])) {
     $task->check(-1, CREATE, $_POST);
 
     if (Config::getConfigValue('autocalculatemileage', 1) == 1) {
-        if (!empty($_POST['latitude_start']) && !empty($_POST['longitude_start']) &&
-            !empty($_POST['latitude_end']) && !empty($_POST['longitude_end'])) {
+        if (!empty($_POST['latitude_start']) && !empty($_POST['longitude_start'])
+            && !empty($_POST['latitude_end']) && !empty($_POST['longitude_end'])) {
             $_POST['mileage'] = CommonDBTM::calculateDistance(
-                (float)$_POST['latitude_start'],
-                (float)$_POST['longitude_start'],
-                (float)$_POST['latitude_end'],
-                (float)$_POST['longitude_end']
+                (float) $_POST['latitude_start'],
+                (float) $_POST['longitude_start'],
+                (float) $_POST['latitude_end'],
+                (float) $_POST['longitude_end']
             );
         }
     }
@@ -63,13 +64,13 @@ if (isset($_POST['add'])) {
     $task->check($_POST['id'], UPDATE);
 
     if (Config::getConfigValue('autocalculatemileage', 1) == 1) {
-        if (!empty($_POST['latitude_start']) && !empty($_POST['longitude_start']) &&
-            !empty($_POST['latitude_end']) && !empty($_POST['longitude_end'])) {
+        if (!empty($_POST['latitude_start']) && !empty($_POST['longitude_start'])
+            && !empty($_POST['latitude_end']) && !empty($_POST['longitude_end'])) {
             $_POST['mileage'] = CommonDBTM::calculateDistance(
-                (float)$_POST['latitude_start'],
-                (float)$_POST['longitude_start'],
-                (float)$_POST['latitude_end'],
-                (float)$_POST['longitude_end']
+                (float) $_POST['latitude_start'],
+                (float) $_POST['longitude_start'],
+                (float) $_POST['latitude_end'],
+                (float) $_POST['longitude_end']
             );
         }
     }
@@ -134,8 +135,8 @@ if (isset($_POST['add'])) {
         'task'
     );
 
-    $id = (int)($_GET['id'] ?? 0);
-    $company_id = (int)($_GET['plugin_newbase_companydata_id'] ?? 0);
+    $id = (int) ($_GET['id'] ?? 0);
+    $company_id = (int) ($_GET['plugin_newbase_companydata_id'] ?? 0);
 
     if ($id > 0) {
         $task->getFromDB($id);

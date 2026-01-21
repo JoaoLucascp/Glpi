@@ -1,4 +1,5 @@
 <?php
+
 /**
 * Config Class - Plugin Configuration Management
 * @package   PluginNewbase
@@ -10,6 +11,7 @@
 declare(strict_types=1);
 
 namespace GlpiPlugin\Newbase\Src;
+
 use CommonDBTM;
 use Session;
 use Html;
@@ -90,7 +92,7 @@ class Config extends CommonDBTM
         $iterator = $DB->request([
             'FROM'  => self::getTable(),
             'WHERE' => ['config_key' => $key],
-            'LIMIT' => 1
+            'LIMIT' => 1,
         ]);
 
         if (count($iterator)) {
@@ -115,14 +117,14 @@ class Config extends CommonDBTM
         $key = \Glpi\Toolbox\Sanitizer::sanitize($key);
         $value = is_array($value)
             ? json_encode($value)
-            : \Glpi\Toolbox\Sanitizer::sanitize((string)$value);
+            : \Glpi\Toolbox\Sanitizer::sanitize((string) $value);
 
         try {
             // Check if key exists
             $iterator = $DB->request([
                 'FROM'  => self::getTable(),
                 'WHERE' => ['config_key' => $key],
-                'LIMIT' => 1
+                'LIMIT' => 1,
             ]);
 
             if (count($iterator)) {
@@ -131,7 +133,7 @@ class Config extends CommonDBTM
                     self::getTable(),
                     [
                         'config_value' => $value,
-                        'date_mod' => date('Y-m-d H:i:s')
+                        'date_mod' => date('Y-m-d H:i:s'),
                     ],
                     ['config_key' => $key]
                 );
@@ -142,7 +144,7 @@ class Config extends CommonDBTM
                     [
                         'config_key' => $key,
                         'config_value' => $value,
-                        'date_mod' => date('Y-m-d H:i:s')
+                        'date_mod' => date('Y-m-d H:i:s'),
                     ]
                 );
             }
@@ -209,7 +211,7 @@ class Config extends CommonDBTM
         echo "<td colspan='3'>";
         echo Html::input('cnpj_api_url', [
             'value' => self::getConfigValue('cnpj_api_url', 'https://brasilapi.com.br/api/cnpj/v1/'),
-            'size' => 80
+            'size' => 80,
         ]);
         echo "</td>";
         echo "</tr>";
@@ -220,7 +222,7 @@ class Config extends CommonDBTM
         echo "<td colspan='3'>";
         echo Html::input('cep_api_url', [
             'value' => self::getConfigValue('cep_api_url', 'https://viacep.com.br/ws/'),
-            'size' => 80
+            'size' => 80,
         ]);
         echo "</td>";
         echo "</tr>";
@@ -235,9 +237,9 @@ class Config extends CommonDBTM
         echo "<td>";
         Dropdown::showFromArray('map_provider', [
             'leaflet' => 'Leaflet (OpenStreetMap)',
-            'google' => 'Google Maps'
+            'google' => 'Google Maps',
         ], [
-            'value' => self::getConfigValue('map_provider', 'leaflet')
+            'value' => self::getConfigValue('map_provider', 'leaflet'),
         ]);
         echo "</td>";
 
@@ -245,7 +247,7 @@ class Config extends CommonDBTM
         echo "<td>" . __('Default Map Zoom', 'newbase') . "</td>";
         echo "<td>";
         Dropdown::showFromArray('map_default_zoom', array_combine(range(1, 20), range(1, 20)), [
-            'value' => self::getConfigValue('map_default_zoom', '13')
+            'value' => self::getConfigValue('map_default_zoom', '13'),
         ]);
         echo "</td>";
         echo "</tr>";
@@ -257,7 +259,7 @@ class Config extends CommonDBTM
         echo Html::input('map_default_lat', [
             'value' => self::getConfigValue('map_default_lat', '-23.5505'),
             'type' => 'number',
-            'step' => 'any'
+            'step' => 'any',
         ]);
         echo "</td>";
 
@@ -266,7 +268,7 @@ class Config extends CommonDBTM
         echo Html::input('map_default_lng', [
             'value' => self::getConfigValue('map_default_lng', '-46.6333'),
             'type' => 'number',
-            'step' => 'any'
+            'step' => 'any',
         ]);
         echo "</td>";
         echo "</tr>";
@@ -325,7 +327,7 @@ class Config extends CommonDBTM
             'map_default_lat',
             'map_default_lng',
             'auto_calculate_mileage',
-            'require_signature'
+            'require_signature',
         ];
 
         $success = true;
@@ -417,5 +419,3 @@ class Config extends CommonDBTM
         return self::getConfigValue('cep_api_url', 'https://viacep.com.br/ws/');
     }
 }
-
-

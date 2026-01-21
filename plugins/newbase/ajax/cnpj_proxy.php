@@ -1,4 +1,5 @@
 <?php
+
 /**
 * Proxy para buscar dados de CNPJ
 * Este arquivo resolve o problema de CORS fazendo a requisição do lado do servidor.
@@ -25,7 +26,7 @@ if (empty($_POST['cnpj'])) {
     http_response_code(400);
     echo json_encode([
         'success' => false,
-        'error' => 'CNPJ não informado'
+        'error' => 'CNPJ não informado',
     ]);
     exit;
 }
@@ -36,7 +37,7 @@ if (strlen($cnpj) !== 14) {
     http_response_code(400);
     echo json_encode([
         'success' => false,
-        'error' => 'CNPJ invalido'
+        'error' => 'CNPJ invalido',
     ]);
     exit;
 }
@@ -44,7 +45,8 @@ if (strlen($cnpj) !== 14) {
 /**
  * Busca na API 1: BrasilAPI
  */
-function buscarBrasilAPI($cnpj) {
+function buscarBrasilAPI($cnpj)
+{
     $url = "https://brasilapi.com.br/api/cnpj/v1/{$cnpj}";
 
     $ch = curl_init();
@@ -67,7 +69,8 @@ function buscarBrasilAPI($cnpj) {
 /**
  * Busca na API 2: ReceitaWS (via proxy PHP - resolve CORS)
  */
-function buscarReceitaWS($cnpj) {
+function buscarReceitaWS($cnpj)
+{
     $url = "https://receitaws.com.br/v1/cnpj/{$cnpj}";
 
     $ch = curl_init();
@@ -94,13 +97,14 @@ function buscarReceitaWS($cnpj) {
 /**
  * Mesclar dados de mÃºltiplas APIs
  */
-function mesclarDados($api1, $api2) {
+function mesclarDados($api1, $api2)
+{
     $resultado = [
         'razao_social' => '',
         'nome_fantasia' => '',
         'email' => '',
         'telefone' => '',
-        'fonte' => []
+        'fonte' => [],
     ];
 
     // Prioriza BrasilAPI
@@ -146,7 +150,7 @@ if (!$dadosBrasilAPI && !$dadosReceitaWS) {
     http_response_code(404);
     echo json_encode([
         'success' => false,
-        'error' => 'CNPJ não encontrado em nenhuma API'
+        'error' => 'CNPJ não encontrado em nenhuma API',
     ]);
     exit;
 }
@@ -157,13 +161,12 @@ $resultado = mesclarDados($dadosBrasilAPI, $dadosReceitaWS);
 // Log para debug
 Toolbox::logInFile(
     'newbase_cnpj',
-    "CNPJ: {$cnpj} | Email: " . ($resultado['email'] ?: 'NÃO ENCONTRADO') .
-    " | Fontes: " . implode(', ', $resultado['fonte']) . "\n"
+    "CNPJ: {$cnpj} | Email: " . ($resultado['email'] ?: 'NÃO ENCONTRADO')
+    . " | Fontes: " . implode(', ', $resultado['fonte']) . "\n"
 );
 
 // Retorna resultado
 echo json_encode([
     'success' => true,
-    'data' => $resultado
+    'data' => $resultado,
 ]);
-

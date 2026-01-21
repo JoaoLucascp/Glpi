@@ -1,4 +1,5 @@
 <?php
+
 /**
 * System Form - Newbase Plugin
 * @package   PluginNewbase
@@ -108,8 +109,8 @@ if (isset($_POST['add'])) {
         'system'
     );
 
-    $id = (int)($_GET['id'] ?? 0);
-    $company_id = (int)($_GET['plugin_newbase_companydata_id'] ?? 0);
+    $id = (int) ($_GET['id'] ?? 0);
+    $company_id = (int) ($_GET['plugin_newbase_companydata_id'] ?? 0);
 
     if ($id > 0) {
         $system->getFromDB($id);

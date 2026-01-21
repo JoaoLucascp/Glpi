@@ -1,4 +1,5 @@
 <?php
+
 /**
 * Global Namespace Aliases - Compatibility for GLPI's MassiveAction
 *
@@ -26,37 +27,25 @@ use GlpiPlugin\Newbase\Src\Config as SourceConfig;
 // Create global namespace aliases for GLPI's MassiveAction and other core systems
 
 if (!class_exists('CompanyData')) {
-    class CompanyData extends SourceCompanyData
-    {
-    }
+    class CompanyData extends SourceCompanyData {}
 }
 
 if (!class_exists('Address')) {
-    class Address extends SourceAddress
-    {
-    }
+    class Address extends SourceAddress {}
 }
 
 if (!class_exists('System')) {
-    class System extends SourceSystem
-    {
-    }
+    class System extends SourceSystem {}
 }
 
 if (!class_exists('Task')) {
-    class Task extends SourceTask
-    {
-    }
+    class Task extends SourceTask {}
 }
 
 if (!class_exists('TaskSignature')) {
-    class TaskSignature extends SourceTaskSignature
-    {
-    }
+    class TaskSignature extends SourceTaskSignature {}
 }
 
 if (!class_exists('Config')) {
-    class Config extends SourceConfig
-    {
-    }
+    class Config extends SourceConfig {}
 }

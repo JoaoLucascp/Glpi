@@ -1,4 +1,5 @@
 <?php
+
 /**
  * AJAX endpoint for searching company by CNPJ
 * @package   PluginNewbase
@@ -7,25 +8,18 @@
 * @license   GPLv2+
 * @since     2.0.0
 */
-declare(strict_types=1);
 
 use GlpiPlugin\Newbase\Src\Common;
 
-include('../../../inc/includes.php');
+// Include GLPI
+define('GLPI_ROOT', dirname(__DIR__, 3));
+require_once(GLPI_ROOT . '/inc/includes.php');
 
-// Security check
-if (!defined('GLPI_ROOT')) {
-    define('GLPI_ROOT', dirname(dirname(dirname(dirname(__FILE__)))));
-}
-
-// Check authentication
+// Check if user is logged in
 Session::checkLoginUser();
 
-// Check rights
-Session::checkRight('plugin_newbase_companydata', READ);
-
-// Validate CSRF token
-Session::checkCSRF($_POST);
+// Check permissions - CORREÇÃO PRINCIPAL!
+Session::checkRight('plugin_newbase', READ);
 
 // Set JSON header
 header('Content-Type: application/json; charset=utf-8');
@@ -37,7 +31,7 @@ try {
     if (empty($cnpj)) {
         echo json_encode([
             'success' => false,
-            'message' => __('CNPJ is required', 'newbase')
+            'message' => __('CNPJ is required', 'newbase'),
         ]);
         exit;
     }
@@ -49,7 +43,7 @@ try {
     if (strlen($cnpj) !== 14) {
         echo json_encode([
             'success' => false,
-            'message' => __('Invalid CNPJ length', 'newbase')
+            'message' => __('Invalid CNPJ length', 'newbase'),
         ]);
         exit;
     }
@@ -58,7 +52,7 @@ try {
     if (!Common::validateCNPJ($cnpj)) {
         echo json_encode([
             'success' => false,
-            'message' => __('Invalid CNPJ', 'newbase')
+            'message' => __('Invalid CNPJ', 'newbase'),
         ]);
         exit;
     }
@@ -69,7 +63,7 @@ try {
     if ($companyData === false) {
         echo json_encode([
             'success' => false,
-            'message' => __('Company not found or API error', 'newbase')
+            'message' => __('Company not found or API error', 'newbase'),
         ]);
         Toolbox::logInFile('newbase_plugin', "CNPJ search failed for: $cnpj\n");
         exit;
@@ -82,9 +76,9 @@ try {
             'legal_name' => $companyData['legal_name'] ?? '',
             'fantasy_name' => $companyData['fantasy_name'] ?? '',
             'email' => $companyData['email'] ?? '',
-            'phone' => Common::formatPhone($companyData['phone'] ?? '')
+            'phone' => Common::formatPhone($companyData['phone'] ?? ''),
         ],
-        'message' => __('Company data loaded successfully', 'newbase')
+        'message' => __('Company data loaded successfully', 'newbase'),
     ]);
 
     Toolbox::logInFile('newbase_plugin', "CNPJ search successful for: $cnpj\n");
@@ -93,7 +87,7 @@ try {
     // Error response
     echo json_encode([
         'success' => false,
-        'message' => __('Server error', 'newbase')
+        'message' => __('Server error', 'newbase'),
     ]);
 
     Toolbox::logInFile('newbase_plugin', "ERROR in searchCompany.php: " . $e->getMessage() . "\n");

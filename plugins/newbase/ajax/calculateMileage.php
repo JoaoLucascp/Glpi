@@ -1,4 +1,5 @@
 <?php
+
 /**
 * AJAX endpoint for calculating mileage between two coordinates
 * @package   PluginNewbase
@@ -38,7 +39,7 @@ try {
     if ($lat1 === 0.0 || $lng1 === 0.0 || $lat2 === 0.0 || $lng2 === 0.0) {
         echo json_encode([
             'success' => false,
-            'message' => __('All coordinates are required', 'newbase')
+            'message' => __('All coordinates are required', 'newbase'),
         ]);
         exit;
     }
@@ -47,7 +48,7 @@ try {
     if ($lat1 < -90 || $lat1 > 90 || $lat2 < -90 || $lat2 > 90) {
         echo json_encode([
             'success' => false,
-            'message' => __('Invalid latitude value (must be between -90 and 90)', 'newbase')
+            'message' => __('Invalid latitude value (must be between -90 and 90)', 'newbase'),
         ]);
         exit;
     }
@@ -56,7 +57,7 @@ try {
     if ($lng1 < -180 || $lng1 > 180 || $lng2 < -180 || $lng2 > 180) {
         echo json_encode([
             'success' => false,
-            'message' => __('Invalid longitude value (must be between -180 and 180)', 'newbase')
+            'message' => __('Invalid longitude value (must be between -180 and 180)', 'newbase'),
         ]);
         exit;
     }
@@ -69,7 +70,7 @@ try {
         'success' => true,
         'mileage' => number_format($distance, 2, '.', ''),
         'formatted_mileage' => number_format($distance, 2, ',', '.') . ' km',
-        'message' => __('Mileage calculated successfully', 'newbase')
+        'message' => __('Mileage calculated successfully', 'newbase'),
     ]);
 
     Toolbox::logInFile(
@@ -81,7 +82,7 @@ try {
     // Error response
     echo json_encode([
         'success' => false,
-        'message' => __('Server error', 'newbase')
+        'message' => __('Server error', 'newbase'),
     ]);
 
     Toolbox::logInFile('newbase_plugin', "ERROR in calculateMileage.php: " . $e->getMessage() . "\n");

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Newbase Plugin - Menu Class (Legacy Style for GLPI 10.0.20)
  * Esta classe usa o estilo legado (sem namespace) porque o GLPI 10.0.20
@@ -11,6 +12,7 @@
 declare(strict_types=1);
 
 namespace GlpiPlugin\Newbase\Src;
+
 use CommonDBTM;
 
 if (!defined('GLPI_ROOT')) {
@@ -58,7 +60,7 @@ class PluginNewbaseMenu extends CommonDBTM
                 'links' => [
                     'search' => $CFG_GLPI['root_doc'] . '/plugins/newbase/front/companydata.php',
                     'add' => $CFG_GLPI['root_doc'] . '/plugins/newbase/front/companydata.form.php',
-                ]
+                ],
             ],
             'system' => [
                 'title' => __('Systems', 'newbase'),

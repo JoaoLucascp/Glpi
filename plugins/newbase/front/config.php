@@ -1,4 +1,5 @@
 <?php
+
 /**
 * Configuration page for Newbase Plugin
 * @package   PluginNewbase

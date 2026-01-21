@@ -1,4 +1,5 @@
 <?php
+
 /**
 * Reports page for Newbase Plugin
 * @package   PluginNewbase
@@ -59,7 +60,7 @@ echo "<td>";
 CompanyData::dropdown([
     'name' => 'company_id',
     'value' => $_GET['company_id'] ?? 0,
-    'display_emptychoice' => true
+    'display_emptychoice' => true,
 ]);
 echo "</td>";
 
@@ -69,7 +70,7 @@ User::dropdown([
     'name' => 'user_id',
     'value' => $_GET['user_id'] ?? 0,
     'right' => 'all',
-    'display_emptychoice' => true
+    'display_emptychoice' => true,
 ]);
 echo "</td>";
 echo "</tr>";
@@ -151,10 +152,10 @@ $iterator = $DB->request([
     'SELECT' => [
         'SUM' => 'mileage AS total_mileage',
         'AVG' => 'mileage AS avg_mileage',
-        'COUNT' => 'id AS task_count'
+        'COUNT' => 'id AS task_count',
     ],
     'FROM' => 'glpi_plugin_newbase_task',
-    'WHERE' => $mileage_where
+    'WHERE' => $mileage_where,
 ]);
 
 $mileage_data = $iterator->current();
@@ -167,12 +168,12 @@ echo "</tr>";
 
 echo "<tr class='tab_bg_1'>";
 echo "<td>" . __('Total Mileage', 'newbase') . "</td>";
-echo "<td><b>" . number_format((float)($mileage_data['total_mileage'] ?? 0), 2, ',', '.') . " km</b></td>";
+echo "<td><b>" . number_format((float) ($mileage_data['total_mileage'] ?? 0), 2, ',', '.') . " km</b></td>";
 echo "</tr>";
 
 echo "<tr class='tab_bg_1'>";
 echo "<td>" . __('Average Mileage per Task', 'newbase') . "</td>";
-echo "<td><b>" . number_format((float)($mileage_data['avg_mileage'] ?? 0), 2, ',', '.') . " km</b></td>";
+echo "<td><b>" . number_format((float) ($mileage_data['avg_mileage'] ?? 0), 2, ',', '.') . " km</b></td>";
 echo "</tr>";
 
 echo "<tr class='tab_bg_1'>";
@@ -193,21 +194,21 @@ echo "<h3><i class='fas fa-building'></i> " . __('Tasks by Company', 'newbase') 
 $iterator = $DB->request([
     'SELECT' => [
         'glpi_plugin_newbase_companydata.name AS company_name',
-        'COUNT' => 'glpi_plugin_newbase_task.id AS task_count'
+        'COUNT' => 'glpi_plugin_newbase_task.id AS task_count',
     ],
     'FROM' => 'glpi_plugin_newbase_task',
     'INNER JOIN' => [
         'glpi_plugin_newbase_companydata' => [
             'ON' => [
                 'glpi_plugin_newbase_task' => 'plugin_newbase_companydata_id',
-                'glpi_plugin_newbase_companydata' => 'id'
-            ]
-        ]
+                'glpi_plugin_newbase_companydata' => 'id',
+            ],
+        ],
     ],
     'WHERE' => $where,
     'GROUP' => 'plugin_newbase_companydata_id',
     'ORDER' => 'task_count DESC',
-    'LIMIT' => 10
+    'LIMIT' => 10,
 ]);
 
 if (count($iterator)) {
@@ -240,21 +241,21 @@ echo "<h3><i class='fas fa-users'></i> " . __('Tasks by User', 'newbase') . "</h
 $iterator = $DB->request([
     'SELECT' => [
         'glpi_users.name AS user_name',
-        'COUNT' => 'glpi_plugin_newbase_task.id AS task_count'
+        'COUNT' => 'glpi_plugin_newbase_task.id AS task_count',
     ],
     'FROM' => 'glpi_plugin_newbase_task',
     'INNER JOIN' => [
         'glpi_users' => [
             'ON' => [
                 'glpi_plugin_newbase_task' => 'assigned_to',
-                'glpi_users' => 'id'
-            ]
-        ]
+                'glpi_users' => 'id',
+            ],
+        ],
     ],
     'WHERE' => $where,
     'GROUP' => 'assigned_to',
     'ORDER' => 'task_count DESC',
-    'LIMIT' => 10
+    'LIMIT' => 10,
 ]);
 
 if (count($iterator)) {

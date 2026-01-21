@@ -14,7 +14,7 @@ return array(
     'GlpiPlugin\\Newbase\\CompanyData' => $baseDir . '/src/LegacyAliases.php',
     'GlpiPlugin\\Newbase\\Config' => $baseDir . '/src/LegacyAliases.php',
     'GlpiPlugin\\Newbase\\Src\\Address' => $baseDir . '/src/Address.php',
-    'GlpiPlugin\\Newbase\\Src\\Ajax\\AddressHandler' => $baseDir . '/src/Ajax/AddressHandler.php',
+    'GlpiPlugin\\Newbase\\Src\\AddressHandler' => $baseDir . '/src/AddressHandler.php',
     'GlpiPlugin\\Newbase\\Src\\Common' => $baseDir . '/src/Common.php',
     'GlpiPlugin\\Newbase\\Src\\CompanyData' => $baseDir . '/src/CompanyData.php',
     'GlpiPlugin\\Newbase\\Src\\Config' => $baseDir . '/src/Config.php',

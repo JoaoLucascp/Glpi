@@ -1,4 +1,5 @@
 <?php
+
 /**
 * AJAX endpoint for task actions (pause, resume, complete, etc)
 * @package   PluginNewbase
@@ -13,7 +14,7 @@ use GlpiPlugin\Newbase\Src\Task;
 use GlpiPlugin\Newbase\Src\TaskSignature;
 use GlpiPlugin\Newbase\Src\Config;
 
-include ('../../../inc/includes.php');
+include('../../../inc/includes.php');
 
 // Security check
 if (!defined('GLPI_ROOT')) {
@@ -40,7 +41,7 @@ try {
     if ($task_id <= 0) {
         echo json_encode([
             'success' => false,
-            'message' => __('Task ID is required', 'newbase')
+            'message' => __('Task ID is required', 'newbase'),
         ]);
         exit;
     }
@@ -48,7 +49,7 @@ try {
     if (empty($action)) {
         echo json_encode([
             'success' => false,
-            'message' => __('Action is required', 'newbase')
+            'message' => __('Action is required', 'newbase'),
         ]);
         exit;
     }
@@ -58,7 +59,7 @@ try {
     if (!$task->getFromDB($task_id)) {
         echo json_encode([
             'success' => false,
-            'message' => __('Task not found', 'newbase')
+            'message' => __('Task not found', 'newbase'),
         ]);
         exit;
     }
@@ -67,7 +68,7 @@ try {
     if (!$task->canUpdate()) {
         echo json_encode([
             'success' => false,
-            'message' => __('You do not have permission to update this task', 'newbase')
+            'message' => __('You do not have permission to update this task', 'newbase'),
         ]);
         exit;
     }
@@ -81,7 +82,7 @@ try {
             if ($task->fields['status'] !== 'open') {
                 echo json_encode([
                     'success' => false,
-                    'message' => __('Task must be in Open status to start', 'newbase')
+                    'message' => __('Task must be in Open status to start', 'newbase'),
                 ]);
                 exit;
             }
@@ -94,7 +95,7 @@ try {
             if ($task->fields['status'] !== 'in_progress') {
                 echo json_encode([
                     'success' => false,
-                    'message' => __('Task must be in progress to pause', 'newbase')
+                    'message' => __('Task must be in progress to pause', 'newbase'),
                 ]);
                 exit;
             }
@@ -106,7 +107,7 @@ try {
             if ($task->fields['status'] !== 'paused') {
                 echo json_encode([
                     'success' => false,
-                    'message' => __('Task must be paused to resume', 'newbase')
+                    'message' => __('Task must be paused to resume', 'newbase'),
                 ]);
                 exit;
             }
@@ -118,7 +119,7 @@ try {
             if (!in_array($task->fields['status'], ['open', 'in_progress', 'paused'])) {
                 echo json_encode([
                     'success' => false,
-                    'message' => __('Task cannot be completed from current status', 'newbase')
+                    'message' => __('Task cannot be completed from current status', 'newbase'),
                 ]);
                 exit;
             }
@@ -129,7 +130,7 @@ try {
                 if (!$signature) {
                     echo json_encode([
                         'success' => false,
-                        'message' => __('Signature is required to complete task', 'newbase')
+                        'message' => __('Signature is required to complete task', 'newbase'),
                     ]);
                     exit;
                 }
@@ -144,7 +145,7 @@ try {
             if ($task->fields['status'] !== 'completed') {
                 echo json_encode([
                     'success' => false,
-                    'message' => __('Only completed tasks can be reopened', 'newbase')
+                    'message' => __('Only completed tasks can be reopened', 'newbase'),
                 ]);
                 exit;
             }
@@ -156,7 +157,7 @@ try {
         default:
             echo json_encode([
                 'success' => false,
-                'message' => __('Invalid action', 'newbase')
+                'message' => __('Invalid action', 'newbase'),
             ]);
             exit;
     }
@@ -167,15 +168,15 @@ try {
             'success' => true,
             'message' => $success_message,
             'data' => [
-                'status' => $update_data['status']
-            ]
+                'status' => $update_data['status'],
+            ],
         ]);
 
         Toolbox::logInFile('newbase_plugin', "Task $task_id action '$action' executed successfully\n");
     } else {
         echo json_encode([
             'success' => false,
-            'message' => __('Error updating task', 'newbase')
+            'message' => __('Error updating task', 'newbase'),
         ]);
 
         Toolbox::logInFile('newbase_plugin', "ERROR updating task $task_id with action '$action'\n");
@@ -185,7 +186,7 @@ try {
     // Error response
     echo json_encode([
         'success' => false,
-        'message' => __('Server error', 'newbase')
+        'message' => __('Server error', 'newbase'),
     ]);
 
     Toolbox::logInFile('newbase_plugin', "ERROR in taskActions.php: " . $e->getMessage() . "\n");

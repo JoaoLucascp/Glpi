@@ -1,4 +1,5 @@
 <?php
+
 /**
 * Newbase Plugin - Menu Class (SIMPLIFICADO)
 * @package   PluginNewbase
@@ -9,6 +10,7 @@
 */
 
 namespace GlpiPlugin\Newbase\Src;
+
 use GlpiPlugin\Newbase\Src\Common;
 
 if (!defined('GLPI_ROOT')) {
@@ -53,7 +55,7 @@ class Menu extends Common
                 'links' => [
                     'search' => $CFG_GLPI['root_doc'] . '/plugins/newbase/front/companydata.php',
                     'add' => $CFG_GLPI['root_doc'] . '/plugins/newbase/front/companydata.form.php',
-                ]
+                ],
             ],
             'system' => [
                 'title' => __('Systems', 'newbase'),
@@ -62,7 +64,7 @@ class Menu extends Common
                 'links' => [
                     'search' => $CFG_GLPI['root_doc'] . '/plugins/newbase/front/system.php',
                     'add' => $CFG_GLPI['root_doc'] . '/plugins/newbase/front/system.form.php',
-                ]
+                ],
             ],
             'address' => [
                 'title' => __('Addresses', 'newbase'),
@@ -71,7 +73,7 @@ class Menu extends Common
                 'links' => [
                     'search' => $CFG_GLPI['root_doc'] . '/plugins/newbase/front/address.php',
                     'add' => $CFG_GLPI['root_doc'] . '/plugins/newbase/front/address.form.php',
-                ]
+                ],
             ],
             'task' => [
                 'title' => __('Tasks', 'newbase'),
@@ -80,7 +82,7 @@ class Menu extends Common
                 'links' => [
                     'search' => $CFG_GLPI['root_doc'] . '/plugins/newbase/front/task.php',
                     'add' => $CFG_GLPI['root_doc'] . '/plugins/newbase/front/task.form.php',
-                ]
+                ],
             ],
             'config' => [
                 'title' => __('Configuration', 'newbase'),

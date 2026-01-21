@@ -1,4 +1,5 @@
 <?php
+
 /**
 * Company Data List
 * @package   PluginNewbase

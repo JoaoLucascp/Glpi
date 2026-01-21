@@ -1,4 +1,5 @@
 <?php
+
 /**
 * TaskSignature class
 * Gerencia assinaturas digitais para tarefas com funcionalidade de upload e exibição
@@ -11,6 +12,7 @@
 declare(strict_types=1);
 
 namespace GlpiPlugin\Newbase\Src;
+
 use GlpiPlugin\Newbase\Src\Task;
 use GlpiPlugin\Newbase\Src\Common;
 use Session;
@@ -108,7 +110,7 @@ class TaskSignature extends Common
         $iterator = $DB->request([
             'FROM'  => self::getTable(),
             'WHERE' => ['plugin_newbase_task_id' => $task_id],
-            'LIMIT' => 1
+            'LIMIT' => 1,
         ]);
 
         if (count($iterator)) {
@@ -127,7 +129,7 @@ class TaskSignature extends Common
     {
         global $CFG_GLPI;
 
-        $task_id = (int)$task->getID();
+        $task_id = (int) $task->getID();
         $signature = self::getForTask($task_id);
 
         echo "<div class='spaced'>";
@@ -373,5 +375,3 @@ class TaskSignature extends Common
         );
     }
 }
-
-

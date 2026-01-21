@@ -1,4 +1,5 @@
 <?php
+
 /**
 * Endpoint AJAX para busca de endereço por CEP
 * @package   PluginNewbase
@@ -39,7 +40,7 @@ try {
     // Resposta de erro
     echo json_encode([
         'success' => false,
-        'message' => __('Server error', 'newbase')
+        'message' => __('Server error', 'newbase'),
     ]);
 
     // Manter Toolbox::logInFile por enquanto, conforme estava no arquivo original

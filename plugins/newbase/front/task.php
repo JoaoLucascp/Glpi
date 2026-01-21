@@ -1,4 +1,5 @@
 <?php
+
 /**
 * Task list page for Newbase Plugin
 * @package   PluginNewbase

@@ -1,4 +1,5 @@
 <?php
+
 /**
 * Dashboard page for Newbase Plugin
 * @package   PluginNewbase
@@ -97,25 +98,25 @@ $iterator = $DB->request([
     'SELECT' => [
         'glpi_plugin_newbase_task.*',
         'glpi_plugin_newbase_companydata.name AS company_name',
-        'glpi_users.name AS user_name'
+        'glpi_users.name AS user_name',
     ],
     'FROM' => 'glpi_plugin_newbase_task',
     'LEFT JOIN' => [
         'glpi_plugin_newbase_companydata' => [
             'ON' => [
                 'glpi_plugin_newbase_task' => 'plugin_newbase_companydata_id',
-                'glpi_plugin_newbase_companydata' => 'id'
-            ]
+                'glpi_plugin_newbase_companydata' => 'id',
+            ],
         ],
         'glpi_users' => [
             'ON' => [
                 'glpi_plugin_newbase_task' => 'assigned_to',
-                'glpi_users' => 'id'
-            ]
-        ]
+                'glpi_users' => 'id',
+            ],
+        ],
     ],
     'ORDER' => 'date_creation DESC',
-    'LIMIT' => 10
+    'LIMIT' => 10,
 ]);
 
 if (count($iterator)) {
@@ -135,7 +136,7 @@ if (count($iterator)) {
             'open' => '#FF9800',
             'in_progress' => '#2196F3',
             'paused' => '#9E9E9E',
-            'completed' => '#4CAF50'
+            'completed' => '#4CAF50',
         ];
         $status_color = $status_colors[$row['status']] ?? '#000';
 
@@ -195,8 +196,8 @@ if (Config::isGeolocationEnabled()) {
     $tasks_with_coords = countElementsInTable('glpi_plugin_newbase_task', [
         'OR' => [
             ['latitude_start' => ['<>', null]],
-            ['latitude_end' => ['<>', null]]
-        ]
+            ['latitude_end' => ['<>', null]],
+        ],
     ]);
 
     if ($tasks_with_coords > 0) {

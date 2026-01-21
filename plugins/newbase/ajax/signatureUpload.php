@@ -1,4 +1,5 @@
 <?php
+
 /**
 * AJAX endpoint for uploading digital signature
 * @package   PluginNewbase
@@ -40,7 +41,7 @@ try {
     if ($task_id <= 0) {
         echo json_encode([
             'success' => false,
-            'message' => __('Task ID is required', 'newbase')
+            'message' => __('Task ID is required', 'newbase'),
         ]);
         exit;
     }
@@ -48,7 +49,7 @@ try {
     if (empty($signature_data)) {
         echo json_encode([
             'success' => false,
-            'message' => __('Signature data is required', 'newbase')
+            'message' => __('Signature data is required', 'newbase'),
         ]);
         exit;
     }
@@ -57,7 +58,7 @@ try {
     if (!Config::isSignatureEnabled()) {
         echo json_encode([
             'success' => false,
-            'message' => __('Digital signature feature is disabled', 'newbase')
+            'message' => __('Digital signature feature is disabled', 'newbase'),
         ]);
         exit;
     }
@@ -67,7 +68,7 @@ try {
     if (!$task->getFromDB($task_id)) {
         echo json_encode([
             'success' => false,
-            'message' => __('Task not found', 'newbase')
+            'message' => __('Task not found', 'newbase'),
         ]);
         exit;
     }
@@ -76,7 +77,7 @@ try {
     if (!$task->canUpdate()) {
         echo json_encode([
             'success' => false,
-            'message' => __('You do not have permission to update this task', 'newbase')
+            'message' => __('You do not have permission to update this task', 'newbase'),
         ]);
         exit;
     }
@@ -85,7 +86,7 @@ try {
     if (!preg_match('/^data:image\/(png|jpeg|jpg);base64,/', $signature_data)) {
         echo json_encode([
             'success' => false,
-            'message' => __('Invalid signature format', 'newbase')
+            'message' => __('Invalid signature format', 'newbase'),
         ]);
         exit;
     }
@@ -95,7 +96,7 @@ try {
     if (count($signature_parts) !== 2) {
         echo json_encode([
             'success' => false,
-            'message' => __('Invalid signature format', 'newbase')
+            'message' => __('Invalid signature format', 'newbase'),
         ]);
         exit;
     }
@@ -109,7 +110,7 @@ try {
     if ($image_data === false) {
         echo json_encode([
             'success' => false,
-            'message' => __('Invalid base64 encoding', 'newbase')
+            'message' => __('Invalid base64 encoding', 'newbase'),
         ]);
         exit;
     }
@@ -118,7 +119,7 @@ try {
     if (strlen($image_data) > 2 * 1024 * 1024) {
         echo json_encode([
             'success' => false,
-            'message' => __('Signature file too large (max 2MB)', 'newbase')
+            'message' => __('Signature file too large (max 2MB)', 'newbase'),
         ]);
         exit;
     }
@@ -134,20 +135,20 @@ try {
             'id' => $existing_signature['id'],
             'signature_data' => $image_data,
             'signature_mime' => $mime_type,
-            'signature_filename' => 'signature_task_' . $task_id . '.png'
+            'signature_filename' => 'signature_task_' . $task_id . '.png',
         ]);
 
         if ($result) {
             echo json_encode([
                 'success' => true,
-                'message' => __('Signature updated successfully', 'newbase')
+                'message' => __('Signature updated successfully', 'newbase'),
             ]);
 
             Toolbox::logInFile('newbase_plugin', "Signature updated for task $task_id\n");
         } else {
             echo json_encode([
                 'success' => false,
-                'message' => __('Error updating signature', 'newbase')
+                'message' => __('Error updating signature', 'newbase'),
             ]);
 
             Toolbox::logInFile('newbase_plugin', "ERROR updating signature for task $task_id\n");
@@ -160,20 +161,20 @@ try {
             'signature_mime' => $mime_type,
             'signature_filename' => 'signature_task_' . $task_id . '.png',
             'date_creation' => date('Y-m-d H:i:s'),
-            'created_by' => Session::getLoginUserID()
+            'created_by' => Session::getLoginUserID(),
         ]);
 
         if ($result) {
             echo json_encode([
                 'success' => true,
-                'message' => __('Signature saved successfully', 'newbase')
+                'message' => __('Signature saved successfully', 'newbase'),
             ]);
 
             Toolbox::logInFile('newbase_plugin', "Signature created for task $task_id\n");
         } else {
             echo json_encode([
                 'success' => false,
-                'message' => __('Error saving signature', 'newbase')
+                'message' => __('Error saving signature', 'newbase'),
             ]);
 
             Toolbox::logInFile('newbase_plugin', "ERROR creating signature for task $task_id\n");
@@ -184,7 +185,7 @@ try {
     // Error response
     echo json_encode([
         'success' => false,
-        'message' => __('Server error', 'newbase')
+        'message' => __('Server error', 'newbase'),
     ]);
 
     Toolbox::logInFile('newbase_plugin', "ERROR in signatureUpload.php: " . $e->getMessage() . "\n");
