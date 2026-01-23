@@ -25,7 +25,7 @@ if (!defined('GLPI_ROOT')) {
 Session::checkLoginUser();
 
 // Check rights
-Session::checkRight('plugin_newbase_task', UPDATE);
+Session::checkRight('plugin_newbase', UPDATE);
 
 // Validate CSRF token
 Session::checkCSRF($_POST);
@@ -54,9 +54,14 @@ try {
         exit;
     }
 
-    // Load task
-    $task = new Task();
-    if (!$task->getFromDB($task_id)) {
+    // Load task from database
+    global $DB;
+    $task_result = $DB->request([
+        'FROM' => 'glpi_plugin_newbase_tasks',
+        'WHERE' => ['id' => $task_id]
+    ]);
+
+    if ($task_result->count() === 0) {
         echo json_encode([
             'success' => false,
             'message' => __('Task not found', 'newbase'),
@@ -64,7 +69,10 @@ try {
         exit;
     }
 
-    // Check if user can update this task
+    $task_data = $task_result->current();
+
+    // Verify user has permission to update
+    $task = new Task();
     if (!$task->canUpdate()) {
         echo json_encode([
             'success' => false,
@@ -79,7 +87,7 @@ try {
     // Handle actions
     switch ($action) {
         case 'start':
-            if ($task->fields['status'] !== 'open') {
+            if ($task_data['status'] !== 'open') {
                 echo json_encode([
                     'success' => false,
                     'message' => __('Task must be in Open status to start', 'newbase'),
@@ -92,7 +100,7 @@ try {
             break;
 
         case 'pause':
-            if ($task->fields['status'] !== 'in_progress') {
+            if ($task_data['status'] !== 'in_progress') {
                 echo json_encode([
                     'success' => false,
                     'message' => __('Task must be in progress to pause', 'newbase'),
@@ -104,7 +112,7 @@ try {
             break;
 
         case 'resume':
-            if ($task->fields['status'] !== 'paused') {
+            if ($task_data['status'] !== 'paused') {
                 echo json_encode([
                     'success' => false,
                     'message' => __('Task must be paused to resume', 'newbase'),
@@ -116,7 +124,7 @@ try {
             break;
 
         case 'complete':
-            if (!in_array($task->fields['status'], ['open', 'in_progress', 'paused'])) {
+            if (!in_array($task_data['status'], ['open', 'in_progress', 'paused'])) {
                 echo json_encode([
                     'success' => false,
                     'message' => __('Task cannot be completed from current status', 'newbase'),
@@ -142,7 +150,7 @@ try {
             break;
 
         case 'reopen':
-            if ($task->fields['status'] !== 'completed') {
+            if ($task_data['status'] !== 'completed') {
                 echo json_encode([
                     'success' => false,
                     'message' => __('Only completed tasks can be reopened', 'newbase'),

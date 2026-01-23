@@ -16,9 +16,9 @@ use GlpiPlugin\Newbase\Src\Common;
 use GlpiPlugin\Newbase\Src\CompanyData;
 use CommonGLPI;
 use CommonDBTM;
+use Entity;
 use Html;
 use Session;
-use Entity;
 
 /**
 * Address - Gerencia endereços de empresas com integração de CEP
@@ -230,28 +230,21 @@ class Address extends Common
     */
     public function showForm($ID, array $options = []): bool
     {
+        // Inicializar formulário com permissões e dados
+        $this->initForm($ID, $options);
+
         // Verificar permissões
         if (!$this->canView()) {
             return false;
         }
 
-        // Verificar acesso ao item
-        if ($ID > 0) {
-            $this->check($ID, READ);
-        } else {
-            $this->check(-1, CREATE);
-            $this->getEmpty();
-        }
-
         // Obter companydata_id da URL ou formulário
         $companydata_id = $options['companydata_id'] ?? $_GET['companydata_id'] ?? $this->fields['companydata_id'] ?? 0;
 
-        // Iniciar formulário
+        // Iniciar renderização do formulário
         $this->showFormHeader($options);
 
         echo "<tr class='tab_bg_1'>";
-
-        // Campo Nome
         echo "<td>" . __('Name') . " <span class='red'>*</span></td>";
         echo "<td>";
         echo Html::input('name', [
@@ -260,23 +253,17 @@ class Address extends Common
             'required' => true,
         ]);
         echo "</td>";
-
-        // Dropdown de Empresa
         echo "<td>" . __('Company', 'newbase') . " <span class='red'>*</span></td>";
         echo "<td>";
         CompanyData::dropdown([
             'name'   => 'companydata_id',
             'value'  => $companydata_id,
-            'entity' => $_SESSION['glpiactive_entity'] ?? 0,
             'required' => true,
         ]);
         echo "</td>";
-
         echo "</tr>";
 
         echo "<tr class='tab_bg_1'>";
-
-        // Campo CEP com busca automática
         echo "<td>" . __('ZIP Code', 'newbase') . " <span class='red'>*</span></td>";
         echo "<td>";
         echo Html::input('cep', [
@@ -289,8 +276,6 @@ class Address extends Common
         echo "<i class='fas fa-search'></i> " . __('Search CEP', 'newbase');
         echo "</button>";
         echo "</td>";
-
-        // Número
         echo "<td>" . __('Number', 'newbase') . "</td>";
         echo "<td>";
         echo Html::input('number', [
@@ -298,12 +283,9 @@ class Address extends Common
             'size'  => 10,
         ]);
         echo "</td>";
-
         echo "</tr>";
 
         echo "<tr class='tab_bg_1'>";
-
-        // Rua
         echo "<td>" . __('Street', 'newbase') . "</td>";
         echo "<td>";
         echo Html::input('street', [
@@ -312,8 +294,6 @@ class Address extends Common
             'id'    => 'street_field',
         ]);
         echo "</td>";
-
-        // Complemento
         echo "<td>" . __('Complement', 'newbase') . "</td>";
         echo "<td>";
         echo Html::input('complement', [
@@ -321,12 +301,9 @@ class Address extends Common
             'size'  => 30,
         ]);
         echo "</td>";
-
         echo "</tr>";
 
         echo "<tr class='tab_bg_1'>";
-
-        // Bairro
         echo "<td>" . __('Neighborhood', 'newbase') . "</td>";
         echo "<td>";
         echo Html::input('neighborhood', [
@@ -335,8 +312,6 @@ class Address extends Common
             'id'    => 'neighborhood_field',
         ]);
         echo "</td>";
-
-        // Cidade
         echo "<td>" . __('City', 'newbase') . "</td>";
         echo "<td>";
         echo Html::input('city', [
@@ -345,12 +320,9 @@ class Address extends Common
             'id'    => 'city_field',
         ]);
         echo "</td>";
-
         echo "</tr>";
 
         echo "<tr class='tab_bg_1'>";
-
-        // Estado
         echo "<td>" . __('State', 'newbase') . "</td>";
         echo "<td>";
         echo Html::input('state', [
@@ -360,121 +332,14 @@ class Address extends Common
             'maxlength' => 2,
         ]);
         echo "</td>";
-
-        // Entidade
         echo "<td>" . __('Entity') . "</td>";
         echo "<td>";
         Entity::dropdown([
             'name'   => 'entities_id',
             'value'  => $this->fields['entities_id'] ?? 0,
-            'entity' => $_SESSION['glpiactive_entity'] ?? 0,
         ]);
         echo "</td>";
-
         echo "</tr>";
-
-        echo "<tr class='tab_bg_1'>";
-
-        // Latitude (apenas leitura - preenchimento automático)
-        echo "<td>" . __('Latitude', 'newbase') . "</td>";
-        echo "<td>";
-        echo Html::input('latitude', [
-            'value' => $this->fields['latitude'] ?? '',
-            'size'  => 15,
-            'id'    => 'latitude_field',
-            'readonly' => true,
-        ]);
-        echo "</td>";
-
-        // Longitude (apenas leitura - preenchimento automático)
-        echo "<td>" . __('Longitude', 'newbase') . "</td>";
-        echo "<td>";
-        echo Html::input('longitude', [
-            'value' => $this->fields['longitude'] ?? '',
-            'size'  => 15,
-            'id'    => 'longitude_field',
-            'readonly' => true,
-        ]);
-        echo "</td>";
-
-        echo "</tr>";
-
-        // JavaScript para busca automática de CEP
-        $plugin_root = \Plugin::getWebDir('newbase');
-
-        echo "<script type='text/javascript'>";
-        echo "
-        $(document).ready(function() {
-            // Formatar CEP enquanto digita
-            $('#cep_field').mask('00000-000');
-
-            // Formatar Estado para maiúsculas
-            $('#state_field').on('input', function() {
-                $(this).val($(this).val().toUpperCase());
-            });
-
-            // Botão de busca de CEP
-            $('#search_cep').click(function() {
-                var cep = $('#cep_field').val().replace(/[^0-9]/g, '');
-
-                if (cep.length !== 8) {
-                    alert('" . __('Invalid ZIP Code', 'newbase') . "');
-                    return;
-                }
-
-                // Mostrar carregando
-                var btn = $(this);
-                btn.prop('disabled', true).html('<i class=\"fas fa-spinner fa-spin\"></i> " . __('Searching...', 'newbase') . "');
-
-                // Chamar AJAX
-                $.ajax({
-                    url: '{$plugin_root}/ajax/searchAddress.php',
-                    type: 'POST',
-                    dataType: 'json',
-                    data: {
-                        cep: cep
-                    },
-                    success: function(response) {
-                        if (response.success && response.data) {
-                            var data = response.data;
-
-                            // Preencher campos de endereço
-                            $('#street_field').val(data.street || '');
-                            $('#neighborhood_field').val(data.neighborhood || '');
-                            $('#city_field').val(data.city || '');
-                            $('#state_field').val(data.state || '');
-
-                            // Preencher coordenadas se disponíveis
-                            if (data.latitude && data.longitude) {
-                                $('#latitude_field').val(data.latitude);
-                                $('#longitude_field').val(data.longitude);
-                            }
-
-                            alert('" . __('Address found! Please verify the data.', 'newbase') . "');
-                        } else {
-                            alert(response.message || '" . __('Address not found', 'newbase') . "');
-                        }
-                    },
-                    error: function(xhr, status, error) {
-                        console.error('AJAX Error:', error);
-                        alert('" . __('Error searching ZIP Code', 'newbase') . "');
-                    },
-                    complete: function() {
-                        btn.prop('disabled', false).html('<i class=\"fas fa-search\"></i> " . __('Search CEP', 'newbase') . "');
-                    }
-                });
-            });
-
-            // Busca automática ao sair do campo CEP (opcional)
-            $('#cep_field').blur(function() {
-                var cep = $(this).val().replace(/[^0-9]/g, '');
-                if (cep.length === 8 && !$('#street_field').val()) {
-                    $('#search_cep').click();
-                }
-            });
-        });
-        ";
-        echo "</script>";
 
         // Finalizar formulário
         $this->showFormButtons($options);
@@ -616,7 +481,8 @@ class Address extends Common
     */
     public function getTabNameForItem(CommonGLPI $item, $withtemplate = 0)
     {
-        if ($item instanceof CompanyData) {
+        // Verificar se é uma entidade (empresa) ou CompanyData
+        if ($item instanceof Entity || (is_object($item) && get_class($item) === 'GlpiPlugin\\Newbase\\Src\\CompanyData')) {
             if ($_SESSION['glpishow_count_on_tabs']) {
                 $count = self::countForItem($item);
                 return self::createTabEntry(

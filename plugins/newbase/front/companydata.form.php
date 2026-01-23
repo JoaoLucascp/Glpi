@@ -1,41 +1,130 @@
 <?php
 
 /**
-* Company Data Form - Handles create, update, and delete operations for CompanyData entities
-* @package   PluginNewbase
-* @author    João Lucas
-* @copyright Copyright (c) 2026 João Lucas
-* @license   GPLv2+
-* @since     2.0.0
-*/
+ * Company Data Form - Handles create, update, and update operations for companies
+ * @package   PluginNewbase
+ * @author    João Lucas
+ * @copyright Copyright (c) 2026 João Lucas
+ * @license   GPLv2+
+ * @since     2.1.0
+ */
+
 declare(strict_types=1);
 
 use GlpiPlugin\Newbase\Src\CompanyData;
 
+// SECURITY: Incluir apenas uma vez
 include('../../../inc/includes.php');
 
-Session::checkRight('plugin_newbase', READ);
+// SECURITY: Proteção contra inclusão direta
+if (!defined('GLPI_ROOT')) {
+    die("Sorry. You can't access this file directly");
+}
 
-$company = new CompanyData();
+// SECURITY: Verificação de permissões
+Session::checkRight('entity', READ);
 
-if (isset($_POST['add'])) {
-    $company->check(-1, CREATE, $_POST);
-    $newID = $company->add($_POST);
+// OPERAÇÕES POST (CREATE/UPDATE/DELETE)
+
+if (isset($_POST['save'])) {
+    // SECURITY: Validação CSRF
+    Session::validateCSRF($_POST);
+
+    $entity_id = isset($_POST['entities_id']) ? (int)$_POST['entities_id'] : 0;
+
+    if (isset($_POST['add'])) {
+        // Nova empresa - criar entity primeiro
+        $entity = new Entity();
+        $entity_data = [
+            'name'              => $_POST['name'] ?? '',
+            'email'             => $_POST['email'] ?? '',
+            'phone'             => $_POST['phone'] ?? '',
+            'address1'          => $_POST['address'] ?? '',
+            'postcode'          => $_POST['cep'] ?? '',
+        ];
+
+        if ($entity_data['name']) {
+            $entity_id = $entity->add($entity_data);
+            if (!$entity_id) {
+                Session::addMessageAfterRedirect(
+                    __('Error creating company entity', 'newbase'),
+                    false,
+                    ERROR
+                );
+                Html::back();
+                exit;
+            }
+        }
+    } else {
+        // Atualizar entity
+        if ($entity_id > 0) {
+            $entity = new Entity();
+            $entity_data = [
+                'id'    => $entity_id,
+                'name'  => $_POST['name'] ?? '',
+                'email' => $_POST['email'] ?? '',
+                'phone' => $_POST['phone'] ?? '',
+            ];
+            $entity->update($entity_data);
+        }
+    }
+
+    // Salvar dados complementares
+    if ($entity_id > 0) {
+        $extras = [
+            'cnpj'            => $_POST['cnpj'] ?? '',
+            'corporate_name'  => $_POST['corporate_name'] ?? '',
+            'fantasy_name'    => $_POST['fantasy_name'] ?? '',
+            'cep'             => $_POST['cep'] ?? '',
+            'website'         => $_POST['website'] ?? '',
+            'notes'           => $_POST['notes'] ?? '',
+        ];
+
+        CompanyData::saveCompanyExtras($entity_id, array_filter($extras));
+
+        Session::addMessageAfterRedirect(
+            __('Company successfully saved', 'newbase'),
+            false,
+            INFO
+        );
+    }
+
     Html::back();
 
-} elseif (isset($_POST['update'])) {
-    $company->check($_POST['id'], UPDATE);
-    $company->update($_POST);
-    Html::back();
+} elseif (isset($_POST['delete'])) {
+    // Delete company (soft delete via glpi_entities.is_deleted)
+    Session::validateCSRF($_POST);
 
-} elseif (isset($_POST['purge'])) {
-    $company->check($_POST['id'], PURGE);
-    $company->delete($_POST, 1);
-    $company->redirectToList();
+    $entity_id = isset($_POST['entities_id']) ? (int)$_POST['entities_id'] : 0;
+
+    if ($entity_id > 0) {
+        $entity = new Entity();
+        if ($entity->delete(['id' => $entity_id])) {
+            Session::addMessageAfterRedirect(
+                __('Company successfully deleted', 'newbase'),
+                false,
+                INFO
+            );
+        }
+    }
+
+    Html::redirect(Plugin::getWebDir('newbase') . '/front/companydata.php');
+    exit;
 
 } else {
-    $id = $_GET['id'] ?? 0;
+    // EXIBIR FORMULÁRIO (GET)
 
+    // SECURITY: Validação e sanitização do ID
+    $entity_id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
+
+    if ($entity_id === false || $entity_id === null) {
+        $entity_id = 0;
+    }
+
+    // SECURITY: Validar ID positivo
+    $entity_id = max(0, $entity_id);
+
+    // Renderizar cabeçalho
     Html::header(
         CompanyData::getTypeName(1),
         $_SERVER['PHP_SELF'],
@@ -43,57 +132,8 @@ if (isset($_POST['add'])) {
         CompanyData::class
     );
 
-    $company->display(['id' => $id]);
-
-    // JavaScript para integração com API do CNPJ
-    echo "<script type='text/javascript'>";
-    echo "
-    $(document).ready(function() {
-        // Format CNPJ while typing
-        $('#cnpj_field').mask('00.000.000/0000-00');
-
-        // Search CNPJ button
-        $('#search_cnpj').click(function() {
-            var cnpj = $('#cnpj_field').val().replace(/[^0-9]/g, '');
-
-            if (cnpj.length !== 14) {
-                alert('" . __('Invalid CNPJ', 'newbase') . "');
-                return;
-            }
-
-            // Show loading
-            $(this).prop('disabled', true).html('<i class=\"fas fa-spinner fa-spin\"></i> " . __('Searching...', 'newbase') . "');
-
-            // Call AJAX
-            $.ajax({
-                url: CFG_GLPI['root_doc'] + '/plugins/newbase/ajax/searchCompany.php',
-                type: 'POST',
-                data: {
-                    cnpj: cnpj,
-                    '_token': '" . Session::getNewCSRFToken() . "'
-                },
-                dataType: 'json',
-                success: function(response) {
-                    if (response.success) {
-                        $('#corporate_name_field').val(response.data.legal_name);
-                        $('#fantasy_name_field').val(response.data.fantasy_name);
-                        alert(response.message);
-                    } else {
-                        alert(response.message);
-                    }
-                },
-                error: function(xhr, status, error) {
-                    alert('" . __('Error searching CNPJ', 'newbase') . "');
-                    console.error('AJAX Error:', error);
-                },
-                complete: function() {
-                    $('#search_cnpj').prop('disabled', false).html('<i class=\"fas fa-search\"></i> " . __('Search', 'newbase') . "');
-                }
-            });
-    });
-    });
-    ";
-    echo "</script>";
+    // Exibir formulário
+    CompanyData::showForm($entity_id, []);
 
     Html::footer();
 }

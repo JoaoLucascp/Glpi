@@ -2,7 +2,9 @@
 -- Version: 2.0.0
 -- Compatible with GLPI 10.0.20+
 SET FOREIGN_KEY_CHECKS = 0;
+
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+
 SET time_zone = "+00:00";
 
 -- ┌──────────────────────────────────────────────────────────────────────────────────────────┐
@@ -51,22 +53,23 @@ CREATE TABLE `glpi_plugin_newbase_companydata` (
     `corporate_name` VARCHAR(255) DEFAULT NULL,
     `fantasy_name` VARCHAR(255) DEFAULT NULL,
     `branch` VARCHAR(100) DEFAULT NULL,
+    `email` VARCHAR(255) DEFAULT NULL,
+    `phone` VARCHAR(20) DEFAULT NULL,
+    `cep` VARCHAR(10) DEFAULT NULL,
     `entities_id` INT unsigned NOT NULL DEFAULT '0',
     `is_recursive` TINYINT NOT NULL DEFAULT '0',
     `is_deleted` TINYINT NOT NULL DEFAULT '0',
     `date_creation` TIMESTAMP NULL DEFAULT NULL,
     `date_mod` TIMESTAMP NULL DEFAULT NULL,
-PRIMARY KEY (`id`),
+    PRIMARY KEY (`id`),
     KEY `name` (`name`),
     KEY `cnpj` (`cnpj`),
+    KEY `email` (`email`),
     KEY `entities_id` (`entities_id`),
     KEY `is_deleted` (`is_deleted`),
     KEY `date_mod` (`date_mod`),
-    CONSTRAINT `fk_company_entity`
-    FOREIGN KEY (`entities_id`)
-    REFERENCES `glpi_entities` (`id`)
-    ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
+    CONSTRAINT `fk_company_entity` FOREIGN KEY (`entities_id`) REFERENCES `glpi_entities` (`id`) ON DELETE CASCADE
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
 
 -- Tabela 2: glpi_plugin_newbase_addresses (Endereços)
 -- Esta tabela armazena endereços das empresas.
@@ -106,24 +109,21 @@ CREATE TABLE `glpi_plugin_newbase_addresses` (
     `neighborhood` VARCHAR(100) DEFAULT NULL,
     `city` VARCHAR(100) DEFAULT NULL,
     `state` VARCHAR(2) DEFAULT NULL,
-    `latitude` DECIMAL(10,8) DEFAULT NULL,
-    `longitude` DECIMAL(11,8) DEFAULT NULL,
+    `latitude` DECIMAL(10, 8) DEFAULT NULL,
+    `longitude` DECIMAL(11, 8) DEFAULT NULL,
     `entities_id` INT unsigned NOT NULL DEFAULT '0',
     `is_recursive` TINYINT NOT NULL DEFAULT '0',
     `is_deleted` TINYINT NOT NULL DEFAULT '0',
     `date_creation` TIMESTAMP NULL DEFAULT NULL,
     `date_mod` TIMESTAMP NULL DEFAULT NULL,
-PRIMARY KEY (`id`),
+    PRIMARY KEY (`id`),
     KEY `name` (`name`),
     KEY `companydata_id` (`companydata_id`),
     KEY `cep` (`cep`),
     KEY `entities_id` (`entities_id`),
     KEY `is_deleted` (`is_deleted`),
-    CONSTRAINT `fk_address_company`
-    FOREIGN KEY (`companydata_id`)
-    REFERENCES `glpi_plugin_newbase_companydata` (`id`)
-    ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
+    CONSTRAINT `fk_address_company` FOREIGN KEY (`companydata_id`) REFERENCES `glpi_plugin_newbase_companydata` (`id`) ON DELETE CASCADE
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
 
 -- Tabela 3: glpi_plugin_newbase_systems (Sistemas Telefônicos)
 -- Armazena sistemas telefônicos como PABX, IPBX, Chatbot, etc.
@@ -180,15 +180,9 @@ CREATE TABLE `glpi_plugin_newbase_systems` (
     KEY `system_type` (`system_type`),
     KEY `entities_id` (`entities_id`),
     KEY `is_deleted` (`is_deleted`),
-    CONSTRAINT `fk_system_entity`
-    FOREIGN KEY (`entities_id`)
-    REFERENCES `glpi_entities` (`id`)
-    ON DELETE CASCADE,
-    CONSTRAINT `fk_system_company`
-    FOREIGN KEY (`companydata_id`)
-    REFERENCES `glpi_plugin_newbase_companydata` (`id`)
-    ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
+    CONSTRAINT `fk_system_entity` FOREIGN KEY (`entities_id`) REFERENCES `glpi_entities` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_system_company` FOREIGN KEY (`companydata_id`) REFERENCES `glpi_plugin_newbase_companydata` (`id`) ON DELETE CASCADE
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
 
 -- Tabela 4: glpi_plugin_newbase_tasks (Tarefas)
 -- Armazena tarefas com informações de localização, status, etc.
@@ -217,11 +211,11 @@ CREATE TABLE `glpi_plugin_newbase_tasks` (
     `name` VARCHAR(255) DEFAULT NULL,
     `description` VARCHAR(255),
     `status` VARCHAR(50) DEFAULT 'pending',
-    `start_latitude` DECIMAL(10,8) DEFAULT NULL,
-    `start_longitude` DECIMAL(10,8) DEFAULT NULL,
-    `end_latitude` DECIMAL(10,8) DEFAULT NULL,
-    `end_longitude` DECIMAL(10,8) DEFAULT NULL,
-    `mileage` DECIMAL(10,2) DEFAULT NULL,
+    `start_latitude` DECIMAL(10, 8) DEFAULT NULL,
+    `start_longitude` DECIMAL(10, 8) DEFAULT NULL,
+    `end_latitude` DECIMAL(10, 8) DEFAULT NULL,
+    `end_longitude` DECIMAL(10, 8) DEFAULT NULL,
+    `mileage` DECIMAL(10, 2) DEFAULT NULL,
     `entities_id` INT unsigned NOT NULL DEFAULT '0',
     `companydata_id` INT unsigned NOT NULL DEFAULT '0',
     `address_id` INT unsigned NOT NULL DEFAULT '0',
@@ -233,7 +227,7 @@ CREATE TABLE `glpi_plugin_newbase_tasks` (
     `is_deleted` TINYINT NOT NULL DEFAULT '0',
     `date_creation` TIMESTAMP NULL DEFAULT NULL,
     `date_mod` TIMESTAMP NULL DEFAULT NULL,
-PRIMARY KEY (`id`),
+    PRIMARY KEY (`id`),
     KEY `name` (`name`),
     KEY `companydata_id` (`companydata_id`),
     KEY `address_id` (`address_id`),
@@ -241,23 +235,11 @@ PRIMARY KEY (`id`),
     KEY `status` (`status`),
     KEY `entities_id` (`entities_id`),
     KEY `is_deleted` (`is_deleted`),
-    CONSTRAINT `fk_task_company`
-    FOREIGN KEY (`companydata_id`)
-    REFERENCES `glpi_plugin_newbase_companydata` (`id`)
-    ON DELETE CASCADE,
-    CONSTRAINT `fk_task_entity`
-    FOREIGN KEY (`entities_id`)
-    REFERENCES `glpi_entities` (`id`)
-    ON DELETE CASCADE,
-    CONSTRAINT `fk_task_address`
-    FOREIGN KEY (`address_id`)
-    REFERENCES `glpi_plugin_newbase_addresses` (`id`)
-    ON DELETE CASCADE,
-    CONSTRAINT `fk_task_user`
-    FOREIGN KEY (`users_id`)
-    REFERENCES `glpi_users` (`id`)
-    ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
+    CONSTRAINT `fk_task_company` FOREIGN KEY (`companydata_id`) REFERENCES `glpi_plugin_newbase_companydata` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_task_entity` FOREIGN KEY (`entities_id`) REFERENCES `glpi_entities` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_task_address` FOREIGN KEY (`address_id`) REFERENCES `glpi_plugin_newbase_addresses` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_task_user` FOREIGN KEY (`users_id`) REFERENCES `glpi_users` (`id`) ON DELETE CASCADE
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
 
 -- Tabela 5: glpi_newbase_tasksignatures (Assinaturas)
 -- Armazena assinaturas digitais das tarefas concluídas.
@@ -279,13 +261,10 @@ CREATE TABLE `glpi_plugin_newbase_tasksignatures` (
     `task_id` INT unsigned NOT NULL DEFAULT '0',
     `signature` longblob,
     `date_signed` TIMESTAMP NULL DEFAULT NULL,
-PRIMARY KEY (`id`),
+    PRIMARY KEY (`id`),
     KEY `task_id` (`task_id`),
-    CONSTRAINT `fk_signature_task`
-    FOREIGN KEY (`task_id`)
-    REFERENCES `glpi_plugin_newbase_tasks` (`id`)
-    ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
+    CONSTRAINT `fk_signature_task` FOREIGN KEY (`task_id`) REFERENCES `glpi_plugin_newbase_tasks` (`id`) ON DELETE CASCADE
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
 
 -- Tabela: glpi_plugin_newbase_configs
 DROP TABLE IF EXISTS `glpi_plugin_newbase_configs`;
@@ -294,13 +273,14 @@ CREATE TABLE `glpi_plugin_newbase_configs` (
     `id` INT unsigned NOT NULL AUTO_INCREMENT,
     `name` VARCHAR(255) NOT NULL,
     `value` VARCHAR(255),
-PRIMARY KEY (`id`),
-UNIQUE KEY `name` (`name`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `name` (`name`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC;
 
 -- Inserir configurações padrão
-INSERT INTO `glpi_plugin_newbase_configs` (`name`, `value`) VALUES
-    ('version', '2.0.0'),
+INSERT INTO
+    `glpi_plugin_newbase_configs` (`name`, `value`)
+VALUES ('version', '2.0.0'),
     ('api_timeout', '30'),
     ('enable_geolocation', '1'),
     ('enable_signature', '1');

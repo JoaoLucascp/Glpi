@@ -6,7 +6,7 @@
 * @author    João Lucas
 * @copyright 2026 João Lucas
 * @license   GPLv2+
-* @version   2.0.0
+* @version   2.1.0
 */
 
 declare(strict_types=1);
@@ -25,7 +25,7 @@ use GlpiPlugin\Newbase\Src\TaskSignature;
 use GlpiPlugin\Newbase\Src\Config;
 
 // Define constants
-define('PLUGIN_NEWBASE_VERSION', '2.0.0');
+define('PLUGIN_NEWBASE_VERSION', '2.1.0');
 define('PLUGIN_NEWBASE_DIR', __DIR__);
 define('NEWBASE_MIN_GLPI', '10.0.0');
 define('NEWBASE_MAX_GLPI', '10.1.0');
@@ -52,9 +52,9 @@ function plugin_init_newbase()
         Plugin::registerClass(TaskSignature::class);
         Plugin::registerClass(Config::class);
 
-        // Add to management menu
+        // Add to management menu using PluginNewbaseMenu class
         $PLUGIN_HOOKS['menu_toadd']['newbase'] = [
-            'management' => CompanyData::class,
+            'management' => 'PluginNewbaseMenu',
         ];
 
         $PLUGIN_HOOKS['config_page']['newbase'] = 'front/config.php';
@@ -198,7 +198,7 @@ function plugin_newbase_install(): bool
     // Disable foreign key checks
     $DB->query("SET FOREIGN_KEY_CHECKS = 0");
 
-    $sqlFile = PLUGIN_NEWBASE_DIR . '/install/mysql/2.0.0.sql';
+    $sqlFile = PLUGIN_NEWBASE_DIR . '/install/mysql/2.1.0.sql';
 
     if (!file_exists($sqlFile)) {
         echo "SQL file not found: $sqlFile\n";
@@ -241,37 +241,84 @@ function plugin_newbase_uninstall(): bool
     global $DB;
 
     try {
-        // Disable foreign key checks
+        // Disable foreign key checks to avoid constraint errors
         $DB->query("SET FOREIGN_KEY_CHECKS = 0");
 
         // List of tables in reverse dependency order
+        // Note: glpi_plugin_newbase_companydata was removed in v2.1.0
         $tables = [
-            'glpi_plugin_newbase_tasksignatures',
+            'glpi_plugin_newbase_signatures',
             'glpi_plugin_newbase_tasks',
+            'glpi_plugin_newbase_chatbot',
             'glpi_plugin_newbase_systems',
-            'glpi_plugin_newbase_addresses',
-            'glpi_plugin_newbase_configs',
-            'glpi_plugin_newbase_companydata',
+            'glpi_plugin_newbase_company_extras',
         ];
 
         // Drop each table
         foreach ($tables as $table) {
             if ($DB->tableExists($table)) {
-                $DB->query("DROP TABLE `$table`");
+                try {
+                    $DB->queryOrDie("DROP TABLE IF EXISTS `$table`");
+                } catch (Exception $e) {
+                    Toolbox::logError("Failed to drop table $table: " . $e->getMessage());
+                    // Continue with next table instead of failing completely
+                }
             }
         }
 
         // Re-enable foreign key checks
         $DB->query("SET FOREIGN_KEY_CHECKS = 1");
 
-        // Clean profile rights
-        $DB->query("DELETE FROM `glpi_profilerights` WHERE `name` LIKE 'plugin_newbase%'");
+        // Clean profile rights - only attempt if table exists
+        if ($DB->tableExists('glpi_profilerights')) {
+            try {
+                $DB->queryOrDie("DELETE FROM `glpi_profilerights` WHERE `name` = 'plugin_newbase'");
+            } catch (Exception $e) {
+                Toolbox::logError("Failed to clean profile rights: " . $e->getMessage());
+            }
+        }
 
-        // Clean display preferences
-        $DB->query("DELETE FROM `glpi_displaypreferences` WHERE `itemtype` LIKE '%Newbase%'");
+        // Clean display preferences - only attempt if table exists
+        if ($DB->tableExists('glpi_displaypreferences')) {
+            try {
+                $DB->queryOrDie("DELETE FROM `glpi_displaypreferences` 
+                    WHERE `itemtype` IN ('GlpiPlugin\\Newbase\\Src\\CompanyData',
+                                         'GlpiPlugin\\Newbase\\Src\\Task', 
+                                         'GlpiPlugin\\Newbase\\Src\\System',
+                                         'GlpiPlugin\\Newbase\\Src\\TaskSignature',
+                                         'GlpiPlugin\\Newbase\\CompanyData',
+                                         'GlpiPlugin\\Newbase\\Task',
+                                         'GlpiPlugin\\Newbase\\System',
+                                         'GlpiPlugin\\Newbase\\TaskSignature',
+                                         'CompanyData',
+                                         'Task',
+                                         'System',
+                                         'TaskSignature')");
+            } catch (Exception $e) {
+                Toolbox::logError("Failed to clean display preferences: " . $e->getMessage());
+            }
+        }
 
-        // Clean logs
-        $DB->query("DELETE FROM `glpi_logs` WHERE `itemtype` LIKE '%Newbase%'");
+        // Clean logs - only attempt if table exists
+        if ($DB->tableExists('glpi_logs')) {
+            try {
+                $DB->queryOrDie("DELETE FROM `glpi_logs` 
+                    WHERE `itemtype` IN ('GlpiPlugin\\Newbase\\Src\\CompanyData',
+                                         'GlpiPlugin\\Newbase\\Src\\Task', 
+                                         'GlpiPlugin\\Newbase\\Src\\System',
+                                         'GlpiPlugin\\Newbase\\Src\\TaskSignature',
+                                         'GlpiPlugin\\Newbase\\CompanyData',
+                                         'GlpiPlugin\\Newbase\\Task',
+                                         'GlpiPlugin\\Newbase\\System',
+                                         'GlpiPlugin\\Newbase\\TaskSignature',
+                                         'CompanyData',
+                                         'Task',
+                                         'System',
+                                         'TaskSignature')");
+            } catch (Exception $e) {
+                Toolbox::logError("Failed to clean logs: " . $e->getMessage());
+            }
+        }
 
         return true;
     } catch (Throwable $e) {

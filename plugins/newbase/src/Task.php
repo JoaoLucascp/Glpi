@@ -14,43 +14,26 @@ declare(strict_types=1);
 
 namespace GlpiPlugin\Newbase\Src;
 
-use GlpiPlugin\Newbase\Src\Common;
-use CommonDBTM;
 use Session;
 use Html;
 use Dropdown;
 use User;
 use CommonGLPI;
-use CompanyData;
-use Sanitizer;
+use CommonDBTM;
 
 /**
 * Classe Task - Gerenciamento de tarefas com geolocalização e rastreamento de status
 */
-class Task extends Common
+class Task
 {
-    // Nome correto para permissões
+    /**
+    * Nome do direito no perfil
+    */
     public static $rightname = 'plugin_newbase_task';
 
-    // Ativar histórico
-    public $dohistory = true;
-
     /**
-    * Obter nome da tabela
-    * @param string|null $classname Nome da classe ou nulo para usar a classe atual
-    * @return string
-    */
-    public static function getTable($classname = null): string
-    {
-        if ($classname !== null && $classname !== self::class) {
-            return parent::getTable($classname);
-        }
-        return 'glpi_plugin_newbase_task';
-    }
-
-    /**
-    * Obter nome do tipo
-    * @param int $nb Numero do item
+    * Obter nome de tipo
+    * @param int $nb Número
     * @return string
     */
     public static function getTypeName($nb = 0): string
@@ -68,7 +51,7 @@ class Task extends Common
 
         $tab[1] = [
             'id'            => 1,
-            'table'         => $this->getTable(),
+            'table'         => 'glpi_plugin_newbase_tasks',
             'field'         => 'id',
             'name'          => __('ID'),
             'datatype'      => 'number',
@@ -77,7 +60,7 @@ class Task extends Common
 
         $tab[2] = [
             'id'            => 2,
-            'table'         => $this->getTable(),
+            'table'         => 'glpi_plugin_newbase_tasks',
             'field'         => 'name',
             'name'          => __('Nome', 'newbase'),
             'datatype'      => 'string',
@@ -87,7 +70,7 @@ class Task extends Common
 
         $tab[3] = [
             'id'            => 3,
-            'table'         => $this->getTable(),
+            'table'         => 'glpi_plugin_newbase_tasks',
             'field'         => 'description',
             'name'          => __('Descrição'),
             'datatype'      => 'text',
@@ -96,7 +79,7 @@ class Task extends Common
 
         $tab[4] = [
             'id'            => 4,
-            'table'         => $this->getTable(),
+            'table'         => 'glpi_plugin_newbase_tasks',
             'field'         => 'date_start',
             'name'          => __('Data de início', 'newbase'),
             'datatype'      => 'datetime',
@@ -105,7 +88,7 @@ class Task extends Common
 
         $tab[5] = [
             'id'            => 5,
-            'table'         => $this->getTable(),
+            'table'         => 'glpi_plugin_newbase_tasks',
             'field'         => 'date_end',
             'name'          => __('Data de término', 'newbase'),
             'datatype'      => 'datetime',
@@ -114,7 +97,7 @@ class Task extends Common
 
         $tab[6] = [
             'id'            => 6,
-            'table'         => $this->getTable(),
+            'table'         => 'glpi_plugin_newbase_tasks',
             'field'         => 'status',
             'name'          => __('Status'),
             'datatype'      => 'string',
@@ -124,7 +107,7 @@ class Task extends Common
         // Data de Criação
         $tab[11] = [
             'id'            => 11,
-            'table'         => $this->getTable(),
+            'table'         => 'glpi_plugin_newbase_tasks',
             'field'         => 'date_creation',
             'name'          => __('Data de criação'),
             'datatype'      => 'datetime',
@@ -134,7 +117,7 @@ class Task extends Common
         // Data de Modificação
         $tab[12] = [
             'id'            => 12,
-            'table'         => $this->getTable(),
+            'table'         => 'glpi_plugin_newbase_tasks',
             'field'         => 'date_mod',
             'name'          => __('Data de modificação'),
             'datatype'      => 'datetime',
@@ -154,7 +137,7 @@ class Task extends Common
         // Recursivo
         $tab[86] = [
             'id'            => 86,
-            'table'         => $this->getTable(),
+            'table'         => 'glpi_plugin_newbase_tasks',
             'field'         => 'is_recursive',
             'name'          => __('Entidades filhas'),
             'datatype'      => 'bool',
@@ -215,7 +198,7 @@ class Task extends Common
     }
 
     /**
-    * Verificar se o usuário pode excluir o item
+    * Verificar se o usuário pode purgar o item
     * @return bool
     */
     public static function canPurge(): bool
@@ -288,7 +271,7 @@ class Task extends Common
 
     /**
     * Contabilizar tarefas para uma empresa
-    * @param CommonGLPI $item Item da empresa
+    * @param CommonDBTM $item Item da empresa
     * @return int
     */
     public static function countForItem(CommonDBTM $item): int
@@ -299,7 +282,7 @@ class Task extends Common
             'COUNT' => 'cpt',
             'FROM'  => self::getTable(),
             'WHERE' => [
-                'plugin_newbase_companydata_id' => $id = $item->getID(),
+                'plugin_newbase_companydata_id' => $item->getID(),
             ],
         ]);
 
@@ -421,13 +404,15 @@ class Task extends Common
     */
     public function showForm($ID, array $options = []): bool
     {
-        global $CFG_GLPI;
+        // Inicializar formulário com permissões e dados
+        $this->initForm($ID, $options);
 
+        // Verificar permissões
         if (!$this->canView()) {
             return false;
         }
 
-        $this->initForm($ID, $options);
+        // Iniciar renderização do formulário
         $this->showFormHeader($options);
 
         echo "<tr class='tab_bg_1'>";
@@ -439,7 +424,6 @@ class Task extends Common
             'required' => true,
         ]);
         echo "</td>";
-
         echo "<td>" . __('Title', 'newbase') . " <span class='required'>*</span></td>";
         echo "<td>";
         echo Html::input('title', [
@@ -456,29 +440,12 @@ class Task extends Common
             'value' => $this->fields['status'] ?? 'open',
         ]);
         echo "</td>";
-
         echo "<td>" . __('Assigned to', 'newbase') . "</td>";
         echo "<td>";
         User::dropdown([
             'name' => 'assigned_to',
             'value' => $this->fields['assigned_to'] ?? 0,
             'right' => 'all',
-        ]);
-        echo "</td>";
-        echo "</tr>";
-
-        echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __('Start Date', 'newbase') . "</td>";
-        echo "<td>";
-        Html::showDateTimeField('date_start', [
-            'value' => $this->fields['date_start'] ?? date('Y-m-d H:i:s'),
-        ]);
-        echo "</td>";
-
-        echo "<td>" . __('End Date', 'newbase') . "</td>";
-        echo "<td>";
-        Html::showDateTimeField('date_end', [
-            'value' => $this->fields['date_end'] ?? '',
         ]);
         echo "</td>";
         echo "</tr>";
@@ -495,60 +462,7 @@ class Task extends Common
         echo "</td>";
         echo "</tr>";
 
-        // Seção de geolocalização
-        echo "<tr class='tab_bg_2'>";
-        echo "<th colspan='4'>" . __('Geolocation', 'newbase') . "</th>";
-        echo "</tr>";
-
-        echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __('Start Latitude', 'newbase') . "</td>";
-        echo "<td>";
-        echo Html::input('lat_start', [
-            'value' => $this->fields['lat_start'] ?? '',
-            'type' => 'number',
-            'step' => '0.00000001',
-        ]);
-        echo "</td>";
-        echo "<td>" . __('Start Longitude', 'newbase') . "</td>";
-        echo "<td>";
-        echo Html::input('lng_start', [
-            'value' => $this->fields['lng_start'] ?? '',
-            'type' => 'number',
-            'step' => '0.00000001',
-        ]);
-        echo "</td>";
-        echo "</tr>";
-
-        echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __('End Latitude', 'newbase') . "</td>";
-        echo "<td>";
-        echo Html::input('lat_end', [
-            'value' => $this->fields['lat_end'] ?? '',
-            'type' => 'number',
-            'step' => '0.00000001',
-        ]);
-        echo "</td>";
-        echo "<td>" . __('End Longitude', 'newbase') . "</td>";
-        echo "<td>";
-        echo Html::input('lng_end', [
-            'value' => $this->fields['lng_end'] ?? '',
-            'type' => 'number',
-            'step' => '0.00000001',
-        ]);
-        echo "</td>";
-        echo "</tr>";
-
-        echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __('Mileage (km)', 'newbase') . "</td>";
-        echo "<td colspan='3'>";
-        echo Html::input('mileage', [
-            'value' => $this->fields['mileage'] ?? '',
-            'type' => 'number',
-            'step' => '0.01',
-        ]);
-        echo "</td>";
-        echo "</tr>";
-
+        // Finalizar formulário
         $this->showFormButtons($options);
 
         return true;
@@ -583,7 +497,8 @@ class Task extends Common
     {
         foreach ($input as $key => $value) {
             if (is_string($value)) {
-                $input[$key] = Sanitizer::unsanitize($value);
+                // Use GLPI's built-in sanitization
+                $input[$key] = htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
             }
         }
 

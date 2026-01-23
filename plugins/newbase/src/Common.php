@@ -16,7 +16,7 @@ use CommonDBTM;
 use Toolbox;
 use Exception;
 use Plugin;
-use html;
+use Html;
 
 /**
 * Common - Base class with shared functionality
@@ -321,6 +321,152 @@ abstract class Common extends CommonDBTM
             return false;
         }
     }
+
+    /**
+     * Search for additional company data (email and phone) via multiple APIs
+     * @param string $cnpj CNPJ number
+     * @param string $companyName Company name for alternative search
+     * @return array Company data with email and phone
+     */
+    public static function searchCompanyAdditionalData($cnpj, $companyName = ''): array
+    {
+        $result = [
+            'email' => '',
+            'phone' => '',
+            'website' => '',
+        ];
+
+        // Remove formatting
+        $cnpj = preg_replace('/[^0-9]/', '', $cnpj);
+
+        // Try ReceitaWS API (alternative to Brasil API with more data)
+        $result = array_merge($result, self::searchReceitaWSAPI($cnpj));
+
+        // If we have email/phone, return early
+        if (!empty($result['email']) || !empty($result['phone'])) {
+            return $result;
+        }
+
+        // Try alternative data sources
+        $result = array_merge($result, self::searchPublicDataSources($cnpj, $companyName));
+
+        return $result;
+    }
+
+    /**
+     * Search for company data via ReceitaWS API
+     * @param string $cnpj CNPJ number
+     * @return array Company data or empty array
+     */
+    private static function searchReceitaWSAPI($cnpj): array
+    {
+        $result = [
+            'email' => '',
+            'phone' => '',
+            'website' => '',
+        ];
+
+        try {
+            // ReceitaWS API - Brazilian public data
+            $url = "https://www.receitaws.com.br/v1/cnpj/{$cnpj}";
+
+            $options = [
+                'http' => [
+                    'method' => 'GET',
+                    'header' => 'User-Agent: GLPI-Newbase/2.0.0',
+                    'timeout' => 8,
+                ],
+            ];
+
+            $context = stream_context_create($options);
+            $response = @file_get_contents($url, false, $context);
+
+            if ($response === false) {
+                return $result;
+            }
+
+            $data = json_decode($response, true);
+
+            // Check if request was successful
+            if (isset($data['status']) && $data['status'] === '0') {
+                $result['email'] = $data['email'] ?? '';
+                $result['phone'] = $data['telefone'] ?? '';
+                $result['website'] = $data['website'] ?? '';
+
+                \Toolbox::logInFile(
+                    'newbase_plugin',
+                    "ReceitaWS API found data for CNPJ {$cnpj}"
+                );
+            }
+
+        } catch (\Exception $e) {
+            \Toolbox::logInFile(
+                'newbase_plugin',
+                "ReceitaWS API Error for CNPJ {$cnpj}: " . $e->getMessage()
+            );
+        }
+
+        return $result;
+    }
+
+    /**
+     * Search for company data in public GLPI database
+     * @param string $cnpj CNPJ number
+     * @param string $companyName Company name
+     * @return array Company data or empty array
+     */
+    private static function searchPublicDataSources($cnpj, $companyName = ''): array
+    {
+        $result = [
+            'email' => '',
+            'phone' => '',
+            'website' => '',
+        ];
+
+        if (empty($companyName)) {
+            return $result;
+        }
+
+        try {
+            // Verificar se classe Company está disponível
+            if (!class_exists('Company')) {
+                Toolbox::logInFile(
+                    'newbase_plugin',
+                    "Classe Company não disponível para busca em GLPI"
+                );
+                return $result;
+            }
+
+            // Search in GLPI's own Company database for additional info
+            // @phpstan-ignore-next-line - Company class exists in GLPI core
+            $glpiCompany = new \Company();
+            $found = $glpiCompany->find(['name' => $companyName]);
+
+            if (!empty($found)) {
+                foreach ($found as $company) {
+                    if (!empty($company['phonenumber'])) {
+                        $result['phone'] = $company['phonenumber'];
+                    }
+                    if (!empty($company['email'])) {
+                        $result['email'] = $company['email'];
+                    }
+                    if (!empty($company['website'])) {
+                        $result['website'] = $company['website'];
+                    }
+                    break;
+                }
+            }
+
+        } catch (\Exception $e) {
+            Toolbox::logInFile(
+                'newbase_plugin',
+                "Error searching GLPI database for company data: " . $e->getMessage()
+            );
+        }
+
+        return $result;
+    }
+
     /**
     * Format phone number for Brazilian format
     * @param string $phone Phone number

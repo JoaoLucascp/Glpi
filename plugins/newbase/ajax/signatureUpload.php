@@ -25,7 +25,7 @@ if (!defined('GLPI_ROOT')) {
 Session::checkLoginUser();
 
 // Check rights
-Session::checkRight('plugin_newbase_task', UPDATE);
+Session::checkRight('plugin_newbase', UPDATE);
 
 // Validate CSRF token
 Session::checkCSRF($_POST);

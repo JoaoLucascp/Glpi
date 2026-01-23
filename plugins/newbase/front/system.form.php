@@ -18,7 +18,7 @@ include('../../../inc/includes.php');
 global $CFG_GLPI, $DB;
 
 Session::checkLoginUser();
-Session::checkRight('plugin_newbase_system', READ);
+Session::checkRight('plugin_newbase', READ);
 
 $system = new System();
 
@@ -28,7 +28,7 @@ if (isset($_POST['add'])) {
     $newID = $system->add($_POST);
     if ($newID) {
         Session::addMessageAfterRedirect(
-            __('Company added successfully', 'newbase'),
+            __('System added successfully', 'newbase'),
             false,
             'success'
         );
@@ -51,7 +51,7 @@ if (isset($_POST['add'])) {
 
     if ($system->update($_POST)) {
         Session::addMessageAfterRedirect(
-            __('Company added successfully', 'newbase'),
+            __('System updated successfully', 'newbase'),
             false,
             'success'
         );
@@ -69,7 +69,7 @@ if (isset($_POST['add'])) {
 
     if ($system->delete($_POST)) {
         Session::addMessageAfterRedirect(
-            __('Company added successfully', 'newbase'),
+            __('System deleted successfully', 'newbase'),
             false,
             'success'
         );
@@ -87,7 +87,7 @@ if (isset($_POST['add'])) {
 
     if ($system->delete($_POST, 1)) {
         Session::addMessageAfterRedirect(
-            __('Company added successfully', 'newbase'),
+            __('System purged successfully', 'newbase'),
             false,
             'success'
         );

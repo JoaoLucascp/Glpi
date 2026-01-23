@@ -2,14 +2,15 @@
 
 /**
  * AJAX endpoint for searching company by CNPJ
-* @package   PluginNewbase
-* @author    João Lucas
-* @copyright Copyright (c) 2026 João Lucas
-* @license   GPLv2+
-* @since     2.0.0
-*/
+ * @package   PluginNewbase
+ * @author    João Lucas
+ * @copyright Copyright (c) 2026 João Lucas
+ * @license   GPLv2+
+ * @since     2.1.0
+ */
 
 use GlpiPlugin\Newbase\Src\Common;
+use GlpiPlugin\Newbase\Src\CompanyData;
 
 // Include GLPI
 define('GLPI_ROOT', dirname(__DIR__, 3));
@@ -18,7 +19,7 @@ require_once(GLPI_ROOT . '/inc/includes.php');
 // Check if user is logged in
 Session::checkLoginUser();
 
-// Check permissions - CORREÇÃO PRINCIPAL!
+// Check permissions
 Session::checkRight('plugin_newbase', READ);
 
 // Set JSON header
@@ -57,32 +58,51 @@ try {
         exit;
     }
 
-    // Search company via API
-    $companyData = Common::searchCompanyByCNPJ($cnpj);
+    // First: try to find company in database
+    $company = CompanyData::getCompanyByCNPJ($cnpj);
 
-    if ($companyData === false) {
+    if ($company) {
+        // Company already in database, return its data
         echo json_encode([
-            'success' => false,
-            'message' => __('Company not found or API error', 'newbase'),
+            'success' => true,
+            'data' => [
+                'corporate_name' => $company['name'] ?? '',
+                'fantasy_name' => $company['fantasy_name'] ?? '',
+                'email' => $company['email'] ?? '',
+                'phone' => Common::formatPhone($company['phone'] ?? ''),
+            ],
+            'message' => __('Company data loaded successfully', 'newbase'),
         ]);
-        Toolbox::logInFile('newbase_plugin', "CNPJ search failed for: $cnpj\n");
-        exit;
+    } else {
+        // Company not in database, search via API
+        $companyData = Common::searchCompanyByCNPJ($cnpj);
+
+        if ($companyData === false) {
+            echo json_encode([
+                'success' => false,
+                'message' => __('Company not found or API error', 'newbase'),
+            ]);
+            Toolbox::logInFile('newbase_plugin', "CNPJ search failed for: $cnpj\n");
+            exit;
+        }
+
+        // Search for additional data (email and phone)
+        $additionalData = Common::searchCompanyAdditionalData($cnpj, $companyData['legal_name'] ?? '');
+
+        // Success response
+        echo json_encode([
+            'success' => true,
+            'data' => [
+                'corporate_name' => $companyData['legal_name'] ?? '',
+                'fantasy_name' => $companyData['fantasy_name'] ?? '',
+                'email' => $additionalData['email'] ?? '',
+                'phone' => Common::formatPhone($additionalData['phone'] ?? ''),
+            ],
+            'message' => __('Company data loaded successfully', 'newbase'),
+        ]);
+
+        Toolbox::logInFile('newbase_plugin', "CNPJ search successful for: $cnpj\n");
     }
-
-    // Success response
-    echo json_encode([
-        'success' => true,
-        'data' => [
-            'legal_name' => $companyData['legal_name'] ?? '',
-            'fantasy_name' => $companyData['fantasy_name'] ?? '',
-            'email' => $companyData['email'] ?? '',
-            'phone' => Common::formatPhone($companyData['phone'] ?? ''),
-        ],
-        'message' => __('Company data loaded successfully', 'newbase'),
-    ]);
-
-    Toolbox::logInFile('newbase_plugin', "CNPJ search successful for: $cnpj\n");
-
 } catch (Exception $e) {
     // Error response
     echo json_encode([

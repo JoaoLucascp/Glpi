@@ -13,6 +13,7 @@ declare(strict_types=1);
 use GlpiPlugin\Newbase\Src\Task;
 use GlpiPlugin\Newbase\Src\Config;
 use GlpiPlugin\Newbase\Src\CompanyData;
+use GlpiPlugin\Newbase\Src\Common;
 use CommonDBTM;
 
 include('../../../inc/includes.php');
@@ -20,7 +21,7 @@ include('../../../inc/includes.php');
 global $CFG_GLPI, $DB;
 
 Session::checkLoginUser();
-Session::checkRight('plugin_newbase_task', READ);
+Session::checkRight('plugin_newbase', READ);
 
 $task = new Task();
 
@@ -30,7 +31,7 @@ if (isset($_POST['add'])) {
     if (Config::getConfigValue('autocalculatemileage', 1) == 1) {
         if (!empty($_POST['latitude_start']) && !empty($_POST['longitude_start'])
             && !empty($_POST['latitude_end']) && !empty($_POST['longitude_end'])) {
-            $_POST['mileage'] = CommonDBTM::calculateDistance(
+            $_POST['mileage'] = Common::calculateDistance(
                 (float) $_POST['latitude_start'],
                 (float) $_POST['longitude_start'],
                 (float) $_POST['latitude_end'],
@@ -42,7 +43,7 @@ if (isset($_POST['add'])) {
     $newID = $task->add($_POST);
     if ($newID) {
         Session::addMessageAfterRedirect(
-            __('Company added successfully', 'newbase'),
+            __('Task added successfully', 'newbase'),
             false,
             'success'
         );
@@ -66,7 +67,7 @@ if (isset($_POST['add'])) {
     if (Config::getConfigValue('autocalculatemileage', 1) == 1) {
         if (!empty($_POST['latitude_start']) && !empty($_POST['longitude_start'])
             && !empty($_POST['latitude_end']) && !empty($_POST['longitude_end'])) {
-            $_POST['mileage'] = CommonDBTM::calculateDistance(
+            $_POST['mileage'] = Common::calculateDistance(
                 (float) $_POST['latitude_start'],
                 (float) $_POST['longitude_start'],
                 (float) $_POST['latitude_end'],
@@ -77,7 +78,7 @@ if (isset($_POST['add'])) {
 
     if ($task->update($_POST)) {
         Session::addMessageAfterRedirect(
-            __('Company added successfully', 'newbase'),
+            __('Task updated successfully', 'newbase'),
             false,
             'success'
         );
@@ -95,7 +96,7 @@ if (isset($_POST['add'])) {
 
     if ($task->delete($_POST)) {
         Session::addMessageAfterRedirect(
-            __('Company added successfully', 'newbase'),
+            __('Task deleted successfully', 'newbase'),
             false,
             'success'
         );
@@ -113,7 +114,7 @@ if (isset($_POST['add'])) {
 
     if ($task->delete($_POST, 1)) {
         Session::addMessageAfterRedirect(
-            __('Company added successfully', 'newbase'),
+            __('Task purged successfully', 'newbase'),
             false,
             'success'
         );
@@ -139,12 +140,23 @@ if (isset($_POST['add'])) {
     $company_id = (int) ($_GET['plugin_newbase_companydata_id'] ?? 0);
 
     if ($id > 0) {
-        $task->getFromDB($id);
+        // Carregar dados da tarefa se existir
+        global $DB;
+        $result = $DB->request([
+            'FROM' => 'glpi_plugin_newbase_tasks',
+            'WHERE' => ['id' => $id]
+        ]);
+        if ($result->count() > 0) {
+            $task_data = $result->current();
+        }
     } elseif ($company_id > 0) {
-        $task->fields['plugin_newbase_companydata_id'] = $company_id;
+        // Pré-definir o ID da empresa se fornecido via GET
+        $task_data = ['entities_id' => $company_id];
+    } else {
+        $task_data = [];
     }
 
-    $task->showForm($id, ['plugin_newbase_companydata_id' => $company_id]);
+    $task->showForm($id, $task_data);
 
     Html::footer();
 }

@@ -42,10 +42,10 @@ class System extends Common
 
     // ===== RELACIONAMENTO =====
     /**
-    * Nome do campo ID dos itens
+    * Nome do campo ID dos itens (FK para glpi_entities)
     * @var string
     */
-    public static $items_id = 'companydata_id';
+    public static $items_id = 'entities_id';
 
     /**
     * Tipo de item ao qual esta classe pertence
@@ -191,28 +191,21 @@ class System extends Common
     */
     public function showForm($ID, array $options = []): bool
     {
+        // Inicializar formulário com permissões e dados
+        $this->initForm($ID, $options);
+
         // Verificar permissões
         if (!$this::canView()) {
             return false;
         }
 
-        // Verificar acesso ao item
-        if ($ID > 0) {
-            $this->check($ID, READ);
-        } else {
-            $this->check(-1, CREATE);
-            $this->getEmpty();
-        }
+        // Obter entities_id da URL ou formulário (FK para glpi_entities)
+        $entities_id = $options['entities_id'] ?? $_GET['entities_id'] ?? $this->fields['entities_id'] ?? 0;
 
-        // Obter companydata_id da URL ou formulário
-        $companydata_id = $options['companydata_id'] ?? $_GET['companydata_id'] ?? $this->fields['companydata_id'] ?? 0;
-
-        // Iniciar formulário
+        // Iniciar renderização do formulário
         $this->showFormHeader($options);
 
         echo "<tr class='tab_bg_1'>";
-
-        // Campo de nome
         echo "<td>" . __('Name') . " <span class='red'>*</span></td>";
         echo "<td>";
         echo Html::input('name', [
@@ -221,23 +214,17 @@ class System extends Common
             'required' => true,
         ]);
         echo "</td>";
-
-        // Dropdown de empresa
         echo "<td>" . __('Company', 'newbase') . " <span class='red'>*</span></td>";
         echo "<td>";
-        CompanyData::dropdown([
-            'name'   => 'companydata_id',
-            'value'  => $companydata_id,
-            'entity' => $_SESSION['glpiactive_entity'] ?? 0,
+        Entity::dropdown([
+            'name'   => 'entities_id',
+            'value'  => $entities_id,
             'required' => true,
         ]);
         echo "</td>";
-
         echo "</tr>";
 
         echo "<tr class='tab_bg_1'>";
-
-        // Dropdown de Tipo de Sistema
         echo "<td>" . __('System Type', 'newbase') . " <span class='red'>*</span></td>";
         echo "<td>";
         $types = $this->getSystemTypes();
@@ -251,22 +238,16 @@ class System extends Common
         }
         echo "</select>";
         echo "</td>";
-
-        // Entidade
         echo "<td>" . __('Entity') . "</td>";
         echo "<td>";
         Entity::dropdown([
             'name'   => 'entities_id',
             'value'  => $this->fields['entities_id'] ?? 0,
-            'entity' => $_SESSION['glpiactive_entity'] ?? 0,
         ]);
         echo "</td>";
-
         echo "</tr>";
 
         echo "<tr class='tab_bg_1'>";
-
-        // Descrição (sempre visível)
         echo "<td colspan='1'>" . __('Description') . "</td>";
         echo "<td colspan='3'>";
         echo Html::textarea([
@@ -276,221 +257,7 @@ class System extends Common
             'rows'  => 3,
         ]);
         echo "</td>";
-
         echo "</tr>";
-
-        // ===== CAMPOS ESPECÍFICOS POR TIPO =====
-
-        // Campos de PABX
-        echo "<tbody id='fields_pabx' class='system-fields' style='display:none;'>";
-        echo "<tr class='tab_bg_1'><td colspan='4'><h3>" . __('PABX Configuration', 'newbase') . "</h3></td></tr>";
-
-        echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __('Brand', 'newbase') . "</td>";
-        echo "<td>";
-        echo Html::input('pabx_brand', [
-            'value' => $this->fields['pabx_brand'] ?? '',
-            'size'  => 30,
-        ]);
-        echo "</td>";
-
-        echo "<td>" . __('Model', 'newbase') . "</td>";
-        echo "<td>";
-        echo Html::input('pabx_model', [
-            'value' => $this->fields['pabx_model'] ?? '',
-            'size'  => 30,
-        ]);
-        echo "</td>";
-        echo "</tr>";
-
-        echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __('Extensions', 'newbase') . "</td>";
-        echo "<td>";
-        echo Html::input('pabx_extensions', [
-            'value' => $this->fields['pabx_extensions'] ?? '',
-            'size'  => 20,
-            'type'  => 'number',
-        ]);
-        echo "</td>";
-        echo "<td></td><td></td>";
-        echo "</tr>";
-        echo "</tbody>";
-
-        // Campos de IPBX
-        echo "<tbody id='fields_ipbx' class='system-fields' style='display:none;'>";
-        echo "<tr class='tab_bg_1'><td colspan='4'><h3>" . __('IPBX Configuration', 'newbase') . "</h3></td></tr>";
-
-        echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __('IP Address', 'newbase') . " <span class='red'>*</span></td>";
-        echo "<td>";
-        echo Html::input('ipbx_ip', [
-            'value' => $this->fields['ipbx_ip'] ?? '',
-            'size'  => 20,
-        ]);
-        echo "</td>";
-
-        echo "<td>" . __('Port', 'newbase') . "</td>";
-        echo "<td>";
-        echo Html::input('ipbx_port', [
-            'value' => $this->fields['ipbx_port'] ?? '5060',
-            'size'  => 10,
-            'type'  => 'number',
-        ]);
-        echo "</td>";
-        echo "</tr>";
-
-        echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __('Asterisk Version', 'newbase') . "</td>";
-        echo "<td>";
-        echo Html::input('ipbx_version', [
-            'value' => $this->fields['ipbx_version'] ?? '',
-            'size'  => 20,
-        ]);
-        echo "</td>";
-
-        echo "<td>" . __('Users', 'newbase') . "</td>";
-        echo "<td>";
-        echo Html::input('ipbx_users', [
-            'value' => $this->fields['ipbx_users'] ?? '',
-            'size'  => 10,
-            'type'  => 'number',
-        ]);
-        echo "</td>";
-        echo "</tr>";
-        echo "</tbody>";
-
-        // Campos de IPBX Cloud
-        echo "<tbody id='fields_ipbx_cloud' class='system-fields' style='display:none;'>";
-        echo "<tr class='tab_bg_1'><td colspan='4'><h3>" . __('IPBX Cloud Configuration', 'newbase') . "</h3></td></tr>";
-
-        echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __('URL', 'newbase') . " <span class='red'>*</span></td>";
-        echo "<td>";
-        echo Html::input('cloud_url', [
-            'value' => $this->fields['cloud_url'] ?? '',
-            'size'  => 50,
-        ]);
-        echo "</td>";
-
-        echo "<td>" . __('Username', 'newbase') . "</td>";
-        echo "<td>";
-        echo Html::input('cloud_username', [
-            'value' => $this->fields['cloud_username'] ?? '',
-            'size'  => 30,
-        ]);
-        echo "</td>";
-        echo "</tr>";
-
-        echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __('API Token', 'newbase') . "</td>";
-        echo "<td colspan='3'>";
-        echo Html::input('cloud_api_token', [
-            'value' => $this->fields['cloud_api_token'] ?? '',
-            'size'  => 80,
-            'type'  => 'password',
-        ]);
-        echo "</td>";
-        echo "</tr>";
-        echo "</tbody>";
-
-        // Campos de Chatbot
-        echo "<tbody id='fields_chatbot' class='system-fields' style='display:none;'>";
-        echo "<tr class='tab_bg_1'><td colspan='4'><h3>" . __('Chatbot Configuration', 'newbase') . "</h3></td></tr>";
-
-        echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __('Platform', 'newbase') . "</td>";
-        echo "<td>";
-        $platforms = [
-            'whatsapp' => 'WhatsApp',
-            'telegram' => 'Telegram',
-            'messenger' => 'Facebook Messenger',
-            'other' => __('Other', 'newbase'),
-        ];
-        echo "<select name='chatbot_platform'>";
-        echo "<option value=''>-- " . __('Select', 'newbase') . " --</option>";
-        foreach ($platforms as $key => $label) {
-            $selected = (($this->fields['chatbot_platform'] ?? '') === $key) ? 'selected' : '';
-            echo "<option value='$key' $selected>$label</option>";
-        }
-        echo "</select>";
-        echo "</td>";
-
-        echo "<td>" . __('Phone Number', 'newbase') . "</td>";
-        echo "<td>";
-        echo Html::input('chatbot_phone', [
-            'value' => $this->fields['chatbot_phone'] ?? '',
-            'size'  => 20,
-        ]);
-        echo "</td>";
-        echo "</tr>";
-
-        echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __('API Key', 'newbase') . "</td>";
-        echo "<td colspan='3'>";
-        echo Html::input('chatbot_api_key', [
-            'value' => $this->fields['chatbot_api_key'] ?? '',
-            'size'  => 80,
-            'type'  => 'password',
-        ]);
-        echo "</td>";
-        echo "</tr>";
-        echo "</tbody>";
-
-        // Campos de Linha Fixa
-        echo "<tbody id='fields_landline' class='system-fields' style='display:none;'>";
-        echo "<tr class='tab_bg_1'><td colspan='4'><h3>" . __('Landline Configuration', 'newbase') . "</h3></td></tr>";
-
-        echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __('Phone Number', 'newbase') . " <span class='red'>*</span></td>";
-        echo "<td>";
-        echo Html::input('landline_number', [
-            'value' => $this->fields['landline_number'] ?? '',
-            'size'  => 20,
-            'id'    => 'landline_number_field',
-        ]);
-        echo "</td>";
-
-        echo "<td>" . __('Operator', 'newbase') . "</td>";
-        echo "<td>";
-        echo Html::input('landline_operator', [
-            'value' => $this->fields['landline_operator'] ?? '',
-            'size'  => 30,
-        ]);
-        echo "</td>";
-        echo "</tr>";
-        echo "</tbody>";
-
-        // JavaScript para formulário dinâmico
-        echo "<script type='text/javascript'>";
-        echo "
-        $(document).ready(function() {
-            // Mascara para telefone de linha fixa
-            $('#landline_number_field').mask('(00) 0000-0000');
-
-            // Funcao para mostrar/ocultar campos
-            function showFieldsForType(type) {
-                // Oculta todos os campos
-                $('.system-fields').hide();
-
-                // Mostra apenas os campos do tipo selecionado
-                if (type) {
-                    $('#fields_' + type).show();
-                }
-            }
-
-            // Ao mudar o tipo
-            $('#system_type_field').change(function() {
-                showFieldsForType($(this).val());
-            });
-
-            // Mostra campos do tipo atual (se editando)
-            var currentType = $('#system_type_field').val();
-            if (currentType) {
-                showFieldsForType(currentType);
-            }
-        });
-        ";
-        echo "</script>";
 
         // Finalizar formulário
         $this->showFormButtons($options);
@@ -516,7 +283,7 @@ class System extends Common
             return false;
         }
 
-        if (empty($input['companydata_id'])) {
+        if (empty($input['entities_id'])) {
             Session::addMessageAfterRedirect(
                 __('Company is required', 'newbase'),
                 false,
@@ -592,11 +359,11 @@ class System extends Common
                 break;
         }
 
-        // Verificar se a empresa existe
-        $company = new CompanyData();
-        if (!$company->getFromDB($input['companydata_id'])) {
+        // Verificar se a empresa existe em glpi_entities
+        $entity = new Entity();
+        if (!$entity->getFromDB($input['entities_id'])) {
             Session::addMessageAfterRedirect(
-                __('Company not found', 'newbase'),
+                __('Company entity not found', 'newbase'),
                 false,
                 ERROR
             );
@@ -631,7 +398,7 @@ class System extends Common
                 "System added: ID=%d, Type=%s, Company=%d\n",
                 $this->fields['id'],
                 $this->fields['system_type'],
-                $this->fields['companydata_id']
+                $this->fields['entities_id']
             )
         );
     }

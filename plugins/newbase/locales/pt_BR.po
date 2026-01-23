@@ -11,10 +11,11 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
+msgid "Newbase - Company Management"
+msgstr "Newbase - Gestão de Empresas"
+
 msgid "Company Data"
-msgid_plural "Companies Data"
-msgstr[0] "Dados da Empresa"
-msgstr[1] "Dados de Empresas"
+msgstr "Dados da Empresa"
 
 msgid "Newbase - Personal Data Management"
 msgstr "Newbase - Gestão de Dados Pessoais"
@@ -34,14 +35,35 @@ msgstr "Telefone"
 msgid "Search"
 msgstr "Buscar"
 
+msgid "Searching..."
+msgstr "Buscando..."
+
 msgid "Invalid CNPJ"
 msgstr "CNPJ inválido"
+
+msgid "Data loaded successfully!"
+msgstr "Dados carregados com sucesso!"
+
+msgid "Company not found"
+msgstr "Empresa não encontrada"
+
+msgid "Error searching CNPJ"
+msgstr "Erro ao buscar dados do CNPJ"
 
 msgid "Legal Name"
 msgstr "Razão Social"
 
+msgid "Corporate Name"
+msgstr "Razão Social"
+
 msgid "Fantasy Name"
 msgstr "Nome Fantasia"
+
+msgid "Branch"
+msgstr "Filial"
+
+msgid "ZIP Code"
+msgstr "CEP"
 
 msgid "Active"
 msgstr "Ativo"

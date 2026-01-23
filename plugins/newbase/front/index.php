@@ -19,7 +19,7 @@ include('../../../inc/includes.php');
 Session::checkLoginUser();
 
 // Check rights
-Session::checkRight('plugin_newbase_companydata', READ);
+Session::checkRight('plugin_newbase', READ);
 
 // Start page
 Html::header(

@@ -10,8 +10,8 @@
 */
 declare(strict_types=1);
 
-use GlpiPlugin\Newbase\Address;
-use GlpiPlugin\Newbase\CompanyData;
+use GlpiPlugin\Newbase\Src\Address;
+use GlpiPlugin\Newbase\Src\CompanyData;
 
 include('../../../inc/includes.php');
 
@@ -56,7 +56,7 @@ if (isset($_POST['add'])) {
 
     if ($newID = $address->add($_POST)) {
         Session::addMessageAfterRedirect(
-            __('Company added successfully', 'newbase'),
+            __('Address added successfully', 'newbase'),
             false,
             'success'
         );
@@ -77,7 +77,7 @@ if (isset($_POST['add'])) {
 
     if ($address->update($_POST)) {
         Session::addMessageAfterRedirect(
-            __('Company added successfully', 'newbase'),
+            __('Address updated successfully', 'newbase'),
             false,
             'success'
         );
@@ -95,7 +95,7 @@ if (isset($_POST['add'])) {
 
     if ($address->delete($_POST)) {
         Session::addMessageAfterRedirect(
-            __('Company added successfully', 'newbase'),
+            __('Address deleted successfully', 'newbase'),
             false,
             'success'
         );
@@ -117,7 +117,7 @@ if (isset($_POST['add'])) {
 
     if ($address->delete($_POST, 1)) {
         Session::addMessageAfterRedirect(
-            __('Company added successfully', 'newbase'),
+            __('Address purged successfully', 'newbase'),
             false,
             'success'
         );

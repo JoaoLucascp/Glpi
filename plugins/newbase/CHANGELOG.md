@@ -2,6 +2,24 @@
 
 Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 
+## [2.1.0] - 2026-01-22
+
+### Alterado (Refatoração)
+
+- **Refatoração de Banco de Dados**: Plugin agora utiliza tabelas nativas do GLPI (glpi_entities) em vez de tabelas customizadas
+  - CompanyData convertida de CommonDBTM para classe utilitária estática
+  - Leitura de empresas diretamente de glpi_entities
+  - Eliminação de duplicação de dados
+  - Sincronização automática com core GLPI
+- Tabelas customizadas criadas apenas para dados exclusivos:
+  - glpi_plugin_newbase_company_extras (complementos de empresa)
+  - glpi_plugin_newbase_systems (documentação de sistemas)
+  - glpi_plugin_newbase_chatbot (Omnichannel)
+  - glpi_plugin_newbase_tasks (tarefas com geolocalização)
+  - glpi_plugin_newbase_signatures (assinaturas digitais)
+- Melhor integridade referencial com foreign keys para glpi_entities
+- Compatibilidade mantida com código legado
+
 ## [2.0.0] - 2025-12-19
 
 ### Adicionado

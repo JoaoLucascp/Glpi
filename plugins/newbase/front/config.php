@@ -18,7 +18,7 @@ include('../../../inc/includes.php');
 Session::checkLoginUser();
 
 // Check rights
-Session::checkRight('plugin_newbase_config', UPDATE);
+Session::checkRight('plugin_newbase', READ);
 
 // Handle configuration update
 if (isset($_POST['update_config'])) {

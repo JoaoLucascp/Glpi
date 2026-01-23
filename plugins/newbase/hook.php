@@ -28,10 +28,10 @@ if (!defined('GLPI_LOG_DIR')) {
 }
 
 /**
- * Função auxiliar: Criar diretórios necessários
- *
- * @return boolean
- */
+* Função auxiliar: Criar diretórios necessários
+*
+* @return boolean
+*/
 function plugin_newbase_createDirectories()
 {
     $directories = [
@@ -51,10 +51,10 @@ function plugin_newbase_createDirectories()
 }
 
 /**
- * Função auxiliar: Verificar se tabelas existem
- *
- * @return array Array com status das tabelas
- */
+* Função auxiliar: Verificar se tabelas existem
+*
+* @return array Array com status das tabelas
+*/
 function plugin_newbase_checkTables()
 {
     global $DB;
@@ -77,10 +77,10 @@ function plugin_newbase_checkTables()
 }
 
 /**
- * Função auxiliar: Limpar cache do GLPI
- *
- * @return void
- */
+* Função auxiliar: Limpar cache do GLPI
+*
+* @return void
+*/
 function plugin_newbase_clearCache()
 {
     if (function_exists('opcache_reset')) {
@@ -94,10 +94,10 @@ function plugin_newbase_clearCache()
 }
 
 /**
- * Função auxiliar: Validar estrutura das tabelas
- *
- * @return array Array com erros encontrados
- */
+* Função auxiliar: Validar estrutura das tabelas
+*
+* @return array Array com erros encontrados
+*/
 function plugin_newbase_validateSchema()
 {
     global $DB;
@@ -127,11 +127,11 @@ function plugin_newbase_validateSchema()
 }
 
 /**
- * Função auxiliar: Remover diretórios do plugin
- *
- * @param string $dir Diretório a ser removido
- * @return boolean
- */
+* Função auxiliar: Remover diretórios do plugin
+*
+* @param string $dir Diretório a ser removido
+* @return boolean
+*/
 function plugin_newbase_removeDirectory($dir)
 {
     if (!is_dir($dir)) {
@@ -148,12 +148,12 @@ function plugin_newbase_removeDirectory($dir)
 }
 
 /**
- * Função auxiliar: Log de operações do plugin
- *
- * @param string $message Mensagem para log
- * @param string $level Nível do log (info, warning, error)
- * @return void
- */
+* Função auxiliar: Log de operações do plugin
+*
+* @param string $message Mensagem para log
+* @param string $level Nível do log (info, warning, error)
+* @return void
+*/
 function plugin_newbase_log($message, $level = 'info')
 {
     $log_file = GLPI_LOG_DIR . '/newbase.log';
@@ -164,12 +164,12 @@ function plugin_newbase_log($message, $level = 'info')
 }
 
 /**
- * Função auxiliar: Executar migração de dados se necessário
- *
- * @param string $from_version Versão de origem
- * @param string $to_version Versão de destino
- * @return boolean
- */
+* Função auxiliar: Executar migração de dados se necessário
+*
+* @param string $from_version Versão de origem
+* @param string $to_version Versão de destino
+* @return boolean
+*/
 function plugin_newbase_migrate($from_version, $to_version)
 {
     // Implementar lógica de migração futura aqui
