@@ -7,11 +7,37 @@
 * @copyright Copyright (c) 2026 João Lucas
 * @license   GPLv2+
 * @since     2.0.0
+*
+* ---------------------------------------------------------------------
+* GLPI - Gestionnaire Libre de Parc Informatique
+* Copyright (C) 2015-2026 Teclib' and contributors.
+*
+* http://glpi-project.org
+*
+* based on GLPI - Copyright (C) 2003-2014 by the INDEPNET Development Team.
+*
+* ---------------------------------------------------------------------
+*
+* LICENSE
+*
+* This file is part of GLPI.
+*
+* GLPI is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2 of the License, or
+* (at your option) any later version.
+*
+* GLPI is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with GLPI. If not, see <http://www.gnu.org/licenses/>.
+* ---------------------------------------------------------------------
 */
-declare(strict_types=1);
 
-use GlpiPlugin\Newbase\Src\Common;
-
+// Carrega o GLPI core
 include('../../../inc/includes.php');
 
 // Security check
@@ -19,14 +45,21 @@ if (!defined('GLPI_ROOT')) {
     define('GLPI_ROOT', dirname(dirname(dirname(dirname(__FILE__)))));
 }
 
-// Check authentication
+// Evita acesso direto
+if (!defined('GLPI_ROOT')) {
+    include('../../../inc/includes.php');
+}
+
+// Verifica sessão ativa
 Session::checkLoginUser();
 // Check rights
 Session::checkRight('plugin_newbase_task', READ);
-// Validate CSRF token
+// Verifica token CSRF (OBRIGATÓRIO para GLPI 10+)
 Session::checkCSRF($_POST);
-// Set JSON header
+// Força modo AJAX
 header('Content-Type: application/json; charset=utf-8');
+
+use GlpiPlugin\Newbase\Src\Common;
 
 try {
     // Get coordinates from POST

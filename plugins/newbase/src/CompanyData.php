@@ -1,33 +1,34 @@
 <?php
 
 /**
- * Newbase - Gerenciador de Gestão de Empresas para GLPI
- *
- * @author João Lucas <joao@example.com>
- * @license GPLv2+
- * @link https://github.com/newbase/glpi
- */
-
-declare(strict_types=1);
+* CompanyData
+* Classe utilitária para gerenciar dados de empresas
+* Lê dados nativos de glpi_entities, não cria tabela própria
+* Mantém dados complementares em glpi_plugin_newbase_company_extras
+* @package   GlpiPlugin\Newbase
+* @author    João Lucas
+* @license   GPLv2+
+* @since     2.1.0
+*/
 
 namespace GlpiPlugin\Newbase\Src;
 
+if (!defined('GLPI_ROOT')) {
+    die("Sorry. You can't access this file directly");
+}
+
 /**
- * Classe CompanyData - Utilitário estático para gestão de empresas
- *
- * A partir da v2.1.0, esta classe é um utilitário estático que lê diretamente de glpi_entities,
- * eliminando duplicação de dados e garantindo sincronização automática com o core do GLPI.
- *
- * Dados complementares de empresas são armazenados em glpi_plugin_newbase_company_extras.
- *
- * @package GlpiPlugin\Newbase\Src
- */
+* Class CompanyData
+* Gerencia dados de empresas (entidades) do GLPI
+* com complementos específicos do plugin Newbase
+*/
 class CompanyData
 {
     /**
-     * Obtenha o nome do tipo
+     * Retorna o nome do tipo (para compatibilidade com GLPI)
+     *
      * @param int $nb Número de itens
-     * @return string Nome do tipo
+     * @return string
      */
     public static function getTypeName($nb = 0): string
     {
@@ -35,18 +36,28 @@ class CompanyData
     }
 
     /**
-     * Obtenha o ícone para menus
-     * @return string Classe de ícones do Font Awesome
+     * Retorna o ícone para menus (Tabler Icons)
+     * @return string Classe de ícone
      */
     public static function getIcon(): string
     {
-        return 'fas fa-building';
+        return 'ti ti-building';
     }
 
     /**
-     * Obtenha todas as empresas ativas de glpi_entities
+     * Retorna a URL de busca de empresas
+     * @return string
+     */
+    public static function getSearchURL(): string
+    {
+        global $CFG_GLPI;
+        return $CFG_GLPI['root_doc'] . '/plugins/newbase/front/companydata.php';
+    }
+
+    /**
+     * Obtém todas as empresas ativas de glpi_entities
      *
-     * @return array Array de empresas [id => name, ...]
+     * @return array Array associativo [id => name, ...]
      */
     public static function getAllCompanies(): array
     {
@@ -68,8 +79,7 @@ class CompanyData
     }
 
     /**
-     * Obtenha dados completos de uma empresa pelo ID (Entity ID do GLPI)
-     *
+     * Obtém dados completos de uma empresa pelo ID
      * @param int $entity_id ID da entidade (glpi_entities.id)
      * @return array|null Array com dados da empresa ou null
      */
@@ -89,14 +99,14 @@ class CompanyData
         // Obter dados complementares
         $extras = self::getCompanyExtras($entity_id);
 
-        // Mesclar dados
+        // Mesclar dados (glpi_entities + complementos)
         return array_merge($entity, $extras ?? []);
     }
 
     /**
-     * Obtenha uma empresa pelo CNPJ
+     * Obtém uma empresa pelo CNPJ
      *
-     * @param string $cnpj CNPJ sem formatação (14 dígitos)
+     * @param string $cnpj CNPJ com ou sem formatação
      * @return array|null Array com dados da empresa ou null
      */
     public static function getCompanyByCNPJ(string $cnpj): ?array
@@ -104,7 +114,11 @@ class CompanyData
         global $DB;
 
         // Remover formatação do CNPJ
-        $cnpj = preg_replace('/[^0-9]/', '', $cnpj);
+        $cnpj_clean = preg_replace('/[^0-9]/', '', $cnpj);
+
+        if (strlen($cnpj_clean) !== 14) {
+            return null;
+        }
 
         // Buscar nos dados complementares
         $extras = $DB->request([
@@ -114,22 +128,25 @@ class CompanyData
 
         if ($extras) {
             // Obter dados completos da entidade
-            $entity = self::getCompanyById($extras['entities_id']);
-            return $entity;
+            return self::getCompanyById($extras['entities_id']);
         }
 
         return null;
     }
 
     /**
-     * Obtenha dados complementares de uma empresa
-     *
-     * @param int $entity_id ID da entidade (glpi_entities.id)
+     * Obtém dados complementares de uma empresa
+     * @param int $entity_id ID da entidade
      * @return array|null Array com dados complementares ou null
      */
     public static function getCompanyExtras(int $entity_id): ?array
     {
         global $DB;
+
+        // Verifica se a tabela existe antes de consultar
+        if (!$DB->tableExists('glpi_plugin_newbase_company_extras')) {
+            return null;
+        }
 
         $result = $DB->request([
             'FROM'  => 'glpi_plugin_newbase_company_extras',
@@ -141,10 +158,9 @@ class CompanyData
 
     /**
      * Salvar ou atualizar dados complementares de uma empresa
-     *
-     * @param int    $entity_id       ID da entidade
-     * @param array  $data            Dados a salvar (cnpj, corporate_name, fantasy_name, etc)
-     * @return int|false ID do registro ou false
+     * @param int   $entity_id ID da entidade
+     * @param array $data      Dados a salvar (cnpj, corporate_name, fantasy_name, etc)
+     * @return int|bool ID do registro ou false
      */
     public static function saveCompanyExtras(int $entity_id, array $data)
     {
@@ -155,30 +171,39 @@ class CompanyData
             return false;
         }
 
+        // Validar se tabela existe
+        if (!$DB->tableExists('glpi_plugin_newbase_company_extras')) {
+            return false;
+        }
+
         // Preparar dados
         $data['entities_id'] = $entity_id;
 
-        // Verificar se já existe
+        // Verificar se já existe registro
         $existing = $DB->request([
             'FROM'  => 'glpi_plugin_newbase_company_extras',
             'WHERE' => ['entities_id' => $entity_id],
         ])->current();
 
         if ($existing) {
-            // Atualizar
+            // Atualizar registro existente
             $data['date_mod'] = date('Y-m-d H:i:s');
-            return $DB->update('glpi_plugin_newbase_company_extras', $data, ['id' => $existing['id']]);
+            return $DB->update(
+                'glpi_plugin_newbase_company_extras',
+                $data,
+                ['id' => $existing['id']]
+            );
         } else {
-            // Inserir novo
+            // Inserir novo registro
             $data['date_creation'] = date('Y-m-d H:i:s');
             $data['date_mod'] = date('Y-m-d H:i:s');
+            $data['is_deleted'] = 0;
             return $DB->insert('glpi_plugin_newbase_company_extras', $data);
         }
     }
 
     /**
-     * Pesquisar empresas por termo (busca nos nomes de glpi_entities)
-     *
+     * Pesquisar empresas por termo
      * @param string $search Termo de busca
      * @param int    $limit  Limite de resultados
      * @return array Array de empresas encontradas
@@ -188,15 +213,13 @@ class CompanyData
         global $DB;
 
         $companies = [];
-        $search_term = '%' . $search . '%';
+        $search_term = '%' . addslashes($search) . '%';
 
         $result = $DB->request([
             'FROM'   => 'glpi_entities',
             'WHERE'  => [
                 'is_deleted' => 0,
-                'OR' => [
-                    ['name' => ['LIKE', $search_term]],
-                ],
+                'name'       => ['LIKE', $search_term],
             ],
             'LIMIT'  => $limit,
             'ORDER'  => ['name' => 'ASC'],
@@ -205,14 +228,15 @@ class CompanyData
         foreach ($result as $entity) {
             $companies[] = [
                 'id'   => $entity['id'],
-                'name' => $entity['name'],
+                'name' => htmlspecialchars($entity['name']),
             ];
         }
 
         return $companies;
     }
     /**
-     * Obtenha opções de busca para o motor de pesquisa do GLPI
+     * Obtém opções de busca para o motor de pesquisa do GLPI
+     * (Usado se CompanyData for uma CommonDBTM no futuro)
      *
      * @return array Opções de pesquisa
      */

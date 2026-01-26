@@ -1,329 +1,232 @@
 <?php
 
 /**
-* Newbase Plugin Setup
-* @package   PluginNewbase
+* Setup File - Plugin Newbase
+* Arquivo de configuração e registro do plugin com GLPI
+* Define classes wrapper para compatibilidade com GLPI 10.0.20
+* @package   GlpiPlugin\Newbase
 * @author    João Lucas
-* @copyright 2026 João Lucas
 * @license   GPLv2+
-* @version   2.1.0
+* @since     2.1.0
 */
 
-declare(strict_types=1);
-
-// Load Composer autoloader
-if (file_exists(__DIR__ . '/vendor/autoload.php')) {
-    require_once __DIR__ . '/vendor/autoload.php';
+if (!defined('GLPI_ROOT')) {
+    die("Sorry. You can't access this file directly");
 }
 
-// Import classes with full namespace
-use GlpiPlugin\Newbase\Src\CompanyData;
-use GlpiPlugin\Newbase\Src\Address;
+// CARREGAR AUTOLOADER DO COMPOSER
+require_once(__DIR__ . '/vendor/autoload.php');
+
+// DEFINIÇÕES GLOBAIS DO PLUGIN
+
+define('PLUGIN_NEWBASE_VERSION', '2.1.0');
+
+define('PLUGIN_NEWBASE_MIN_GLPI', '10.0.20');
+
+define('PLUGIN_NEWBASE_MAX_GLPI', '10.9.99');
+
+define('PLUGIN_NEWBASE_NAME', 'Newbase');
+
+define('PLUGIN_NEWBASE_AUTHOR', 'João Lucas');
+
+define('PLUGIN_NEWBASE_LICENSE', 'GPLv2+');
+
+define('PLUGIN_NEWBASE_HOMEPAGE', 'https://github.com/joao-lucas/glpi-newbase');
+
+define(
+    'PLUGIN_NEWBASE_DESCRIPTION',
+    'Sistema completo de Gestão de documentação de empresas '
+    . 'para GLPI com gerenciamento de empresas, documentação de servidor '
+    . 'telefônico baseado em asterisk, documentação de servidor telefônico '
+    . 'em nuvem baseado em asterisk, documentação de sistema Chatbot Omnichannel, '
+    . 'documentação de linha fixa, Gestão de tarefas com geolocalização, '
+    . 'assinatura digital e cálculo de quilometragem.'
+);
+
+// CLASSES WRAPPER PARA COMPATIBILIDADE
+
 use GlpiPlugin\Newbase\Src\System;
 use GlpiPlugin\Newbase\Src\Task;
 use GlpiPlugin\Newbase\Src\TaskSignature;
-use GlpiPlugin\Newbase\Src\Config;
-
-// Define constants
-define('PLUGIN_NEWBASE_VERSION', '2.1.0');
-define('PLUGIN_NEWBASE_DIR', __DIR__);
-define('NEWBASE_MIN_GLPI', '10.0.0');
-define('NEWBASE_MAX_GLPI', '10.1.0');
 
 /**
- * Initialize plugin
- */
-function plugin_init_newbase()
+* PluginNewbaseSystem
+* Wrapper para compatibilidade com GLPI
+*/
+class PluginNewbaseSystem extends System
 {
-    global $PLUGIN_HOOKS;
-
-    $PLUGIN_HOOKS['csrf_compliant']['newbase'] = true;
-
-    if (Plugin::isPluginActive('newbase')) {
-
-        // Register classes with full namespace
-        Plugin::registerClass(CompanyData::class, [
-            'addtabon' => ['Entity'],
-        ]);
-
-        Plugin::registerClass(Address::class);
-        Plugin::registerClass(System::class);
-        Plugin::registerClass(Task::class);
-        Plugin::registerClass(TaskSignature::class);
-        Plugin::registerClass(Config::class);
-
-        // Add to management menu using PluginNewbaseMenu class
-        $PLUGIN_HOOKS['menu_toadd']['newbase'] = [
-            'management' => 'PluginNewbaseMenu',
-        ];
-
-        $PLUGIN_HOOKS['config_page']['newbase'] = 'front/config.php';
-        $PLUGIN_HOOKS['use_massive_action']['newbase'] = 1;
-
-        // Add CSS
-        $PLUGIN_HOOKS['add_css']['newbase'] = [
-            'css/newbase.css',
-            'css/responsive.css',
-            'css/forms.css',
-        ];
-
-        // Add JavaScript
-        $PLUGIN_HOOKS['add_javascript']['newbase'] = [
-            'js/jquery.mask.min.js',
-            'js/newbase.js',
-            'js/forms.js',
-            'js/map.js',
-            'js/signature.js',
-            'js/mileage.js',
-            'js/mobile.js',
-        ];
-
-        // Item purge hook
-        $PLUGIN_HOOKS['item_purge']['newbase'] = [
-            'Entity' => [CompanyData::class, 'cleanForEntity'],
-        ];
-    }
+    // Classe wrapper - herda tudo de System
 }
 
 /**
- * Get plugin version
- */
+* PluginNewbaseTask
+* Wrapper para compatibilidade com GLPI
+*/
+class PluginNewbaseTask extends Task
+{
+    // Classe wrapper - herda tudo de Task
+}
+
+/**
+* PluginNewbaseTaskSignature
+* Wrapper para compatibilidade com GLPI
+*/
+class PluginNewbaseTaskSignature extends TaskSignature
+{
+    // Classe wrapper - herda tudo de TaskSignature
+}
+
+// CONFIGURAÇÃO DO PLUGIN
+/**
+* Retorna as informações de configuração do plugin
+*
+* @return array Configurações do plugin
+*/
+function plugin_newbase_getConfig(): array
+{
+    $config = [
+        'name'           => PLUGIN_NEWBASE_NAME,
+        'version'        => PLUGIN_NEWBASE_VERSION,
+        'author'         => PLUGIN_NEWBASE_AUTHOR,
+        'license'        => PLUGIN_NEWBASE_LICENSE,
+        'homepage'       => PLUGIN_NEWBASE_HOMEPAGE,
+        'minGlpiVersion' => PLUGIN_NEWBASE_MIN_GLPI,
+        'maxGlpiVersion' => PLUGIN_NEWBASE_MAX_GLPI,
+        'description'    => PLUGIN_NEWBASE_DESCRIPTION,
+    ];
+
+    return $config;
+}
+
+/**
+* Retorna as classes do banco de dados do plugin
+*
+* @return array Array com classes que usam CommonDBTM
+*/
+function plugin_newbase_getDatabase(): array
+{
+    return [
+        'PluginNewbaseSystem',
+        'PluginNewbaseTask',
+        'PluginNewbaseTaskSignature',
+    ];
+}
+
+// VERIFICAR COMPATIBILIDADE
+
+/**
+* Valida se o GLPI é compatível com o plugin
+*
+* @return bool True se compatível
+*/
+function plugin_newbase_checkCompat(): bool
+{
+    // Verificar versão do GLPI
+    if (version_compare(GLPI_VERSION, PLUGIN_NEWBASE_MIN_GLPI, '<')) {
+        echo sprintf(
+            'Este plugin requer GLPI %s ou superior. Sua versão é %s.',
+            PLUGIN_NEWBASE_MIN_GLPI,
+            GLPI_VERSION
+        );
+        return false;
+    }
+
+    // Verificar versão do PHP
+    if (version_compare(PHP_VERSION, '8.1', '<')) {
+        echo 'Este plugin requer PHP 8.1 ou superior.';
+        return false;
+    }
+
+    return true;
+}
+
+/**
+* Retorna a versão e informações do plugin para o GLPI
+*
+* @return array Informações do plugin
+*/
 function plugin_version_newbase(): array
 {
     return [
-        'name'           => __('Newbase - Company Management', 'newbase'),
-        'version'        => PLUGIN_NEWBASE_VERSION,
-        'author'         => 'João Lucas',
-        'license'        => 'GPLv2+',
-        'homepage'       => 'https://github.com/newtel/newbase',
-        'requirements'   => [
-            'glpi' => [
-                'min' => NEWBASE_MIN_GLPI,
-                'max' => NEWBASE_MAX_GLPI,
-            ],
-            'php' => [
-                'min' => '8.1',
-            ],
-        ],
+        'name'     => PLUGIN_NEWBASE_NAME,
+        'version'  => PLUGIN_NEWBASE_VERSION,
+        'author'   => PLUGIN_NEWBASE_AUTHOR,
+        'license'  => PLUGIN_NEWBASE_LICENSE,
+        'homepage' => PLUGIN_NEWBASE_HOMEPAGE,
     ];
 }
 
-/**
- * Check prerequisites
- */
-function plugin_newbase_check_prerequisites(): bool
-{
-    if (version_compare(PHP_VERSION, '8.1', '<')) {
-        echo "This plugin requires PHP >= 8.1";
-        return false;
-    }
+// AUTOLOADER E INCLUSÕES
 
-    if (!defined('GLPI_VERSION')) {
-        echo "GLPI_VERSION constant not defined";
-        return false;
-    }
+// Incluir arquivo de aliases para compatibilidade
+require_once(__DIR__ . '/src/LegacyAliases.php');
 
-    if (version_compare(GLPI_VERSION, NEWBASE_MIN_GLPI, '<')) {
-        echo "This plugin requires GLPI >= " . NEWBASE_MIN_GLPI;
-        return false;
-    }
-
-    if (version_compare(GLPI_VERSION, NEWBASE_MAX_GLPI, '>=')) {
-        echo "This plugin requires GLPI < " . NEWBASE_MAX_GLPI;
-        return false;
-    }
-
-    return true;
-}
+// Incluir arquivo de menu
+require_once(__DIR__ . '/inc/menu.class.php');
 
 /**
- * Check config
+ * Inicializa o plugin Newbase
+ * Define hooks, menus, assets CSS/JS
+ *
+ * @return void
  */
-function plugin_newbase_check_config($verbose = false): bool
+function plugin_init_newbase(): void
 {
-    if ($verbose && !defined('GLPI_PRUNE_LOGS')) {
-        echo __('Installed / not configured', 'newbase');
+    global $PLUGIN_HOOKS;
+
+    // ========================================
+    // DECLARAÇÃO DE COMPATIBILIDADE COM CSRF
+    // ========================================
+    $PLUGIN_HOOKS['csrf_compliant']['newbase'] = true;
+
+    // Verificar se plugin está instalado e ativado
+    if (!class_exists('Plugin')) {
+        return;
     }
 
-    return true;
-}
+    $plugin = new Plugin();
+    if (!$plugin->isInstalled('newbase') || !$plugin->isActivated('newbase')) {
+        return;
+    }
 
-/**
- * Install plugin rights
- */
-function plugin_newbase_install_rights()
-{
-    global $DB;
+    // ========================================
+    // REGISTRAR CLASSES DO PLUGIN
+    // ========================================
+    Plugin::registerClass('PluginNewbaseSystem');
+    Plugin::registerClass('PluginNewbaseTask');
+    Plugin::registerClass('PluginNewbaseTaskSignature');
 
-    $rights = [
-        'plugin_newbase' => ALLSTANDARDRIGHT,
+    // ========================================
+    // MENU PRINCIPAL
+    // ========================================
+    $PLUGIN_HOOKS['menu_toadd']['newbase'] = [
+        'admin' => 'GlpiPlugin\Newbase\Menu',
     ];
 
-    $profile = new Profile();
-    $profiles = $profile->find();
+    // ========================================
+    // PÁGINA DE CONFIGURAÇÃO
+    // ========================================
+    $PLUGIN_HOOKS['config_page']['newbase'] = 'front/config.php';
 
-    foreach ($rights as $right => $default_value) {
-        ProfileRight::addProfileRights([$right]);
+    // ========================================
+    // CSS DO PLUGIN
+    // ========================================
+    $PLUGIN_HOOKS['add_css']['newbase'] = [
+        'css/newbase.css',
+        'css/forms.css',
+        'css/responsive.css',
+    ];
 
-        foreach ($profiles as $profile_id => $profile_data) {
-            $value = 0;
-
-            // Super-admin has all rights
-            if ($profile_data['name'] === 'Super-Admin') {
-                $value = ALLSTANDARDRIGHT;
-            } elseif ($profile_data['name'] === 'Admin') {
-                $value = ALLSTANDARDRIGHT;
-            } elseif ($profile_data['name'] === 'Technician') {
-                $value = READ + CREATE + UPDATE;
-            }
-
-            if ($value > 0) {
-                ProfileRight::updateProfileRights($profile_id, [$right => $value]);
-            }
-        }
-    }
-
-    return true;
-}
-
-/**
- * Install plugin
- */
-function plugin_newbase_install(): bool
-{
-    global $DB;
-
-    $migration = new Migration(PLUGIN_NEWBASE_VERSION);
-
-    // Disable foreign key checks
-    $DB->query("SET FOREIGN_KEY_CHECKS = 0");
-
-    $sqlFile = PLUGIN_NEWBASE_DIR . '/install/mysql/2.1.0.sql';
-
-    if (!file_exists($sqlFile)) {
-        echo "SQL file not found: $sqlFile\n";
-        $DB->query("SET FOREIGN_KEY_CHECKS = 1");
-        return false;
-    }
-
-    $sql = file_get_contents($sqlFile);
-    $commands = array_filter(
-        array_map('trim', explode(';', $sql)),
-        static function ($cmd) {
-            return $cmd !== '';
-        }
-    );
-
-    foreach ($commands as $command) {
-        try {
-            $DB->query($command);
-        } catch (Throwable $e) {
-            echo "Installation error: " . $e->getMessage() . "\n";
-            $DB->query("SET FOREIGN_KEY_CHECKS = 1");
-            return false;
-        }
-    }
-
-    // Re-enable foreign key checks
-    $DB->query("SET FOREIGN_KEY_CHECKS = 1");
-
-    $migration->executeMigration();
-
-    plugin_newbase_install_rights();
-    return true;
-}
-
-/**
- * Uninstall plugin
- */
-function plugin_newbase_uninstall(): bool
-{
-    global $DB;
-
-    try {
-        // Disable foreign key checks to avoid constraint errors
-        $DB->query("SET FOREIGN_KEY_CHECKS = 0");
-
-        // List of tables in reverse dependency order
-        // Note: glpi_plugin_newbase_companydata was removed in v2.1.0
-        $tables = [
-            'glpi_plugin_newbase_signatures',
-            'glpi_plugin_newbase_tasks',
-            'glpi_plugin_newbase_chatbot',
-            'glpi_plugin_newbase_systems',
-            'glpi_plugin_newbase_company_extras',
-        ];
-
-        // Drop each table
-        foreach ($tables as $table) {
-            if ($DB->tableExists($table)) {
-                try {
-                    $DB->queryOrDie("DROP TABLE IF EXISTS `$table`");
-                } catch (Exception $e) {
-                    Toolbox::logError("Failed to drop table $table: " . $e->getMessage());
-                    // Continue with next table instead of failing completely
-                }
-            }
-        }
-
-        // Re-enable foreign key checks
-        $DB->query("SET FOREIGN_KEY_CHECKS = 1");
-
-        // Clean profile rights - only attempt if table exists
-        if ($DB->tableExists('glpi_profilerights')) {
-            try {
-                $DB->queryOrDie("DELETE FROM `glpi_profilerights` WHERE `name` = 'plugin_newbase'");
-            } catch (Exception $e) {
-                Toolbox::logError("Failed to clean profile rights: " . $e->getMessage());
-            }
-        }
-
-        // Clean display preferences - only attempt if table exists
-        if ($DB->tableExists('glpi_displaypreferences')) {
-            try {
-                $DB->queryOrDie("DELETE FROM `glpi_displaypreferences` 
-                    WHERE `itemtype` IN ('GlpiPlugin\\Newbase\\Src\\CompanyData',
-                                         'GlpiPlugin\\Newbase\\Src\\Task', 
-                                         'GlpiPlugin\\Newbase\\Src\\System',
-                                         'GlpiPlugin\\Newbase\\Src\\TaskSignature',
-                                         'GlpiPlugin\\Newbase\\CompanyData',
-                                         'GlpiPlugin\\Newbase\\Task',
-                                         'GlpiPlugin\\Newbase\\System',
-                                         'GlpiPlugin\\Newbase\\TaskSignature',
-                                         'CompanyData',
-                                         'Task',
-                                         'System',
-                                         'TaskSignature')");
-            } catch (Exception $e) {
-                Toolbox::logError("Failed to clean display preferences: " . $e->getMessage());
-            }
-        }
-
-        // Clean logs - only attempt if table exists
-        if ($DB->tableExists('glpi_logs')) {
-            try {
-                $DB->queryOrDie("DELETE FROM `glpi_logs` 
-                    WHERE `itemtype` IN ('GlpiPlugin\\Newbase\\Src\\CompanyData',
-                                         'GlpiPlugin\\Newbase\\Src\\Task', 
-                                         'GlpiPlugin\\Newbase\\Src\\System',
-                                         'GlpiPlugin\\Newbase\\Src\\TaskSignature',
-                                         'GlpiPlugin\\Newbase\\CompanyData',
-                                         'GlpiPlugin\\Newbase\\Task',
-                                         'GlpiPlugin\\Newbase\\System',
-                                         'GlpiPlugin\\Newbase\\TaskSignature',
-                                         'CompanyData',
-                                         'Task',
-                                         'System',
-                                         'TaskSignature')");
-            } catch (Exception $e) {
-                Toolbox::logError("Failed to clean logs: " . $e->getMessage());
-            }
-        }
-
-        return true;
-    } catch (Throwable $e) {
-        $DB->query("SET FOREIGN_KEY_CHECKS = 1");
-        Toolbox::logError('Newbase uninstall error: ' . $e->getMessage());
-        return false;
-    }
+    // ========================================
+    // JAVASCRIPT DO PLUGIN
+    // ========================================
+    $PLUGIN_HOOKS['add_javascript']['newbase'] = [
+        'js/newbase.js',
+        'js/forms.js',
+        'js/map.js',
+        'js/signature.js',
+        'js/mileage.js',
+        'js/mobile.js',
+        'js/jquery.mask.min.js',
+    ];
 }

@@ -38,8 +38,16 @@ global $DB, $CFG_GLPI;
 // Statistics cards
 echo "<div class='dashboard-cards' style='display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin: 20px;'>";
 
-// Companies count
-$companies_count = countElementsInTable('glpi_plugin_newbase_companydata');
+// Companies count - usar glpi_entities com join em company_extras
+$companies_count = $DB->request([
+    'COUNT'  => 'cpt',
+    'FROM'   => 'glpi_entities',
+    'WHERE'  => [
+        'entities_id' => 0, // Entidades raiz apenas
+        'is_deleted'  => 0,
+    ]
+])->current()['cpt'] ?? 0;
+
 echo "<div class='card' style='background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);'>";
 echo "<h3 style='margin: 0 0 10px 0;'><i class='fas fa-building'></i> " . __('Companies', 'newbase') . "</h3>";
 echo "<div style='font-size: 32px; font-weight: bold; color: #2196F3;'>$companies_count</div>";
@@ -48,9 +56,9 @@ echo __('View all', 'newbase') . " <i class='fas fa-arrow-right'></i></a>";
 echo "</div>";
 
 // Tasks count by status
-$tasks_open = countElementsInTable('glpi_plugin_newbase_task', ['status' => 'open']);
-$tasks_in_progress = countElementsInTable('glpi_plugin_newbase_task', ['status' => 'in_progress']);
-$tasks_completed = countElementsInTable('glpi_plugin_newbase_task', ['status' => 'completed']);
+$tasks_open = countElementsInTable('glpi_plugin_newbase_tasks', ['status' => 'open']);
+$tasks_in_progress = countElementsInTable('glpi_plugin_newbase_tasks', ['status' => 'in_progress']);
+$tasks_completed = countElementsInTable('glpi_plugin_newbase_tasks', ['status' => 'completed']);
 $tasks_total = $tasks_open + $tasks_in_progress + $tasks_completed;
 
 echo "<div class='card' style='background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);'>";
@@ -66,8 +74,8 @@ echo __('View all', 'newbase') . " <i class='fas fa-arrow-right'></i></a>";
 echo "</div>";
 
 // Systems count
-$systems_count = countElementsInTable('glpi_plugin_newbase_system');
-$systems_active = countElementsInTable('glpi_plugin_newbase_system', ['status' => 'active']);
+$systems_count = countElementsInTable('glpi_plugin_newbase_systems');
+$systems_active = countElementsInTable('glpi_plugin_newbase_systems', ['is_active' => 1]);
 
 echo "<div class='card' style='background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);'>";
 echo "<h3 style='margin: 0 0 10px 0;'><i class='fas fa-server'></i> " . __('Systems', 'newbase') . "</h3>";
@@ -79,12 +87,12 @@ echo "<a href='" . $CFG_GLPI['root_doc'] . "/plugins/newbase/front/system.php' c
 echo __('View all', 'newbase') . " <i class='fas fa-arrow-right'></i></a>";
 echo "</div>";
 
-// Addresses count
-$addresses_count = countElementsInTable('glpi_plugin_newbase_address');
+// Addresses - usar company_extras já que addresses deprecated
+$company_extras_count = countElementsInTable('glpi_plugin_newbase_company_extras');
 
 echo "<div class='card' style='background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);'>";
-echo "<h3 style='margin: 0 0 10px 0;'><i class='fas fa-map-marker-alt'></i> " . __('Addresses', 'newbase') . "</h3>";
-echo "<div style='font-size: 32px; font-weight: bold; color: #FF5722;'>$addresses_count</div>";
+echo "<h3 style='margin: 0 0 10px 0;'><i class='fas fa-map-marker-alt'></i> " . __('Extra Data', 'newbase') . "</h3>";
+echo "<div style='font-size: 32px; font-weight: bold; color: #FF5722;'>$company_extras_count</div>";
 echo "</div>";
 
 echo "</div>";
@@ -96,21 +104,21 @@ echo "<h3><i class='fas fa-clock'></i> " . __('Recent Tasks', 'newbase') . "</h3
 
 $iterator = $DB->request([
     'SELECT' => [
-        'glpi_plugin_newbase_task.*',
-        'glpi_plugin_newbase_companydata.name AS company_name',
+        'glpi_plugin_newbase_tasks.*',
+        'glpi_entities.name AS company_name',
         'glpi_users.name AS user_name',
     ],
-    'FROM' => 'glpi_plugin_newbase_task',
+    'FROM' => 'glpi_plugin_newbase_tasks',
     'LEFT JOIN' => [
-        'glpi_plugin_newbase_companydata' => [
+        'glpi_entities' => [
             'ON' => [
-                'glpi_plugin_newbase_task' => 'plugin_newbase_companydata_id',
-                'glpi_plugin_newbase_companydata' => 'id',
+                'glpi_plugin_newbase_tasks' => 'entities_id',
+                'glpi_entities' => 'id',
             ],
         ],
         'glpi_users' => [
             'ON' => [
-                'glpi_plugin_newbase_task' => 'assigned_to',
+                'glpi_plugin_newbase_tasks' => 'assigned_to',
                 'glpi_users' => 'id',
             ],
         ],
@@ -193,10 +201,10 @@ echo "</div>";
 
 // Map preview (if geolocation is enabled)
 if (Config::isGeolocationEnabled()) {
-    $tasks_with_coords = countElementsInTable('glpi_plugin_newbase_task', [
+    $tasks_with_coords = countElementsInTable('glpi_plugin_newbase_tasks', [
         'OR' => [
-            ['latitude_start' => ['<>', null]],
-            ['latitude_end' => ['<>', null]],
+            ['latitude' => ['<>', null]],
+            ['longitude' => ['<>', null]],
         ],
     ]);
 

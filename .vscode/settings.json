@@ -1,4 +1,45 @@
 {
-    "terminal.integrated.cursorStyle": "block",
-    "intelephense.diagnostics.undefinedMethods": false,
+    "intelephense.environment.includePaths": [
+        ".vscode"
+    ],
+    "intelephense.stubs": [
+        "apache",
+        "bcmath",
+        "Core",
+        "curl",
+        "date",
+        "dom",
+        "fileinfo",
+        "filter",
+        "gd",
+        "hash",
+        "iconv",
+        "json",
+        "libxml",
+        "mbstring",
+        "mysqli",
+        "mysqlnd",
+        "openssl",
+        "pcre",
+        "PDO",
+        "pdo_mysql",
+        "Phar",
+        "SimpleXML",
+        "sockets",
+        "SPL",
+        "standard",
+        "tokenizer",
+        "xml",
+        "xmlreader",
+        "xmlwriter",
+        "zip",
+        "zlib",
+        "Zend OPcache"
+    ],
+    "intelephense.files.exclude": [
+        "**/vendor/**",
+        "**/node_modules/**",
+        "**/.git/**",
+        "**/.svn/**"
+    ]
 }
