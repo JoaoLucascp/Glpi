@@ -17,12 +17,12 @@ declare(strict_types=1);
 namespace GlpiPlugin\Newbase;
 
 // Import all source classes
-use GlpiPlugin\Newbase\Src\CompanyData as SourceCompanyData;
-use GlpiPlugin\Newbase\Src\Address as SourceAddress;
-use GlpiPlugin\Newbase\Src\System as SourceSystem;
-use GlpiPlugin\Newbase\Src\Task as SourceTask;
-use GlpiPlugin\Newbase\Src\TaskSignature as SourceTaskSignature;
-use GlpiPlugin\Newbase\Src\Config as SourceConfig;
+use GlpiPlugin\Newbase\CompanyData as SourceCompanyData;
+use GlpiPlugin\Newbase\Address as SourceAddress;
+use GlpiPlugin\Newbase\System as SourceSystem;
+use GlpiPlugin\Newbase\Task as SourceTask;
+use GlpiPlugin\Newbase\TaskSignature as SourceTaskSignature;
+use GlpiPlugin\Newbase\Config as SourceConfig;
 
 // Create aliases for GLPI's automatic discovery (without the Src\ namespace)
 

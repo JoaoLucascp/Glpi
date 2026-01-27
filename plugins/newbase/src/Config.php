@@ -1,54 +1,19 @@
 <?php
-
 /**
 * Config Class - Plugin Configuration Management
-* @package   PluginNewbase
+*
+* @package   Plugin - Newbase
 * @author    João Lucas
 * @copyright 2026 João Lucas
 * @license   GPLv2+
-* @version   2.0.0
+* @version   2.1.0
 */
-declare(strict_types=1);
 
-namespace GlpiPlugin\Newbase\Src;
+namespace GlpiPlugin\Newbase;
 
-use CommonDBTM;
-use Session;
-use Html;
-use Dropdown;
-use Toolbox;
-use Exception;
+use GlpiPlugin\Newbase\common;
 
-/**
- * Config class for Newbase Plugin
- *
- * Manages plugin configuration settings
- *
- * @package   PluginNewbase
- * @author    JoÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o Lucas
- * @copyright Copyright (c) 2025 JoÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o Lucas
- * @license   GPLv2+
- * @since     2.0.0
- */
-/**
- * Gerenciamento de configuracoes do plugin
- *
- * @package   PluginNewbase
- * @author    Joao Lucas
- * @copyright Copyright (c) 2025 Joao Lucas
- * @license   GPLv2+
- * @since     2.0.0
- */
-/**
- * Gerenciamento de configuracoes do plugin
- *
- * @package   PluginNewbase
- * @author    Joao Lucas
- * @copyright Copyright (c) 2025 Joao Lucas
- * @license   GPLv2+
- * @since     2.0.0
- */
-class Config extends CommonDBTM
+class Config extends Common
 {
     // Right name for permissions
     public static $rightname = 'plugin_newbase_config';

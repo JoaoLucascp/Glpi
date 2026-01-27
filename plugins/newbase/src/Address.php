@@ -1,5 +1,4 @@
 <?php
-
 /**
 * Classe Address - Gerenciamento de Endereços para o Plugin Newbase
 * @package   PluginNewbase
@@ -8,18 +7,15 @@
 * @license   GPLv2+
 * @version   2.0.0
 */
-declare(strict_types=1);
 
-namespace GlpiPlugin\Newbase\Src;
+namespace GlpiPlugin\Newbase;
 
-use GlpiPlugin\Newbase\Src\Common;
-use GlpiPlugin\Newbase\Src\CompanyData;
-use CommonGLPI;
+use GlpiPlugin\Newbase\Common;
 use CommonDBTM;
-use Entity;
-use Html;
+use CommonGLPI;
 use Session;
-
+use Html;
+use Entity;
 /**
 * Address - Gerencia endereços de empresas com integração de CEP
 * Manipula operações CRUD para endereços com busca automática de CEP,
@@ -120,7 +116,7 @@ class Address extends Common
         // Empresa
         $tab[] = [
             'id'       => '3',
-            'table'    => CompanyData::getTable(),
+            'table'    => $this->getTable(),
             'field'    => 'name',
             'name'     => __('Company', 'newbase'),
             'datatype' => 'dropdown',

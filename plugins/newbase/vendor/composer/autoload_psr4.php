@@ -6,5 +6,5 @@ $vendorDir = dirname(__DIR__);
 $baseDir = dirname($vendorDir);
 
 return array(
-    'GlpiPlugin\\Newbase\\Src\\' => array($baseDir . '/src'),
+    'GlpiPlugin\\Newbase\\' => array($baseDir . '/src'),
 );

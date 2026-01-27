@@ -1,5 +1,4 @@
 <?php
-
 /**
 * System Class - Gerenciamento de sistema para o plugin Newbase
 * @package   PluginNewbase
@@ -8,18 +7,15 @@
 * @license   GPLv2+
 * @version   2.0.0
 */
-declare(strict_types=1);
 
-namespace GlpiPlugin\Newbase\Src;
+namespace GlpiPlugin\Newbase;
 
-use GlpiPlugin\Newbase\Src\Common;
-use GlpiPlugin\Newbase\Src\CompanyData;
-use CommonGLPI;
+use GlpiPlugin\Newbase\Common;
 use CommonDBTM;
+use CommonGLPI;
 use Session;
 use Html;
 use Entity;
-
 /**
 * System - Gerencia sistemas de empresas (PABX, IPBX, Chatbot, etc)
 * Manipula operações CRUD para sistemas de telefonia com formulários dinâmicos
@@ -135,7 +131,7 @@ class System extends Common
         // Empresa
         $tab[] = [
             'id'       => '3',
-            'table'    => CompanyData::getTable(),
+            'table'    => $this::getTable(),
             'field'    => 'name',
             'name'     => __('Company', 'newbase'),
             'datatype' => 'dropdown',

@@ -1,5 +1,4 @@
 <?php
-
 /**
 * Common Class - Base class for all Newbase entities
 * @package   PluginNewbase
@@ -8,15 +7,13 @@
 * @license   GPLv2+
 * @version   2.0.0
 */
-declare(strict_types=1);
 
-namespace GlpiPlugin\Newbase\Src;
+namespace GlpiPlugin\Newbase;
 
 use CommonDBTM;
+use plugin;
 use Toolbox;
-use Exception;
-use Plugin;
-use Html;
+use company;
 
 /**
 * Common - Base class with shared functionality

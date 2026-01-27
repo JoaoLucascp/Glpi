@@ -17,12 +17,12 @@ declare(strict_types=1);
 
 // Use namespace global (implícito em PHP ao não declarar namespace)
 
-use GlpiPlugin\Newbase\Src\CompanyData as SourceCompanyData;
-use GlpiPlugin\Newbase\Src\Address as SourceAddress;
-use GlpiPlugin\Newbase\Src\System as SourceSystem;
-use GlpiPlugin\Newbase\Src\Task as SourceTask;
-use GlpiPlugin\Newbase\Src\TaskSignature as SourceTaskSignature;
-use GlpiPlugin\Newbase\Src\Config as SourceConfig;
+use GlpiPlugin\Newbase\CompanyData as SourceCompanyData;
+use GlpiPlugin\Newbase\Address as SourceAddress;
+use GlpiPlugin\Newbase\System as SourceSystem;
+use GlpiPlugin\Newbase\Task as SourceTask;
+use GlpiPlugin\Newbase\TaskSignature as SourceTaskSignature;
+use GlpiPlugin\Newbase\Config as SourceConfig;
 
 // Create global namespace aliases for GLPI's MassiveAction and other core systems
 

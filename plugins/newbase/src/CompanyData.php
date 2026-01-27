@@ -11,7 +11,7 @@
 * @since     2.1.0
 */
 
-namespace GlpiPlugin\Newbase\Src;
+namespace GlpiPlugin\Newbase;
 
 if (!defined('GLPI_ROOT')) {
     die("Sorry. You can't access this file directly");

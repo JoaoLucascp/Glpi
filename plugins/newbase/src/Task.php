@@ -10,16 +10,15 @@
 * @license   GPLv2+
 * @version   2.0.0
 */
-declare(strict_types=1);
 
-namespace GlpiPlugin\Newbase\Src;
+namespace GlpiPlugin\Newbase;
 
 use Session;
+use CommonGLPI;
+use CommonDBTM;
 use Html;
 use Dropdown;
 use User;
-use CommonGLPI;
-use CommonDBTM;
 
 /**
 * Classe Task - Gerenciamento de tarefas com geolocalização e rastreamento de status

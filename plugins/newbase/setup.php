@@ -2,9 +2,8 @@
 
 /**
 * Setup File - Plugin Newbase
-* Arquivo de configuração e registro do plugin com GLPI
-* Define classes wrapper para compatibilidade com GLPI 10.0.20
-* @package   GlpiPlugin\Newbase
+*
+* @package   Plugin Newbase
 * @author    João Lucas
 * @license   GPLv2+
 * @since     2.1.0
@@ -14,112 +13,109 @@ if (!defined('GLPI_ROOT')) {
     die("Sorry. You can't access this file directly");
 }
 
-// CARREGAR AUTOLOADER DO COMPOSER
-require_once(__DIR__ . '/vendor/autoload.php');
-
-// DEFINIÇÕES GLOBAIS DO PLUGIN
-
+// CONSTANTES DO PLUGIN
 define('PLUGIN_NEWBASE_VERSION', '2.1.0');
-
-define('PLUGIN_NEWBASE_MIN_GLPI', '10.0.20');
-
-define('PLUGIN_NEWBASE_MAX_GLPI', '10.9.99');
-
-define('PLUGIN_NEWBASE_NAME', 'Newbase');
-
+define('PLUGIN_NEWBASE_MIN_GLPI', '10.0.0');
+define('PLUGIN_NEWBASE_MAX_GLPI', '10.1.0');
+define('PLUGIN_NEWBASE_NAME', 'Newbase - Company Management');
 define('PLUGIN_NEWBASE_AUTHOR', 'João Lucas');
-
 define('PLUGIN_NEWBASE_LICENSE', 'GPLv2+');
+define('PLUGIN_NEWBASE_HOMEPAGE', 'https://github.com/joaolucas/glpi-newbase');
+define('PLUGIN_NEWBASE_DESCRIPTION', 'Sistema completo de gestão empresarial para GLPI');
 
-define('PLUGIN_NEWBASE_HOMEPAGE', 'https://github.com/joao-lucas/glpi-newbase');
+// AUTOLOADER DO COMPOSER (CRÍTICO!)
+$autoload = __DIR__ . '/vendor/autoload.php';
+if (file_exists($autoload)) {
+    require_once $autoload;
+} else {
+    error_log('NEWBASE PLUGIN ERROR: Autoloader not found! Run: composer install');
+}
 
-define(
-    'PLUGIN_NEWBASE_DESCRIPTION',
-    'Sistema completo de Gestão de documentação de empresas '
-    . 'para GLPI com gerenciamento de empresas, documentação de servidor '
-    . 'telefônico baseado em asterisk, documentação de servidor telefônico '
-    . 'em nuvem baseado em asterisk, documentação de sistema Chatbot Omnichannel, '
-    . 'documentação de linha fixa, Gestão de tarefas com geolocalização, '
-    . 'assinatura digital e cálculo de quilometragem.'
-);
-
-// CLASSES WRAPPER PARA COMPATIBILIDADE
-
-use GlpiPlugin\Newbase\Src\System;
-use GlpiPlugin\Newbase\Src\Task;
-use GlpiPlugin\Newbase\Src\TaskSignature;
+// INICIALIZAÇÃO DO PLUGIN
 
 /**
-* PluginNewbaseSystem
-* Wrapper para compatibilidade com GLPI
+* Inicializa o plugin Newbase
+* Define hooks, menus, assets CSS/JS
+* @return void
 */
-class PluginNewbaseSystem extends System
+function plugin_init_newbase(): void
 {
-    // Classe wrapper - herda tudo de System
+    global $PLUGIN_HOOKS;
+
+    // Compatibilidade CSRF (obrigatório GLPI 10+)
+    $PLUGIN_HOOKS['csrf_compliant']['newbase'] = true;
+
+    // Verificar se plugin está instalado e ativado
+    if (!class_exists('Plugin')) {
+        return;
+    }
+
+    $plugin = new Plugin();
+    if (!$plugin->isInstalled('newbase') || !$plugin->isActivated('newbase')) {
+        return;
+    }
+
+    // Registrar classes do plugin (formato legado)
+    Plugin::registerClass('PluginNewbaseSystem');
+    Plugin::registerClass('PluginNewbaseTask');
+    Plugin::registerClass('PluginNewbaseTaskSignature');
+
+    // Menu principal
+    $PLUGIN_HOOKS['menu_toadd']['newbase'] = [
+        'admin' => 'GlpiPlugin\Newbase\Menu',
+    ];
+
+    // Página de configuração
+    $PLUGIN_HOOKS['config_page']['newbase'] = 'front/config.php';
+
+    // CSS do plugin
+    $PLUGIN_HOOKS['add_css']['newbase'] = [
+        'css/newbase.css',
+        'css/forms.css',
+        'css/responsive.css',
+    ];
+
+    // JavaScript do plugin
+    $PLUGIN_HOOKS['add_javascript']['newbase'] = [
+        'js/newbase.js',
+        'js/forms.js',
+        'js/map.js',
+        'js/signature.js',
+        'js/mileage.js',
+        'js/mobile.js',
+        'js/jquery.mask.min.js',
+    ];
 }
 
 /**
-* PluginNewbaseTask
-* Wrapper para compatibilidade com GLPI
+* Retorna a versão e informações do plugin para o GLPI
+* @return array Informações do plugin
 */
-class PluginNewbaseTask extends Task
+function plugin_version_newbase(): array
 {
-    // Classe wrapper - herda tudo de Task
-}
-
-/**
-* PluginNewbaseTaskSignature
-* Wrapper para compatibilidade com GLPI
-*/
-class PluginNewbaseTaskSignature extends TaskSignature
-{
-    // Classe wrapper - herda tudo de TaskSignature
-}
-
-// CONFIGURAÇÃO DO PLUGIN
-/**
-* Retorna as informações de configuração do plugin
-*
-* @return array Configurações do plugin
-*/
-function plugin_newbase_getConfig(): array
-{
-    $config = [
+    return [
         'name'           => PLUGIN_NEWBASE_NAME,
         'version'        => PLUGIN_NEWBASE_VERSION,
         'author'         => PLUGIN_NEWBASE_AUTHOR,
         'license'        => PLUGIN_NEWBASE_LICENSE,
         'homepage'       => PLUGIN_NEWBASE_HOMEPAGE,
-        'minGlpiVersion' => PLUGIN_NEWBASE_MIN_GLPI,
-        'maxGlpiVersion' => PLUGIN_NEWBASE_MAX_GLPI,
-        'description'    => PLUGIN_NEWBASE_DESCRIPTION,
-    ];
-
-    return $config;
-}
-
-/**
-* Retorna as classes do banco de dados do plugin
-*
-* @return array Array com classes que usam CommonDBTM
-*/
-function plugin_newbase_getDatabase(): array
-{
-    return [
-        'PluginNewbaseSystem',
-        'PluginNewbaseTask',
-        'PluginNewbaseTaskSignature',
+        'requirements'   => [
+            'glpi' => [
+                'min' => PLUGIN_NEWBASE_MIN_GLPI,
+                'max' => PLUGIN_NEWBASE_MAX_GLPI,
+            ],
+            'php' => [
+                'min' => '8.1',
+            ],
+        ],
     ];
 }
 
-// VERIFICAR COMPATIBILIDADE
-
 /**
-* Valida se o GLPI é compatível com o plugin
-*
+* Verificar pré-requisitos antes da instalação
 * @return bool True se compatível
 */
-function plugin_newbase_checkCompat(): bool
+function plugin_newbase_check_prerequisites(): bool
 {
     // Verificar versão do GLPI
     if (version_compare(GLPI_VERSION, PLUGIN_NEWBASE_MIN_GLPI, '<')) {
@@ -141,92 +137,14 @@ function plugin_newbase_checkCompat(): bool
 }
 
 /**
-* Retorna a versão e informações do plugin para o GLPI
-*
-* @return array Informações do plugin
+* Verificar configuração do plugin
+* @param bool $verbose Exibir mensagens
+* @return bool True se configurado
 */
-function plugin_version_newbase(): array
+function plugin_newbase_check_config(bool $verbose = false): bool
 {
-    return [
-        'name'     => PLUGIN_NEWBASE_NAME,
-        'version'  => PLUGIN_NEWBASE_VERSION,
-        'author'   => PLUGIN_NEWBASE_AUTHOR,
-        'license'  => PLUGIN_NEWBASE_LICENSE,
-        'homepage' => PLUGIN_NEWBASE_HOMEPAGE,
-    ];
-}
-
-// AUTOLOADER E INCLUSÕES
-
-// Incluir arquivo de aliases para compatibilidade
-require_once(__DIR__ . '/src/LegacyAliases.php');
-
-// Incluir arquivo de menu
-require_once(__DIR__ . '/inc/menu.class.php');
-
-/**
- * Inicializa o plugin Newbase
- * Define hooks, menus, assets CSS/JS
- *
- * @return void
- */
-function plugin_init_newbase(): void
-{
-    global $PLUGIN_HOOKS;
-
-    // ========================================
-    // DECLARAÇÃO DE COMPATIBILIDADE COM CSRF
-    // ========================================
-    $PLUGIN_HOOKS['csrf_compliant']['newbase'] = true;
-
-    // Verificar se plugin está instalado e ativado
-    if (!class_exists('Plugin')) {
-        return;
+    if ($verbose) {
+        echo 'Plugin Newbase instalado e configurado corretamente';
     }
-
-    $plugin = new Plugin();
-    if (!$plugin->isInstalled('newbase') || !$plugin->isActivated('newbase')) {
-        return;
-    }
-
-    // ========================================
-    // REGISTRAR CLASSES DO PLUGIN
-    // ========================================
-    Plugin::registerClass('PluginNewbaseSystem');
-    Plugin::registerClass('PluginNewbaseTask');
-    Plugin::registerClass('PluginNewbaseTaskSignature');
-
-    // ========================================
-    // MENU PRINCIPAL
-    // ========================================
-    $PLUGIN_HOOKS['menu_toadd']['newbase'] = [
-        'admin' => 'GlpiPlugin\Newbase\Menu',
-    ];
-
-    // ========================================
-    // PÁGINA DE CONFIGURAÇÃO
-    // ========================================
-    $PLUGIN_HOOKS['config_page']['newbase'] = 'front/config.php';
-
-    // ========================================
-    // CSS DO PLUGIN
-    // ========================================
-    $PLUGIN_HOOKS['add_css']['newbase'] = [
-        'css/newbase.css',
-        'css/forms.css',
-        'css/responsive.css',
-    ];
-
-    // ========================================
-    // JAVASCRIPT DO PLUGIN
-    // ========================================
-    $PLUGIN_HOOKS['add_javascript']['newbase'] = [
-        'js/newbase.js',
-        'js/forms.js',
-        'js/map.js',
-        'js/signature.js',
-        'js/mileage.js',
-        'js/mobile.js',
-        'js/jquery.mask.min.js',
-    ];
+    return true;
 }

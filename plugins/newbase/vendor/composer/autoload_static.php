@@ -6,19 +6,15 @@ namespace Composer\Autoload;
 
 class ComposerStaticInit9c805e0428f2a34fed5c26d57fc22662
 {
-    public static $files = array (
-        '9b38cf48e83f5d8f60375221cd213eee' => __DIR__ . '/..' . '/phpstan/phpstan/bootstrap.php',
-    );
-
     public static $prefixLengthsPsr4 = array (
         'G' =>
         array (
-            'GlpiPlugin\\Newbase\\Src\\' => 23,
+            'GlpiPlugin\\Newbase\\' => 19,
         ),
     );
 
     public static $prefixDirsPsr4 = array (
-        'GlpiPlugin\\Newbase\\Src\\' =>
+        'GlpiPlugin\\Newbase\\' =>
         array (
             0 => __DIR__ . '/../..' . '/src',
         ),
@@ -32,15 +28,7 @@ class ComposerStaticInit9c805e0428f2a34fed5c26d57fc22662
         'GlpiPlugin\\Newbase\\Address' => __DIR__ . '/../..' . '/src/LegacyAliases.php',
         'GlpiPlugin\\Newbase\\CompanyData' => __DIR__ . '/../..' . '/src/LegacyAliases.php',
         'GlpiPlugin\\Newbase\\Config' => __DIR__ . '/../..' . '/src/LegacyAliases.php',
-        'GlpiPlugin\\Newbase\\Src\\Address' => __DIR__ . '/../..' . '/src/Address.php',
-        'GlpiPlugin\\Newbase\\Src\\AddressHandler' => __DIR__ . '/../..' . '/src/AddressHandler.php',
-        'GlpiPlugin\\Newbase\\Src\\Common' => __DIR__ . '/../..' . '/src/Common.php',
-        'GlpiPlugin\\Newbase\\Src\\CompanyData' => __DIR__ . '/../..' . '/src/CompanyData.php',
-        'GlpiPlugin\\Newbase\\Src\\Config' => __DIR__ . '/../..' . '/src/Config.php',
-        'GlpiPlugin\\Newbase\\Src\\Menu' => __DIR__ . '/../..' . '/src/Menu.php',
-        'GlpiPlugin\\Newbase\\Src\\System' => __DIR__ . '/../..' . '/src/System.php',
-        'GlpiPlugin\\Newbase\\Src\\Task' => __DIR__ . '/../..' . '/src/Task.php',
-        'GlpiPlugin\\Newbase\\Src\\TaskSignature' => __DIR__ . '/../..' . '/src/TaskSignature.php',
+        'GlpiPlugin\\Newbase\\Menu' => __DIR__ . '/../..' . '/src/Menu.php',
         'GlpiPlugin\\Newbase\\System' => __DIR__ . '/../..' . '/src/LegacyAliases.php',
         'GlpiPlugin\\Newbase\\Task' => __DIR__ . '/../..' . '/src/LegacyAliases.php',
         'GlpiPlugin\\Newbase\\TaskSignature' => __DIR__ . '/../..' . '/src/LegacyAliases.php',

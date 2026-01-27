@@ -7,14 +7,13 @@
 * @author    João Lucas
 * @copyright 2026 João Lucas
 * @license   GPLv2+
-* @version   2.0.0
+* @version   2.1.0
 */
-declare(strict_types=1);
 
-namespace GlpiPlugin\Newbase\Src;
+namespace GlpiPlugin\Newbase;
 
-use GlpiPlugin\Newbase\Src\Task;
-use GlpiPlugin\Newbase\Src\Common;
+use GlpiPlugin\Newbase\Task;
+use GlpiPlugin\Newbase\Common;
 use Session;
 use Html;
 use Toolbox;

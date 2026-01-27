@@ -8,16 +8,13 @@
 * @license   GPLv2+
 * @since     2.0.0
 */
-declare(strict_types=1);
 
-namespace GlpiPlugin\Newbase\Src;
-
-use GlpiPlugin\Newbase\Src\Common;
+namespace GlpiPlugin\Newbase;
 
 /**
 * Undocumented class
 */
-class AddressHandler extends Common
+class AddressHandler
 {
     /**
      * Handles the AJAX request to search for an address by CEP.
