@@ -1,9 +1,8 @@
 <?php
 
 /**
-* TaskSignature class
-* Gerencia assinaturas digitais para tarefas com funcionalidade de upload e exibição
-* @package   PluginNewbase
+* TaskSignature Class - Digital signature management for tasks
+* @package   Plugin - Newbase
 * @author    João Lucas
 * @copyright 2026 João Lucas
 * @license   GPLv2+
@@ -13,98 +12,82 @@
 namespace GlpiPlugin\Newbase;
 
 use CommonDBTM;
+use Session;
+use Html;
+use Toolbox;
 
 /**
-* Undocumented class
+* TaskSignature - Manages digital signatures for field tasks
+* Stores signature as base64 data or file reference
 */
 class TaskSignature extends CommonDBTM
 {
-    // Nome correto para permissões
-    public static $rightname = 'plugin_newbase_task';
+/**
+* Rights management
+* @var string
+*/
+    public static $rightname = 'plugin_newbase';
 
-    // Ativar histórico
+/**
+* Enable history tracking
+* @var bool
+*/
     public $dohistory = true;
 
-    /**
-    * Obter nome da tabela
-    * @param string|null $classname Nome da classe
-    * @return string
-    */
-    public static function getTable($classname = null): string
-    {
-        if ($classname !== null && $classname !== self::class) {
-            return parent::getTable($classname);
-        }
-        return 'glpi_plugin_newbase_tasksignature';
-    }
+/**
+* Maximum signature size in bytes (500KB)
+* @var int
+*/
+    const MAX_SIGNATURE_SIZE = 512000;
 
-    /**
-    * Obter nome do tipo
-    * @param int $nb Numero do item
-    * @return string
-    */
+/**
+* Get type name
+* @param int $nb Number of items
+* @return string Type name
+*/
     public static function getTypeName($nb = 0): string
     {
-        return _n('Digital Signature', 'Digital Signatures', $nb, 'newbase');
+        return $nb > 1 ? __('Signatures', 'newbase') : __('Signature', 'newbase');
     }
 
-    /**
-    * Obter o nome do campo de chave estrangeira
-    * @return string
-    */
-    public static function getForeignKeyField(): string
+/**
+* Get table name
+* @param string|null $classname Class name
+* @return string Table name
+*/
+    public static function getTable($classname = null): string
     {
-        return 'plugin_newbase_tasksignature_id';
+        return 'glpi_plugin_newbase_task_signatures';
     }
 
-    /**
-    * Verificar se o usuário pode visualizar o item
-    * @return bool
-    */
-    public static function canView(): bool
+/**
+* Get icon for menus
+* @return string Icon class
+*/
+    public static function getIcon(): string
     {
-        return (bool) Session::haveRight(self::$rightname, READ);
+        return 'ti ti-signature';
     }
 
-    /**
-    * Verificar se o usuário pode criar um item
-    * @return bool
-    */
-    public static function canCreate(): bool
-    {
-        return (bool) Session::haveRight(self::$rightname, CREATE);
-    }
-
-    /**
-    * Verificar se o usuário pode atualizar o item
-    * @return bool
-    */
-    public static function canUpdate(): bool
-    {
-        return (bool) Session::haveRight(self::$rightname, UPDATE);
-    }
-
-    /**
-    * Verificar se o usuário pode excluir o item
-    * @return bool
-    */
-    public static function canDelete(): bool
-    {
-        return (bool) Session::haveRight(self::$rightname, DELETE);
-    }
-
-    /**
-    * Obter assinatura para a tarefa
-    * @param int $task_id ID da tarefa
-    * @return array|null Dados de assinatura ou nulos
-    */
+/**
+* Get signature for a task
+* @param int $task_id Task ID
+* @return array|null Signature data or null
+*/
     public static function getForTask(int $task_id): ?array
     {
         global $DB;
 
+        if ($task_id <= 0) {
+            return null;
+        }
+
         $iterator = $DB->request([
-            'FROM'  => self::getTable(),
-            'WHERE' => ['plugin_newbase_task_id' => $task_id],
+            'FROM' => self::getTable(),
+            'WHERE' => [
+                'plugin_newbase_tasks_id' => $task_id,
+                'is_deleted' => 0,
+            ],
             'LIMIT' => 1,
         ]);
 
@@ -115,258 +98,392 @@ class TaskSignature extends CommonDBTM
         return null;
     }
 
-    /**
-    * Exibir assinatura da tarefa
-    * @param Task $task Item tarefa
-    * @return void
-    */
-    public static function showForTask(Task $task): void
+/**
+* Save signature for a task
+* @param int $task_id Task ID
+* @param string $signature_data Base64 signature data
+* @param string $signer_name Name of the person who signed
+* @return int|false Signature ID or false on error
+*/
+    public static function saveSignature(int $task_id, string $signature_data, string $signer_name = ''): int|false
     {
-        global $CFG_GLPI;
+        global $DB;
 
-        $task_id = (int) $task->getID();
-        $signature = self::getForTask($task_id);
-
-        echo "<div class='spaced'>";
-        echo "<table class='tab_cadre_fixe'>";
-        echo "<tr class='tab_bg_2'>";
-        echo "<th colspan='2'>" . self::getTypeName(1) . "</th>";
-        echo "</tr>";
-
-        if ($signature) {
-            echo "<tr class='tab_bg_1'>";
-            echo "<td>" . __('Signature', 'newbase') . "</td>";
-            echo "<td>";
-
-            // Exibir imagem de assinatura
-            if (!empty($signature['signature_data'])) {
-                echo "<img src='data:" . $signature['signature_mime'] . ";base64," . base64_encode($signature['signature_data']) . "' ";
-                echo "alt='" . __('Digital Signature', 'newbase') . "' style='max-width: 400px; border: 1px solid #ccc; padding: 5px;' />";
-            }
-
-            echo "</td>";
-            echo "</tr>";
-
-            echo "<tr class='tab_bg_1'>";
-            echo "<td>" . __('Uploaded at', 'newbase') . "</td>";
-            echo "<td>" . Html::convDateTime($signature['date_creation']) . "</td>";
-            echo "</tr>";
-
-            if ($task->canUpdate()) {
-                echo "<tr class='tab_bg_1'>";
-                echo "<td colspan='2' class='center'>";
-                echo "<button type='button' id='update_signature' class='btn btn-primary'>";
-                echo "<i class='fas fa-pen'></i> " . __('Update Signature', 'newbase');
-                echo "</button>";
-                echo "</td>";
-                echo "</tr>";
-            }
-        } else {
-            echo "<tr class='tab_bg_1'>";
-            echo "<td colspan='2' class='center'>";
-            echo __('No signature uploaded', 'newbase');
-            echo "</td>";
-            echo "</tr>";
-
-            if ($task->canUpdate()) {
-                echo "<tr class='tab_bg_1'>";
-                echo "<td colspan='2' class='center'>";
-                echo "<button type='button' id='add_signature' class='btn btn-primary'>";
-                echo "<i class='fas fa-signature'></i> " . __('Add Signature', 'newbase');
-                echo "</button>";
-                echo "</td>";
-                echo "</tr>";
-            }
+        // VALIDATIONS
+        if ($task_id <= 0) {
+            Toolbox::logInFile('newbase_plugin', "Invalid task_id for signature: {$task_id}\n");
+            return false;
         }
 
-        echo "</table>";
-
-        // modal de tela de assinatura
-        if ($task->canUpdate()) {
-            echo "<div id='signature_modal' style='display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999;'>";
-            echo "<div style='position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); background:white; padding:20px; border-radius:8px;'>";
-            echo "<h3>" . __('Draw your signature', 'newbase') . "</h3>";
-            echo "<canvas id='signature_canvas' width='500' height='200' style='border:2px solid #333; cursor:crosshair;'></canvas>";
-            echo "<br><br>";
-            echo "<button type='button' id='clear_signature' class='btn btn-secondary'>";
-            echo "<i class='fas fa-eraser'></i> " . __('Clear', 'newbase');
-            echo "</button>&nbsp;";
-            echo "<button type='button' id='save_signature' class='btn btn-success'>";
-            echo "<i class='fas fa-save'></i> " . __('Save', 'newbase');
-            echo "</button>&nbsp;";
-            echo "<button type='button' id='cancel_signature' class='btn btn-danger'>";
-            echo "<i class='fas fa-times'></i> " . __('Cancel', 'newbase');
-            echo "</button>";
-            echo "</div>";
-            echo "</div>";
+        // Verify task exists
+        $task = new Task();
+        if (!$task->getFromDB($task_id)) {
+            Toolbox::logInFile('newbase_plugin', "Task {$task_id} not found for signature\n");
+            return false;
         }
 
-        echo "</div>";
-
-        // Adicione JavaScript para lidar com assinaturas
-        if ($task->canUpdate()) {
-            echo Html::scriptBlock("
-                var canvas, ctx, isDrawing = false;
-                var lastX = 0, lastY = 0;
-
-                function initSignatureCanvas() {
-                    canvas = document.getElementById('signature_canvas');
-                    ctx = canvas.getContext('2d');
-                    ctx.strokeStyle = '#000';
-                    ctx.lineWidth = 2;
-                    ctx.lineCap = 'round';
-
-                    canvas.addEventListener('mousedown', startDrawing);
-                    canvas.addEventListener('mousemove', draw);
-                    canvas.addEventListener('mouseup', stopDrawing);
-                    canvas.addEventListener('mouseout', stopDrawing);
-
-                    // Touch events for mobile
-                    canvas.addEventListener('touchstart', function(e) {
-                        e.preventDefault();
-                        var touch = e.touches[0];
-                        var rect = canvas.getBoundingClientRect();
-                        lastX = touch.clientX - rect.left;
-                        lastY = touch.clientY - rect.top;
-                        isDrawing = true;
-                    });
-
-                    canvas.addEventListener('touchmove', function(e) {
-                        e.preventDefault();
-                        if (!isDrawing) return;
-                        var touch = e.touches[0];
-                        var rect = canvas.getBoundingClientRect();
-                        var x = touch.clientX - rect.left;
-                        var y = touch.clientY - rect.top;
-                        ctx.beginPath();
-                        ctx.moveTo(lastX, lastY);
-                        ctx.lineTo(x, y);
-                        ctx.stroke();
-                        lastX = x;
-                        lastY = y;
-                    });
-
-                    canvas.addEventListener('touchend', function(e) {
-                        e.preventDefault();
-                        isDrawing = false;
-                    });
-                }
-
-                function startDrawing(e) {
-                    isDrawing = true;
-                    var rect = canvas.getBoundingClientRect();
-                    lastX = e.clientX - rect.left;
-                    lastY = e.clientY - rect.top;
-                }
-
-                function draw(e) {
-                    if (!isDrawing) return;
-                    var rect = canvas.getBoundingClientRect();
-                    var x = e.clientX - rect.left;
-                    var y = e.clientY - rect.top;
-
-                    ctx.beginPath();
-                    ctx.moveTo(lastX, lastY);
-                    ctx.lineTo(x, y);
-                    ctx.stroke();
-
-                    lastX = x;
-                    lastY = y;
-                }
-
-                function stopDrawing() {
-                    isDrawing = false;
-                }
-
-                function clearCanvas() {
-                    ctx.clearRect(0, 0, canvas.width, canvas.height);
-                }
-
-                $(document).ready(function() {
-                    $('#add_signature, #update_signature').on('click', function() {
-                        $('#signature_modal').show();
-                        initSignatureCanvas();
-                    });
-
-                    $('#clear_signature').on('click', function() {
-                        clearCanvas();
-                    });
-
-                    $('#cancel_signature').on('click', function() {
-                        $('#signature_modal').hide();
-                    });
-
-                    $('#save_signature').on('click', function() {
-                        var imageData = canvas.toDataURL('image/png');
-
-                        $.ajax({
-                            url: '" . $CFG_GLPI['root_doc'] . "/plugins/newbase/ajax/signatureUpload.php',
-                            type: 'POST',
-                            data: {
-                                task_id: " . $task_id . ",
-                                signature: imageData,
-                                _glpi_csrf_token: $('input[name=_glpi_csrf_token]').val()
-                            },
-                            dataType: 'json',
-                            success: function(data) {
-                                if (data.success) {
-                                    alert('" . __('Signature saved successfully', 'newbase') . "');
-                                    location.reload();
-                                } else {
-                                    alert(data.message || '" . __('Error saving signature', 'newbase') . "');
-                                }
-                            },
-                            error: function() {
-                                alert('" . __('Error connecting to server', 'newbase') . "');
-                            }
-                        });
-                    });
-                });
-            ");
-        }
-    }
-
-    /**
-    * Prepare a entrada para adição
-    * @param array $input Dados de entrada
-    * @return array|false
-    */
-    public function prepareInputForAdd($input)
-    {
-        // Validate task ID
-        if (empty($input['plugin_newbase_task_id'])) {
+        // Validate signature data format
+        if (!self::validateSignatureData($signature_data)) {
             Session::addMessageAfterRedirect(
-                __('Task is required', 'newbase'),
+                __('Invalid signature format', 'newbase'),
                 false,
                 ERROR
             );
             return false;
         }
 
-        return $input;
+        // Check signature size
+        $size = strlen($signature_data);
+        if ($size > self::MAX_SIGNATURE_SIZE) {
+            Session::addMessageAfterRedirect(
+                sprintf(__('Signature too large: %s KB (max: %s KB)', 'newbase'), 
+                    round($size / 1024, 2),
+                    round(self::MAX_SIGNATURE_SIZE / 1024, 2)
+                ),
+                false,
+                ERROR
+            );
+            return false;
+        }
+
+        // SAVE OR UPDATE
+        $existing = self::getForTask($task_id);
+        $timestamp = $_SESSION['glpi_currenttime'] ?? date('Y-m-d H:i:s');
+
+        $data = [
+            'plugin_newbase_tasks_id' => $task_id,
+            'signature_data' => $signature_data,
+            'signer_name' => $signer_name,
+            'users_id' => Session::getLoginUserID(),
+            'date_mod' => $timestamp,
+        ];
+
+        if ($existing) {
+            // Update existing signature
+            $result = $DB->update(
+                self::getTable(),
+                $data,
+                ['id' => $existing['id']]
+            );
+
+            if ($result === false) {
+                Toolbox::logInFile('newbase_plugin', "Failed to update signature for task {$task_id}\n");
+                return false;
+            }
+
+            Toolbox::logInFile('newbase_plugin', "Signature updated for task {$task_id}\n");
+            return $existing['id'];
+
+        } else {
+            // Insert new signature
+            $data['date_creation'] = $timestamp;
+            $data['is_deleted'] = 0;
+
+            $result = $DB->insert(self::getTable(), $data);
+
+            if ($result === false) {
+                Toolbox::logInFile('newbase_plugin', "Failed to insert signature for task {$task_id}\n");
+                return false;
+            }
+
+            Toolbox::logInFile('newbase_plugin', "Signature created for task {$task_id}\n");
+            return $result;
+        }
     }
 
-    /**
-    * Ações realizadas após a adição
-    * @return void
-    */
-    public function post_addItem(): void
+/**
+* Delete signature for a task
+* @param int $task_id Task ID
+* @return bool Success
+*/
+    public static function deleteSignature(int $task_id): bool
     {
-        Toolbox::logInFile(
-            'newbase_plugin',
-            "Signature added for task ID: " . $this->fields['plugin_newbase_task_id'] . "\n"
+        global $DB;
+
+        if ($task_id <= 0) {
+            return false;
+        }
+
+        $signature = self::getForTask($task_id);
+        if (!$signature) {
+            return true; // Already deleted
+        }
+
+        $result = $DB->update(
+            self::getTable(),
+            [
+                'is_deleted' => 1,
+                'date_mod' => $_SESSION['glpi_currenttime'] ?? date('Y-m-d H:i:s'),
+            ],
+            ['id' => $signature['id']]
         );
+
+        if ($result === false) {
+            Toolbox::logInFile('newbase_plugin', "Failed to delete signature for task {$task_id}\n");
+            return false;
+        }
+
+        Toolbox::logInFile('newbase_plugin', "Signature deleted for task {$task_id}\n");
+        return true;
     }
 
-    /**
-    * Ações realizadas após a atualização
-    * @return void
-    */
-    public function post_updateItem($history = true): void
+/**
+* Validate signature data format
+* @param string $signature_data Base64 signature data
+* @return bool Valid format
+*/
+    private static function validateSignatureData(string $signature_data): bool
     {
-        Toolbox::logInFile(
-            'newbase_plugin',
-            "Signature updated for task ID: " . $this->fields['plugin_newbase_task_id'] . "\n"
-        );
+        // Check if empty
+        if (empty($signature_data)) {
+            return false;
+        }
+
+        // Check if starts with data URI scheme
+        if (!preg_match('/^data:image\/(png|jpeg|jpg);base64,/', $signature_data)) {
+            Toolbox::logInFile('newbase_plugin', "Invalid signature format (not a data URI)\n");
+            return false;
+        }
+
+        // Extract base64 data
+        $base64_data = preg_replace('/^data:image\/(png|jpeg|jpg);base64,/', '', $signature_data);
+
+        // Validate base64
+        if (!base64_decode($base64_data, true)) {
+            Toolbox::logInFile('newbase_plugin', "Invalid base64 data in signature\n");
+            return false;
+        }
+
+        return true;
+    }
+
+/**
+* Display signature for a task
+* @param Task $task Task item
+* @return void
+*/
+    public static function showForTask(Task $task): void
+    {
+        $task_id = $task->getID();
+        $signature = self::getForTask($task_id);
+        $canedit = $task->canUpdate();
+
+        echo "<div class='signature-container' style='margin-top: 20px;'>";
+
+        if ($signature) {
+
+            // SHOW EXISTING SIGNATURE
+            echo "<div class='signature-display'>";
+            echo "<h3>" . __('Digital Signature', 'newbase') . "</h3>";
+
+            // Signature image
+            echo "<div class='signature-image' style='border: 1px solid #ccc; padding: 10px; background: #fff; margin: 10px 0;'>";
+            echo "<img src='" . htmlspecialchars($signature['signature_data']) . "'
+                    alt='" . __('Signature', 'newbase') . "'
+                    style='max-width: 100%; height: auto; max-height: 200px;'>";
+            echo "</div>";
+
+            // Signature metadata
+            echo "<table class='tab_cadre_fixe'>";
+            echo "<tr>";
+            echo "<th>" . __('Signer name', 'newbase') . "</th>";
+            echo "<td>" . htmlspecialchars($signature['signer_name'] ?? '-') . "</td>";
+            echo "</tr>";
+            echo "<tr>";
+            echo "<th>" . __('Signed at', 'newbase') . "</th>";
+            echo "<td>" . Html::convDateTime($signature['date_creation']) . "</td>";
+            echo "</tr>";
+            echo "</table>";
+
+            // Delete button
+            if ($canedit) {
+                echo "<div style='margin-top: 10px;'>";
+                echo "<button type='button' class='btn btn-danger' onclick='deleteSignature(" . $task_id . ")'>";
+                echo "<i class='ti ti-trash'></i> " . __('Delete signature', 'newbase');
+                echo "</button>";
+                echo "</div>";
+            }
+
+            echo "</div>";
+
+        } else {
+
+            // SHOW SIGNATURE CANVAS (UPLOAD)
+            if ($canedit) {
+                echo "<div class='signature-upload'>";
+                echo "<h3>" . __('Digital Signature', 'newbase') . "</h3>";
+                echo "<p>" . __('Draw signature below:', 'newbase') . "</p>";
+
+                // Canvas for signature
+                echo "<div style='border: 2px solid #000; margin: 10px 0; background: #fff;'>";
+                echo "<canvas id='signature-canvas' width='500' height='200'
+                        style='display: block; cursor: crosshair; touch-action: none;'></canvas>";
+                echo "</div>";
+
+                // Signer name input
+                echo "<div style='margin: 10px 0;'>";
+                echo "<label>" . __('Signer name', 'newbase') . ": </label>";
+                echo Html::input('signer_name', [
+                    'id' => 'signer-name',
+                    'size' => 50,
+                    'placeholder' => __('Full name of signer', 'newbase'),
+                ]);
+                echo "</div>";
+
+                // Buttons
+                echo "<div>";
+                echo "<button type='button' class='btn btn-secondary' onclick='clearSignature()'>";
+                echo "<i class='ti ti-eraser'></i> " . __('Clear', 'newbase');
+                echo "</button> ";
+                echo "<button type='button' class='btn btn-primary' onclick='saveSignature(" . $task_id . ")'>";
+                echo "<i class='ti ti-check'></i> " . __('Save signature', 'newbase');
+                echo "</button>";
+                echo "</div>";
+
+                echo "</div>";
+
+                // JavaScript for signature canvas
+                self::includeSignatureScript();
+            } else {
+                echo "<p class='text-muted'>" . __('No signature uploaded', 'newbase') . "</p>";
+            }
+        }
+
+        echo "</div>";
+    }
+
+/**
+* Include JavaScript for signature canvas
+* @return void
+*/
+    private static function includeSignatureScript(): void
+    {
+        $js_path = PLUGIN_NEWBASE_DIR . '/js/signature.js';
+
+        if (file_exists($js_path)) {
+            echo "<script src='" . PLUGIN_NEWBASE_WEB_DIR . "/js/signature.js'></script>";
+        } else {
+            // Inline minimal signature script if file not found
+            echo "<script>
+                const canvas = document.getElementById('signature-canvas');
+                if (canvas) {
+                    const ctx = canvas.getContext('2d');
+                    let drawing = false;
+
+                    canvas.addEventListener('mousedown', () => drawing = true);
+                    canvas.addEventListener('mouseup', () => drawing = false);
+                    canvas.addEventListener('mousemove', (e) => {
+                        if (!drawing) return;
+                        const rect = canvas.getBoundingClientRect();
+                        const x = e.clientX - rect.left;
+                        const y = e.clientY - rect.top;
+                        ctx.lineTo(x, y);
+                        ctx.stroke();
+                    });
+                }
+
+                function clearSignature() {
+                    const canvas = document.getElementById('signature-canvas');
+                    if (canvas) {
+                        const ctx = canvas.getContext('2d');
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    }
+                }
+
+                function saveSignature(taskId) {
+                    const canvas = document.getElementById('signature-canvas');
+                    const signerName = document.getElementById('signer-name').value;
+
+                    if (!canvas) return;
+
+                    const signatureData = canvas.toDataURL('image/png');
+
+                    // Send AJAX request
+                    fetch('" . PLUGIN_NEWBASE_WEB_DIR . "/ajax/signatureUpload.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            task_id: taskId,
+                            signature_data: signatureData,
+                            signer_name: signerName
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert('" . __('Signature saved successfully', 'newbase') . "');
+                            location.reload();
+                        } else {
+                            alert(data.message || '" . __('Error saving signature', 'newbase') . "');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('" . __('Error saving signature', 'newbase') . "');
+                    });
+                }
+
+                function deleteSignature(taskId) {
+                    if (!confirm('" . __('Delete signature?', 'newbase') . "')) return;
+
+                    fetch('" . PLUGIN_NEWBASE_WEB_DIR . "/ajax/signatureUpload.php', {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ task_id: taskId })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert('" . __('Signature deleted successfully', 'newbase') . "');
+                            location.reload();
+                        } else {
+                            alert(data.message || '" . __('Error deleting signature', 'newbase') . "');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('" . __('Error deleting signature', 'newbase') . "');
+                    });
+                }
+            </script>";
+        }
+    }
+
+/**
+* Check if signature is required for task completion
+* @param Task $task Task
+* @return bool Signature required
+*/
+    public static function isRequiredForCompletion(Task $task): bool
+    {
+        // Get plugin configuration
+        $require_signature = Config::getConfigValue('require_signature', 0);
+
+        // Check if signature is required globally
+        if (!$require_signature) {
+            return false;
+        }
+
+        // Check task status
+        if ($task->fields['status'] === 'completed') {
+            return true;
+        }
+
+        return false;
+    }
+
+/**
+* Validate task can be completed (has signature if required)
+* @param Task $task Task
+* @return bool Can complete
+*/
+    public static function canCompleteTask(Task $task): bool
+    {
+        if (!self::isRequiredForCompletion($task)) {
+            return true; // Signature not required
+        }
+
+        $signature = self::getForTask($task->getID());
+        return $signature !== null;
     }
 }
