@@ -1,4 +1,5 @@
 <?php
+
 /**
 * Classe Address - Gerenciamento de Endereços para o Plugin Newbase
 * @package   PluginNewbase
@@ -10,79 +11,80 @@
 
 namespace GlpiPlugin\Newbase;
 
-use GlpiPlugin\Newbase\Common;
 use CommonDBTM;
 use CommonGLPI;
-use Session;
-use Html;
 use Entity;
+use Html;
+use Session;
+use Toolbox;
+
 /**
 * Address - Gerencia endereços de empresas com integração de CEP
 * Manipula operações CRUD para endereços com busca automática de CEP,
 * geocodificação e relacionamento com CompanyData
 */
-class Address extends Common
+class Address extends CommonDBTM
 {
     // ===== CONFIGURAÇÕES GLPI =====
     /**
-    * Gerenciamento de permissões
-    * @var string
-    */
+   * Gerenciamento de permissões
+   * @var string
+   */
     public static $rightname = 'plugin_newbase';
 
     /**
-    * Habilitar rastreamento de histórico
-    * @var bool
-    */
+   * Habilitar rastreamento de histórico
+   * @var bool
+   */
     public $dohistory = true;
 
     // ===== RELACIONAMENTO =====
     /**
-    * Nome do campo ID dos itens
-    * @var string
-    */
+   * Nome do campo ID dos itens
+   * @var string
+   */
     public static $items_id = 'companydata_id';
 
     /**
-    * Tipo de item ao qual esta classe pertence
-    * @var string
-    */
-    public static $itemtype = 'GlpiPlugin\\Newbase\\Src\\CompanyData';
+   * Tipo de item ao qual esta classe pertence
+   * @var string
+   */
+    public static $itemtype = 'GlpiPlugin\\Newbase\\CompanyData';
 
     // ===== MÉTODOS GLPI OBRIGATÓRIOS =====
     /**
-    * Obter o nome do tipo
-    * @param int $nb Número de itens
-    * @return string Nome do tipo
-    */
+   * Obter o nome do tipo
+   * @param int $nb Número de itens
+   * @return string Nome do tipo
+   */
     public static function getTypeName($nb = 0): string
     {
         return $nb > 1 ? __('Addresses', 'newbase') : __('Address', 'newbase');
     }
 
     /**
-    * Obter o nome da tabela
-    * @param string $classname Nome da classe (opcional)
-    * @return string Nome da tabela
-    */
+   * Obter o nome da tabela
+   * @param string $classname Nome da classe (opcional)
+   * @return string Nome da tabela
+   */
     public static function getTable($classname = null): string
     {
         return 'glpi_plugin_newbase_addresses';
     }
 
     /**
-    * Obter ícone para menus
-    * @return string Classe de ícone Font Awesome
-    */
+   * Obter ícone para menus
+   * @return string Classe de ícone Font Awesome
+   */
     public static function getIcon(): string
     {
         return 'fas fa-map-marker-alt';
     }
 
     /**
-    * Definir opções de busca para o motor de busca do GLPI
-    * @return array Opções de busca
-    */
+   * Definir opções de busca para o motor de busca do GLPI
+   * @return array Opções de busca
+   */
     public function rawSearchOptions()
     {
         $tab = [];
@@ -219,11 +221,11 @@ class Address extends Common
 
     // ===== FORMULÁRIO =====
     /**
-    * Exibir formulário para endereço
-    * @param int   $ID      ID do item (0 para novo)
-    * @param array $options Opções adicionais
-    * @return bool Sucesso
-    */
+   * Exibir formulário para endereço
+   * @param int   $ID      ID do item (0 para novo)
+   * @param array $options Opções adicionais
+   * @return bool Sucesso
+   */
     public function showForm($ID, array $options = []): bool
     {
         // Inicializar formulário com permissões e dados
@@ -345,115 +347,238 @@ class Address extends Common
 
     // ===== VALIDAÇÕES =====
     /**
-    * Preparar dados de entrada antes de adicionar ao banco de dados
-    * @param array $input Dados de entrada
-    * @return array|false Entrada preparada ou false em caso de erro
-    */
+   * Preparar dados de entrada antes de adicionar ao banco de dados
+   * @param array $input Dados de entrada
+   * @return array|false Entrada preparada ou false em caso de erro
+   */
     public function prepareInputForAdd($input)
     {
-        // Validar campos obrigatórios
-        if (empty($input['name'])) {
+
+    // VALIDAÇÃO DE CEP
+
+    if (!empty($input['cep'])) {
+        // Remover formatação (01310-100 → 01310100)
+        $cep = preg_replace('/[^0-9]/', '', $input['cep']);
+
+        // Validar tamanho (deve ter 8 dígitos)
+        if (strlen($cep) !== 8) {
             Session::addMessageAfterRedirect(
-                __('Name is required', 'newbase'),
+                __('Invalid ZIP Code: must have 8 digits', 'newbase'),
                 false,
                 ERROR
             );
             return false;
         }
 
-        if (empty($input['companydata_id'])) {
+        // Validar se não é todos zeros
+        if (preg_match('/^0+$/', $cep)) {
             Session::addMessageAfterRedirect(
-                __('Company is required', 'newbase'),
+                __('Invalid ZIP Code: cannot be all zeros', 'newbase'),
                 false,
                 ERROR
             );
             return false;
         }
 
-        if (empty($input['cep'])) {
-            Session::addMessageAfterRedirect(
-                __('ZIP Code is required', 'newbase'),
-                false,
-                ERROR
-            );
-            return false;
+        // Salvar CEP limpo
+        $input['cep'] = $cep;
+
+        // BUSCAR DADOS AUTOMÁTICOS DO CEP (ViaCEP)
+
+        // Se campos de endereço estão vazios, buscar automaticamente
+        if (empty($input['street']) || empty($input['city'])) {
+            $addressData = $this->fetchAddressFromCEP($cep);
+
+            if ($addressData) {
+                // Preencher campos automaticamente
+                $input['street'] = $input['street'] ?? $addressData['logradouro'];
+                $input['neighborhood'] = $input['neighborhood'] ?? $addressData['bairro'];
+                $input['city'] = $input['city'] ?? $addressData['localidade'];
+                $input['state'] = $input['state'] ?? $addressData['uf'];
+
+                Session::addMessageAfterRedirect(
+                    __('Address data loaded from ZIP Code', 'newbase'),
+                    false,
+                    INFO
+                );
+            }
         }
-
-        // Limpar e validar CEP
-        $input['cep'] = preg_replace('/[^0-9]/', '', $input['cep']);
-
-        if (strlen($input['cep']) !== 8) {
-            Session::addMessageAfterRedirect(
-                __('Invalid ZIP Code', 'newbase'),
-                false,
-                ERROR
-            );
-            return false;
-        }
-
-        // Validar estado (2 letras)
-        if (!empty($input['state'])) {
-            $input['state'] = strtoupper(substr($input['state'], 0, 2));
-        }
-
-        // Verificar se a empresa existe
-        $company = new CompanyData();
-        if (!$company->getFromDB($input['companydata_id'])) {
-            Session::addMessageAfterRedirect(
-                __('Company not found', 'newbase'),
-                false,
-                ERROR
-            );
-            return false;
-        }
-
-        return $input;
     }
 
-    /**
-    * Preparar dados de entrada antes de atualizar no banco de dados
-    * @param array $input Dados de entrada
-    * @return array|false Entrada preparada ou false em caso de erro
-    */
-    public function prepareInputForUpdate($input)
-    {
-        // Validar nome se fornecido
-        if (isset($input['name']) && empty($input['name'])) {
+    // VALIDAR COORDENADAS GPS (se fornecidas)
+
+    if (!empty($input['latitude']) && !empty($input['longitude'])) {
+        $lat = (float) $input['latitude'];
+        $lng = (float) $input['longitude'];
+
+        // Validar range de latitude (-90 a 90)
+        if ($lat < -90 || $lat > 90) {
             Session::addMessageAfterRedirect(
-                __('Name cannot be empty', 'newbase'),
+                __('Invalid latitude: must be between -90 and 90', 'newbase'),
                 false,
                 ERROR
             );
             return false;
         }
 
-        // Validar CEP se fornecido
-        if (isset($input['cep'])) {
-            $input['cep'] = preg_replace('/[^0-9]/', '', $input['cep']);
+        // Validar range de longitude (-180 a 180)
+        if ($lng < -180 || $lng > 180) {
+            Session::addMessageAfterRedirect(
+                __('Invalid longitude: must be between -180 and 180', 'newbase'),
+                false,
+                ERROR
+            );
+            return false;
+        }
+    }
 
-            if (strlen($input['cep']) !== 8) {
+    return parent::prepareInputForAdd($input);
+}
+
+    public function prepareInputForUpdate($input)
+    {
+
+    // VALIDAÇÃO DE NOME
+
+    if (isset($input['name']) && empty(trim($input['name']))) {
+        Session::addMessageAfterRedirect(
+            __('Name cannot be empty', 'newbase'),
+            false,
+            ERROR
+        );
+        return false;
+    }
+
+    // VALIDAÇÃO DE CEP (mesma lógica do prepareInputForAdd)
+
+    if (isset($input['cep']) && !empty($input['cep'])) {
+        // Remover formatação
+        $cep = preg_replace('/[^0-9]/', '', $input['cep']);
+
+        // Validar tamanho
+        if (strlen($cep) !== 8) {
+            Session::addMessageAfterRedirect(
+                __('Invalid ZIP Code: must have 8 digits', 'newbase'),
+                false,
+                ERROR
+            );
+            return false;
+        }
+
+        // Validar se não é todos zeros
+        if (preg_match('/^0+$/', $cep)) {
+            Session::addMessageAfterRedirect(
+                __('Invalid ZIP Code: cannot be all zeros', 'newbase'),
+                false,
+                ERROR
+            );
+            return false;
+        }
+
+        $input['cep'] = $cep;
+    }
+
+    // VALIDAÇÃO DE ESTADO
+
+    if (isset($input['state']) && !empty($input['state'])) {
+        $input['state'] = strtoupper(substr($input['state'], 0, 2));
+    }
+
+    // VALIDAÇÃO DE COORDENADAS GPS (se alteradas)
+
+    if (isset($input['latitude']) && isset($input['longitude'])) {
+        if (!empty($input['latitude']) && !empty($input['longitude'])) {
+            $lat = (float) $input['latitude'];
+            $lng = (float) $input['longitude'];
+
+            if ($lat < -90 || $lat > 90) {
                 Session::addMessageAfterRedirect(
-                    __('Invalid ZIP Code', 'newbase'),
+                    __('Invalid latitude: must be between -90 and 90', 'newbase'),
+                    false,
+                    ERROR
+                );
+                return false;
+            }
+
+            if ($lng < -180 || $lng > 180) {
+                Session::addMessageAfterRedirect(
+                    __('Invalid longitude: must be between -180 and 180', 'newbase'),
                     false,
                     ERROR
                 );
                 return false;
             }
         }
+    }
 
-        // Validar estado se fornecido
-        if (isset($input['state']) && !empty($input['state'])) {
-            $input['state'] = strtoupper(substr($input['state'], 0, 2));
+    return $input;
+}
+
+/**
+* Buscar dados de endereço pela API ViaCEP
+*
+* @param string $cep CEP sem formatação (8 dígitos)
+* @return array|false Dados do endereço ou false se não encontrado
+*/
+    private function fetchAddressFromCEP(string $cep)
+    {
+    // URL da API ViaCEP
+    $url = "https://viacep.com.br/ws/{$cep}/json/";
+
+    try {
+        // Fazer requisição HTTP
+        $ch = curl_init();
+        curl_setopt_array($ch, [
+            CURLOPT_URL => $url,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => 10,
+            CURLOPT_SSL_VERIFYPEER => true,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_USERAGENT => 'GLPI Newbase Plugin/2.0',
+        ]);
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        // Verificar se obteve resposta
+        if ($httpCode !== 200 || !$response) {
+            \Toolbox::logInFile(
+                'newbase_plugin',
+                "ViaCEP API error for CEP {$cep}: HTTP {$httpCode}\n"
+            );
+            return false;
         }
 
-        return $input;
+        // Decodificar JSON
+        $data = json_decode($response, true);
+
+        // Verificar se CEP foi encontrado
+        if (isset($data['erro']) && $data['erro'] === true) {
+            Toolbox::logInFile(
+                'newbase_plugin',
+                "CEP not found: {$cep}\n"
+            );
+            return false;
+        }
+
+        // Retornar dados
+        return $data;
+
+    } catch (\Exception $e) {
+        Toolbox::logInFile(
+            'newbase_plugin',
+            "Error fetching CEP {$cep}: " . $e->getMessage() . "\n"
+        );
+        return false;
     }
+}
 
     // ===== AÇÕES PÓS CRUD =====
     /**
-    * Ações após adicionar item ao banco de dados
-    * @return void
-    */
+   * Ações após adicionar item ao banco de dados
+   * @return void
+   */
     public function post_addItem()
     {
         // Logar ação
@@ -470,15 +595,15 @@ class Address extends Common
 
     // ===== ABA EM COMPANYDATA =====
     /**
-    * Obter nome da aba para o item
-    * @param CommonGLPI $item Item
-    * @param int $withtemplate Modo template
-    * @return string Nome da aba
-    */
+   * Obter nome da aba para o item
+   * @param CommonGLPI $item Item
+   * @param int $withtemplate Modo template
+   * @return string Nome da aba
+   */
     public function getTabNameForItem(CommonGLPI $item, $withtemplate = 0)
     {
         // Verificar se é uma entidade (empresa) ou CompanyData
-        if ($item instanceof Entity || (is_object($item) && get_class($item) === 'GlpiPlugin\\Newbase\\Src\\CompanyData')) {
+        if ($item instanceof Entity || (is_object($item) && get_class($item) === 'GlpiPlugin\\Newbase\\CompanyData')) {
             if ($_SESSION['glpishow_count_on_tabs']) {
                 $count = self::countForItem($item);
                 return self::createTabEntry(
@@ -492,12 +617,12 @@ class Address extends Common
     }
 
     /**
-    * Exibir conteúdo da aba para o item
-    * @param CommonGLPI $item Item
-    * @param int $tabnum Número da aba
-    * @param int $withtemplate Modo template
-    * @return bool Sucesso
-    */
+   * Exibir conteúdo da aba para o item
+   * @param CommonGLPI $item Item
+   * @param int $tabnum Número da aba
+   * @param int $withtemplate Modo template
+   * @return bool Sucesso
+   */
     public static function displayTabContentForItem(CommonGLPI $item, $tabnum = 1, $withtemplate = 0): bool
     {
         if ($item instanceof CompanyData) {
@@ -508,10 +633,10 @@ class Address extends Common
     }
 
     /**
-    * Contar endereços para uma empresa
-    * @param CommonDBTM $item Item da empresa
-    * @return int Contagem
-    */
+   * Contar endereços para uma empresa
+   * @param CommonDBTM $item Item da empresa
+   * @return int Contagem
+   */
     public static function countForItem(CommonDBTM $item): int
     {
         global $DB;
@@ -530,10 +655,10 @@ class Address extends Common
     }
 
     /**
-    * Mostrar endereços de uma empresa
-    * @param CompanyData $company Empresa
-    * @return void
-    */
+   * Mostrar endereços de uma empresa
+   * @param CompanyData $company Empresa
+   * @return void
+   */
     public static function showForCompany(CompanyData $company): void
     {
         global $DB;

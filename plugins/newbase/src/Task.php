@@ -13,17 +13,12 @@
 
 namespace GlpiPlugin\Newbase;
 
-use Session;
-use CommonGLPI;
 use CommonDBTM;
-use Html;
-use Dropdown;
-use User;
 
 /**
 * Classe Task - Gerenciamento de tarefas com geolocalização e rastreamento de status
 */
-class Task
+class Task extends CommonDBTM
 {
     /**
     * Nome do direito no perfil

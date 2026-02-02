@@ -1,12 +1,20 @@
 <?php
 
 /**
-* AJAX endpoint for getting map data (tasks with coordinates)
-* @package   PluginNewbase
+* ---------------------------------------------------------------------
+* AJAX - Dados para Mapa de Tarefas - Plugin Newbase
+* ---------------------------------------------------------------------
+*
+* Este arquivo retorna dados de geolocalização para renderizar mapa:
+* - Marcadores de início/fim de tarefas
+* - Rotas entre pontos
+* - Filtros por empresa, usuário, status, período
+* - Configurações do mapa (zoom, centro)
+*
+* Usado pelo Leaflet.js para exibir mapa interativo.
+* @package   Plugin - Newbase
 * @author    João Lucas
-* @copyright Copyright (c) 2026 João Lucas
 * @license   GPLv2+
-* @since     2.0.0
 *
 * ---------------------------------------------------------------------
 * GLPI - Gestionnaire Libre de Parc Informatique
@@ -15,7 +23,6 @@
 * http://glpi-project.org
 *
 * based on GLPI - Copyright (C) 2003-2014 by the INDEPNET Development Team.
-*
 * ---------------------------------------------------------------------
 *
 * LICENSE
@@ -37,152 +44,169 @@
 * ---------------------------------------------------------------------
 */
 
-// Carrega o GLPI core
+// 1 SEGURANÇA: Carregar o núcleo do GLPI
 include('../../../inc/includes.php');
 
-// Security check
-if (!defined('GLPI_ROOT')) {
-    define('GLPI_ROOT', dirname(dirname(dirname(dirname(__FILE__)))));
-}
-
-// Evita acesso direto
-if (!defined('GLPI_ROOT')) {
-    include('../../../inc/includes.php');
-}
-
-// Verifica sessão ativa
+// 2 SEGURANÇA: Verificar se usuário está logado
 Session::checkLoginUser();
-// Check rights
-Session::checkRight('plugin_newbase_task', READ);
-// Verifica token CSRF (OBRIGATÓRIO para GLPI 10+)
-Session::checkCSRF($_POST);
-// Força modo AJAX
+
+// 3 IMPORTAR CLASSES NECESSÁRIAS
+use GlpiPlugin\Newbase\Task;
+use GlpiPlugin\Newbase\Config;
+
+// 4 CONFIGURAR RESPOSTA JSON
 header('Content-Type: application/json; charset=utf-8');
+header('Cache-Control: no-cache, must-revalidate');
+header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
+
+// VALIDAÇÕES DE SEGURANÇA
+
+// 5 VERIFICAR PERMISSÕES
+if (!Task::canView()) {
+    http_response_code(403);
+    echo json_encode([
+        'success' => false,
+        'message' => __('You do not have permission to view tasks', 'newbase'),
+    ]);
+    exit;
+}
+
+// PROCESSAMENTO
 
 try {
     global $DB;
 
-    // Get optional filters
-    $company_id = intval($_GET['company_id'] ?? 0);
-    $user_id = intval($_GET['user_id'] ?? 0);
-    $status = strip_tags($_GET['status'] ?? '');
-    $date_from = strip_tags($_GET['date_from'] ?? '');
-    $date_to = strip_tags($_GET['date_to'] ?? '');
+    // 6 OBTER FILTROS OPCIONAIS (via GET)
+    $company_id = filter_input(INPUT_GET, 'company_id', FILTER_VALIDATE_INT) ?? 0;
+    $user_id = filter_input(INPUT_GET, 'user_id', FILTER_VALIDATE_INT) ?? 0;
+    $status = filter_input(INPUT_GET, 'status', FILTER_SANITIZE_STRING) ?? '';
+    $date_from = filter_input(INPUT_GET, 'date_from', FILTER_SANITIZE_STRING) ?? '';
+    $date_to = filter_input(INPUT_GET, 'date_to', FILTER_SANITIZE_STRING) ?? '';
 
-    // Build WHERE clause
+    // 7 CONSTRUIR CLÁUSULA WHERE
+    // Busca tarefas que tenham pelo menos UMA coordenada
     $where = [
         'OR' => [
             ['latitude_start' => ['<>', null]],
             ['latitude_end' => ['<>', null]],
         ],
+        'is_deleted' => 0,  // Não buscar tarefas deletadas
     ];
 
+    // 8 APLICAR FILTROS OPCIONAIS
     if ($company_id > 0) {
-        $where['plugin_newbase_companydata_id'] = $company_id;
+        $where['entities_id'] = $company_id;
     }
 
     if ($user_id > 0) {
-        $where['assigned_to'] = $user_id;
+        $where['users_id'] = $user_id;
     }
 
-    if (!empty($status) && in_array($status, ['open', 'in_progress', 'paused', 'completed'])) {
+    if (!empty($status) && in_array($status, ['pending', 'in_progress', 'completed'], true)) {
         $where['status'] = $status;
     }
 
     if (!empty($date_from)) {
-        $where[] = ['date_start' => ['>=', $date_from . ' 00:00:00']];
+        $where[] = ['date_creation' => ['>=', $date_from . ' 00:00:00']];
     }
 
     if (!empty($date_to)) {
-        $where[] = ['date_start' => ['<=', $date_to . ' 23:59:59']];
+        $where[] = ['date_creation' => ['<=', $date_to . ' 23:59:59']];
     }
 
-    // Query tasks with coordinates
+    // 9 CONSULTAR TAREFAS COM COORDENADAS
     $iterator = $DB->request([
         'SELECT' => [
-            'glpi_plugin_newbase_task.*',
-            'glpi_plugin_newbase_companydata.name AS company_name',
-            'glpi_users.name AS user_name',
+            't.*',
+            'e.name AS company_name',
+            'u.realname AS user_realname',
+            'u.firstname AS user_firstname',
         ],
-        'FROM' => 'glpi_plugin_newbase_task',
+        'FROM' => 'glpi_plugin_newbase_tasks AS t',
         'LEFT JOIN' => [
-            'glpi_plugin_newbase_companydata' => [
+            'glpi_entities AS e' => [
                 'ON' => [
-                    'glpi_plugin_newbase_task' => 'plugin_newbase_companydata_id',
-                    'glpi_plugin_newbase_companydata' => 'id',
+                    't' => 'entities_id',
+                    'e' => 'id',
                 ],
             ],
-            'glpi_users' => [
+            'glpi_users AS u' => [
                 'ON' => [
-                    'glpi_plugin_newbase_task' => 'assigned_to',
-                    'glpi_users' => 'id',
+                    't' => 'users_id',
+                    'u' => 'id',
                 ],
             ],
         ],
         'WHERE' => $where,
-        'ORDER' => 'date_start DESC',
-        'LIMIT' => 500, // Safety limit
+        'ORDER' => 't.date_creation DESC',
+        'LIMIT' => 500,  // Limite de segurança (evita sobrecarga)
     ]);
 
     $tasks = [];
     $markers = [];
 
+    // 10 PROCESSAR CADA TAREFA
     foreach ($iterator as $row) {
         $task_data = [
-            'id' => $row['id'],
-            'title' => $row['title'],
-            'description' => $row['description'],
+            'id' => (int) $row['id'],
+            'name' => $row['name'],
+            'content' => $row['content'] ?? '',
             'status' => $row['status'],
+            'is_completed' => (int) $row['is_completed'],
             'company_name' => $row['company_name'],
-            'user_name' => $row['user_name'],
-            'date_start' => $row['date_start'],
-            'date_end' => $row['date_end'],
-            'mileage' => $row['mileage'],
+            'user_name' => trim(($row['user_firstname'] ?? '') . ' ' . ($row['user_realname'] ?? '')),
+            'date_creation' => $row['date_creation'],
+            'date_mod' => $row['date_mod'],
+            'mileage' => (float) ($row['mileage'] ?? 0),
         ];
 
-        // Add start point marker
+        // 11 ADICIONAR MARCADOR DE INÍCIO (verde)
         if ($row['latitude_start'] && $row['longitude_start']) {
             $markers[] = [
                 'type' => 'start',
-                'task_id' => $row['id'],
-                'lat' => floatval($row['latitude_start']),
-                'lng' => floatval($row['longitude_start']),
-                'title' => $row['title'] . ' (Start)',
-                'description' => $row['description'],
+                'task_id' => (int) $row['id'],
+                'lat' => (float) $row['latitude_start'],
+                'lng' => (float) $row['longitude_start'],
+                'title' => $row['name'] . ' (Início)',
+                'description' => $row['content'] ?? '',
                 'status' => $row['status'],
                 'company' => $row['company_name'],
-                'user' => $row['user_name'],
-                'date' => $row['date_start'],
+                'user' => $task_data['user_name'],
+                'date' => $row['date_creation'],
+                'color' => 'green',  // Marcador verde para início
             ];
         }
 
-        // Add end point marker
+        // 12 ADICIONAR MARCADOR DE FIM (vermelho)
         if ($row['latitude_end'] && $row['longitude_end']) {
             $markers[] = [
                 'type' => 'end',
-                'task_id' => $row['id'],
-                'lat' => floatval($row['latitude_end']),
-                'lng' => floatval($row['longitude_end']),
-                'title' => $row['title'] . ' (End)',
-                'description' => $row['description'],
+                'task_id' => (int) $row['id'],
+                'lat' => (float) $row['latitude_end'],
+                'lng' => (float) $row['longitude_end'],
+                'title' => $row['name'] . ' (Fim)',
+                'description' => $row['content'] ?? '',
                 'status' => $row['status'],
                 'company' => $row['company_name'],
-                'user' => $row['user_name'],
-                'date' => $row['date_end'] ?? $row['date_start'],
+                'user' => $task_data['user_name'],
+                'date' => $row['date_mod'] ?? $row['date_creation'],
+                'color' => 'red',  // Marcador vermelho para fim
             ];
         }
 
-        // Add route if both coordinates exist
-        if ($row['latitude_start'] && $row['longitude_start']
-            && $row['latitude_end'] && $row['longitude_end']) {
+        // 13 ADICIONAR ROTA SE TIVER AMBAS COORDENADAS
+        if (
+            $row['latitude_start'] && $row['longitude_start']
+            && $row['latitude_end'] && $row['longitude_end']
+        ) {
             $task_data['route'] = [
                 'start' => [
-                    'lat' => floatval($row['latitude_start']),
-                    'lng' => floatval($row['longitude_start']),
+                    'lat' => (float) $row['latitude_start'],
+                    'lng' => (float) $row['longitude_start'],
                 ],
                 'end' => [
-                    'lat' => floatval($row['latitude_end']),
-                    'lng' => floatval($row['longitude_end']),
+                    'lat' => (float) $row['latitude_end'],
+                    'lng' => (float) $row['longitude_end'],
                 ],
             ];
         }
@@ -190,7 +214,7 @@ try {
         $tasks[] = $task_data;
     }
 
-    // Calculate bounds if markers exist
+    // 14 CALCULAR BOUNDS (limites geográficos)
     $bounds = null;
     if (count($markers) > 0) {
         $lats = array_column($markers, 'lat');
@@ -204,17 +228,19 @@ try {
         ];
     }
 
-    // Get map configuration
+    // 15 OBTER CONFIGURAÇÕES DO MAPA
     $map_config = [
         'provider' => Config::getConfigValue('map_provider', 'leaflet'),
-        'default_zoom' => intval(Config::getConfigValue('map_default_zoom', '13')),
+        'default_zoom' => (int) Config::getConfigValue('map_default_zoom', '13'),
         'default_center' => [
-            'lat' => floatval(Config::getConfigValue('map_default_lat', '-23.5505')),
-            'lng' => floatval(Config::getConfigValue('map_default_lng', '-46.6333')),
+            'lat' => (float) Config::getConfigValue('map_default_lat', '-23.5505'),  // São Paulo
+            'lng' => (float) Config::getConfigValue('map_default_lng', '-46.6333'),
         ],
+        'tile_layer' => 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        'attribution' => '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
     ];
 
-    // Success response
+    // 16 RESPOSTA DE SUCESSO
     echo json_encode([
         'success' => true,
         'data' => [
@@ -223,17 +249,39 @@ try {
             'bounds' => $bounds,
             'config' => $map_config,
             'count' => count($markers),
+            'total_tasks' => count($tasks),
         ],
+        'message' => sprintf(
+            __('Loaded %d markers from %d tasks', 'newbase'),
+            count($markers),
+            count($tasks)
+        ),
     ]);
 
-    Toolbox::logInFile('newbase_plugin', "Map data loaded: " . count($markers) . " markers\n");
+    // 17 LOG DE SUCESSO
+    Toolbox::logInFile(
+        'newbase_plugin',
+        sprintf(
+            "Map data loaded: %d markers, %d tasks (filters: company=%d, user=%d, status=%s)\n",
+            count($markers),
+            count($tasks),
+            $company_id,
+            $user_id,
+            $status ?: 'all'
+        )
+    );
 
 } catch (Exception $e) {
-    // Error response
+    // 18 TRATAMENTO DE ERRO
+    http_response_code(500);
     echo json_encode([
         'success' => false,
-        'message' => __('Server error', 'newbase'),
+        'message' => __('Error loading map data', 'newbase'),
+        'error' => GLPI_DEBUG ? $e->getMessage() : null,
     ]);
 
-    Toolbox::logInFile('newbase_plugin', "ERROR in mapData.php: " . $e->getMessage() . "\n");
+    Toolbox::logInFile(
+        'newbase_plugin',
+        "ERROR in mapData.php: " . $e->getMessage() . "\n"
+    );
 }

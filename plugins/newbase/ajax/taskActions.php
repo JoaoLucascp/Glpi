@@ -1,13 +1,26 @@
 <?php
 
 /**
-* AJAX endpoint for task actions (pause, resume, complete, etc)
+* ---------------------------------------------------------------------
+* AJAX - Ações de Ciclo de Vida de Tarefas - Plugin Newbase
+* ---------------------------------------------------------------------
 *
-* @package   PluginNewbase
+* Este arquivo gerencia transições de status de tarefas:
+*
+* Fluxo de Estados:
+* open → start → in_progress → complete → completed
+*                     ↓                       ↓
+*                   pause → paused          reopen
+*                     ↓
+*                  resume → in_progress
+*
+* Validações:
+* - Apenas transições válidas são permitidas
+* - Assinatura obrigatória para completar (se configurado)
+* - Permissões verificadas
+* @package   Plugin - Newbase
 * @author    João Lucas
-* @copyright Copyright (c) 2026 João Lucas
 * @license   GPLv2+
-* @since     2.0.0
 *
 * ---------------------------------------------------------------------
 * GLPI - Gestionnaire Libre de Parc Informatique
@@ -16,7 +29,6 @@
 * http://glpi-project.org
 *
 * based on GLPI - Copyright (C) 2003-2014 by the INDEPNET Development Team.
-*
 * ---------------------------------------------------------------------
 *
 * LICENSE
@@ -38,34 +50,46 @@
 * ---------------------------------------------------------------------
 */
 
-// Carrega o GLPI core
+// 1 SEGURANÇA: Carregar o núcleo do GLPI
 include('../../../inc/includes.php');
 
-// Security check
-if (!defined('GLPI_ROOT')) {
-    define('GLPI_ROOT', dirname(dirname(dirname(dirname(__FILE__)))));
-}
-
-// Evita acesso direto
-if (!defined('GLPI_ROOT')) {
-    include('../../../inc/includes.php');
-}
-
-// Verifica sessão ativa
+// 2 SEGURANÇA: Verificar se usuário está logado
 Session::checkLoginUser();
-// Check rights
-Session::checkRight('plugin_newbase_task', READ);
-// Verifica token CSRF (OBRIGATÓRIO para GLPI 10+)
-Session::checkCSRF($_POST);
-// Força modo AJAX
+
+// 3 IMPORTAR CLASSES NECESSÁRIAS
+use GlpiPlugin\Newbase\Task;
+use GlpiPlugin\Newbase\TaskSignature;
+use GlpiPlugin\Newbase\Config;
+
+// 4 CONFIGURAR RESPOSTA JSON
 header('Content-Type: application/json; charset=utf-8');
+header('Cache-Control: no-cache, must-revalidate');
+header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
+
+// VALIDAÇÕES DE SEGURANÇA
+
+// 5 VERIFICAR SE É REQUISIÇÃO POST
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    echo json_encode([
+        'success' => false,
+        'message' => __('Only POST requests are allowed', 'newbase'),
+    ]);
+    exit;
+}
+
+// 6 VERIFICAR TOKEN CSRF
+Session::checkCSRF($_POST);
+
+// VALIDAÇÃO DE PARÂMETROS
 
 try {
-    // Get parameters
-    $task_id = intval($_POST['task_id'] ?? 0);
-    $action = strip_tags($_POST['action'] ?? '');
+    // 7 OBTER PARÂMETROS
+    $task_id = filter_input(INPUT_POST, 'task_id', FILTER_VALIDATE_INT);
+    $action = filter_input(INPUT_POST, 'action', FILTER_SANITIZE_STRING);
 
-    if ($task_id <= 0) {
+    if (!$task_id || $task_id <= 0) {
+        http_response_code(400);
         echo json_encode([
             'success' => false,
             'message' => __('Task ID is required', 'newbase'),
@@ -74,6 +98,7 @@ try {
     }
 
     if (empty($action)) {
+        http_response_code(400);
         echo json_encode([
             'success' => false,
             'message' => __('Action is required', 'newbase'),
@@ -81,14 +106,10 @@ try {
         exit;
     }
 
-    // Load task from database
-    global $DB;
-    $task_result = $DB->request([
-        'FROM' => 'glpi_plugin_newbase_tasks',
-        'WHERE' => ['id' => $task_id]
-    ]);
-
-    if ($task_result->count() === 0) {
+    // 8 CARREGAR TAREFA DO BANCO
+    $task = new Task();
+    if (!$task->getFromDB($task_id)) {
+        http_response_code(404);
         echo json_encode([
             'success' => false,
             'message' => __('Task not found', 'newbase'),
@@ -96,11 +117,9 @@ try {
         exit;
     }
 
-    $task_data = $task_result->current();
-
-    // Verify user has permission to update
-    $task = new Task();
-    if (!$task->canUpdate()) {
+    // 9 VERIFICAR PERMISSÕES
+    if (!$task->canUpdateItem()) {
+        http_response_code(403);
         echo json_encode([
             'success' => false,
             'message' => __('You do not have permission to update this task', 'newbase'),
@@ -108,121 +127,214 @@ try {
         exit;
     }
 
+    // 10 OBTER STATUS ATUAL
+    $current_status = $task->fields['status'];
+
+    // PROCESSAR AÇÕES
+
     $update_data = ['id' => $task_id];
     $success_message = '';
 
-    // Handle actions
+    // 11 SWITCH DE AÇÕES
     switch ($action) {
+
+        // AÇÃO: INICIAR TAREFA
+
         case 'start':
-            if ($task_data['status'] !== 'open') {
+            // Validar transição
+            if ($current_status !== 'pending') {
+                http_response_code(400);
                 echo json_encode([
                     'success' => false,
-                    'message' => __('Task must be in Open status to start', 'newbase'),
+                    'message' => __('Task must be in Pending status to start', 'newbase'),
+                    'current_status' => $current_status,
                 ]);
                 exit;
             }
+
+            // Capturar coordenadas de início (se enviadas)
+            if (!empty($_POST['latitude_start']) && !empty($_POST['longitude_start'])) {
+                $update_data['latitude_start'] = (float) $_POST['latitude_start'];
+                $update_data['longitude_start'] = (float) $_POST['longitude_start'];
+            }
+
             $update_data['status'] = 'in_progress';
-            $update_data['date_start'] = date('Y-m-d H:i:s');
+            $update_data['date_begin'] = $_SESSION['glpi_currenttime'];
             $success_message = __('Task started successfully', 'newbase');
             break;
 
+        // AÇÃO: PAUSAR TAREFA
+
         case 'pause':
-            if ($task_data['status'] !== 'in_progress') {
+            if ($current_status !== 'in_progress') {
+                http_response_code(400);
                 echo json_encode([
                     'success' => false,
                     'message' => __('Task must be in progress to pause', 'newbase'),
+                    'current_status' => $current_status,
                 ]);
                 exit;
             }
+
             $update_data['status'] = 'paused';
             $success_message = __('Task paused successfully', 'newbase');
             break;
 
+        // AÇÃO: RETOMAR TAREFA
+
         case 'resume':
-            if ($task_data['status'] !== 'paused') {
+            if ($current_status !== 'paused') {
+                http_response_code(400);
                 echo json_encode([
                     'success' => false,
                     'message' => __('Task must be paused to resume', 'newbase'),
+                    'current_status' => $current_status,
                 ]);
                 exit;
             }
+
             $update_data['status'] = 'in_progress';
             $success_message = __('Task resumed successfully', 'newbase');
             break;
 
+        // AÇÃO: COMPLETAR TAREFA
+
         case 'complete':
-            if (!in_array($task_data['status'], ['open', 'in_progress', 'paused'])) {
+            // Validar transição
+            if (!in_array($current_status, ['pending', 'in_progress', 'paused'], true)) {
+                http_response_code(400);
                 echo json_encode([
                     'success' => false,
                     'message' => __('Task cannot be completed from current status', 'newbase'),
+                    'current_status' => $current_status,
                 ]);
                 exit;
             }
 
-            // Check if signature is required
-            if (Config::getConfigValue('require_signature', '0') === '1') {
+            // Verificar se assinatura é obrigatória
+            if (Config::getConfigValue('require_signature', 0) == 1) {
                 $signature = TaskSignature::getForTask($task_id);
                 if (!$signature) {
+                    http_response_code(400);
                     echo json_encode([
                         'success' => false,
-                        'message' => __('Signature is required to complete task', 'newbase'),
+                        'message' => __('Digital signature is required to complete task', 'newbase'),
+                        'require_signature' => true,
                     ]);
                     exit;
                 }
             }
 
+            // Capturar coordenadas de fim (se enviadas)
+            if (!empty($_POST['latitude_end']) && !empty($_POST['longitude_end'])) {
+                $update_data['latitude_end'] = (float) $_POST['latitude_end'];
+                $update_data['longitude_end'] = (float) $_POST['longitude_end'];
+
+                // Calcular quilometragem se tiver ambas coordenadas
+                if (
+                    !empty($task->fields['latitude_start'])
+                    && !empty($task->fields['longitude_start'])
+                ) {
+                    $distance = \GlpiPlugin\Newbase\Common::calculateDistance(
+                        $task->fields['latitude_start'],
+                        $task->fields['longitude_start'],
+                        $update_data['latitude_end'],
+                        $update_data['longitude_end']
+                    );
+                    $update_data['mileage'] = $distance;
+                }
+            }
+
             $update_data['status'] = 'completed';
-            $update_data['date_end'] = date('Y-m-d H:i:s');
+            $update_data['is_completed'] = 1;
+            $update_data['date_end'] = $_SESSION['glpi_currenttime'];
             $success_message = __('Task completed successfully', 'newbase');
             break;
 
+        // AÇÃO: REABRIR TAREFA
+
         case 'reopen':
-            if ($task_data['status'] !== 'completed') {
+            if ($current_status !== 'completed') {
+                http_response_code(400);
                 echo json_encode([
                     'success' => false,
                     'message' => __('Only completed tasks can be reopened', 'newbase'),
+                    'current_status' => $current_status,
                 ]);
                 exit;
             }
-            $update_data['status'] = 'open';
-            $update_data['date_end'] = null;
+
+            $update_data['status'] = 'pending';
+            $update_data['is_completed'] = 0;
+            $update_data['date_end'] = 'NULL';  // Reset date_end
             $success_message = __('Task reopened successfully', 'newbase');
             break;
 
+        // AÇÃO INVÁLIDA
+
         default:
+            http_response_code(400);
             echo json_encode([
                 'success' => false,
                 'message' => __('Invalid action', 'newbase'),
+                'valid_actions' => ['start', 'pause', 'resume', 'complete', 'reopen'],
             ]);
             exit;
     }
 
-    // Update task
+    // EXECUTAR ATUALIZAÇÃO
+
+    // 12 ATUALIZAR TAREFA
     if ($task->update($update_data)) {
         echo json_encode([
             'success' => true,
             'message' => $success_message,
             'data' => [
-                'status' => $update_data['status'],
+                'task_id' => $task_id,
+                'action' => $action,
+                'previous_status' => $current_status,
+                'new_status' => $update_data['status'],
+                'mileage' => $update_data['mileage'] ?? null,
             ],
         ]);
 
-        Toolbox::logInFile('newbase_plugin', "Task $task_id action '$action' executed successfully\n");
+        // 13 LOG DE SUCESSO
+        Toolbox::logInFile(
+            'newbase_plugin',
+            sprintf(
+                "Task %d: action '%s' executed by user %d (%s → %s)\n",
+                $task_id,
+                $action,
+                Session::getLoginUserID(),
+                $current_status,
+                $update_data['status']
+            )
+        );
+
     } else {
+        http_response_code(500);
         echo json_encode([
             'success' => false,
             'message' => __('Error updating task', 'newbase'),
         ]);
 
-        Toolbox::logInFile('newbase_plugin', "ERROR updating task $task_id with action '$action'\n");
+        Toolbox::logInFile(
+            'newbase_plugin',
+            "ERROR: Failed to execute action '$action' on task $task_id\n"
+        );
     }
 
 } catch (Exception $e) {
-    // Error response
+    // 14 TRATAMENTO DE ERRO
+    http_response_code(500);
     echo json_encode([
         'success' => false,
-        'message' => __('Server error', 'newbase'),
+        'message' => __('Error processing task action', 'newbase'),
+        'error' => GLPI_DEBUG ? $e->getMessage() : null,
     ]);
 
-    Toolbox::logInFile('newbase_plugin', "ERROR in taskActions.php: " . $e->getMessage() . "\n");
+    Toolbox::logInFile(
+        'newbase_plugin',
+        "ERROR in taskActions.php: " . $e->getMessage() . "\n"
+    );
 }

@@ -11,10 +11,12 @@
 
 namespace GlpiPlugin\Newbase;
 
+use CommonDBTM;
+
 /**
 * Undocumented class
 */
-class AddressHandler
+class AddressHandler extends CommonDBTM
 {
     /**
      * Handles the AJAX request to search for an address by CEP.

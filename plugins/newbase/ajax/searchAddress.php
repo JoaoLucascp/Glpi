@@ -1,12 +1,20 @@
 <?php
 
 /**
-* Endpoint AJAX para busca de endereço por CEP
-* @package   PluginNewbase
+* ---------------------------------------------------------------------
+* AJAX - Busca de Endereço por CEP - Plugin Newbase
+* ---------------------------------------------------------------------
+*
+* Este arquivo busca dados de endereço pelo CEP usando ViaCEP API:
+* - Valida formato do CEP
+* - Consulta API ViaCEP
+* - Retorna logradouro, bairro, cidade e estado
+*
+* Usado em formulários para preenchimento automático de endereço.
+*
+* @package   GlpiPlugin\Newbase
 * @author    João Lucas
-* @copyright Copyright (c) 2026 João Lucas
 * @license   GPLv2+
-* @since     2.0.0
 *
 * ---------------------------------------------------------------------
 * GLPI - Gestionnaire Libre de Parc Informatique
@@ -15,7 +23,6 @@
 * http://glpi-project.org
 *
 * based on GLPI - Copyright (C) 2003-2014 by the INDEPNET Development Team.
-*
 * ---------------------------------------------------------------------
 *
 * LICENSE
@@ -37,44 +44,188 @@
 * ---------------------------------------------------------------------
 */
 
-// Carrega o GLPI core
+// 1 SEGURANÇA: Carregar o núcleo do GLPI
 include('../../../inc/includes.php');
 
-// Security check
-if (!defined('GLPI_ROOT')) {
-    define('GLPI_ROOT', dirname(dirname(dirname(dirname(__FILE__)))));
-}
-
-// Evita acesso direto
-if (!defined('GLPI_ROOT')) {
-    include('../../../inc/includes.php');
-}
-
-// Verifica sessão ativa
+// 2 SEGURANÇA: Verificar se usuário está logado
 Session::checkLoginUser();
-// Check rights
-Session::checkRight('plugin_newbase_task', READ);
-// Verifica token CSRF (OBRIGATÓRIO para GLPI 10+)
-Session::checkCSRF($_POST);
-// Força modo AJAX
+
+// 3 IMPORTAR CLASSES NECESSÁRIAS
+use GlpiPlugin\Newbase\AddressHandler;
+
+// 4 CONFIGURAR RESPOSTA JSON
 header('Content-Type: application/json; charset=utf-8');
+header('Cache-Control: no-cache, must-revalidate');
+header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
 
-use GlpiPlugin\Newbase\Src\AddressHandler;
+// VALIDAÇÕES DE SEGURANÇA
 
-try {
-    $handler = new AddressHandler();
-    $response = $handler->handleSearch(); // Chamar o método na nova classe
-    echo json_encode($response);
-
-} catch (Exception $e) {
-    // Resposta de erro
+// 5 VERIFICAR SE É REQUISIÇÃO POST
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
     echo json_encode([
         'success' => false,
-        'message' => __('Server error', 'newbase'),
+        'message' => __('Only POST requests are allowed', 'newbase'),
     ]);
-
-    // Manter Toolbox::logInFile por enquanto, conforme estava no arquivo original
-    \Toolbox::logInFile('newbase_plugin', "ERROR in ajax/searchAddress.php (main handler): " . $e->getMessage() . "\n");
+    exit;
 }
 
-exit;
+// 6 VERIFICAR TOKEN CSRF
+Session::checkCSRF($_POST);
+
+// 7 VERIFICAR SE CEP FOI ENVIADO
+if (empty($_POST['cep'])) {
+    http_response_code(400);
+    echo json_encode([
+        'success' => false,
+        'message' => __('CEP is required', 'newbase'),
+    ]);
+    exit;
+}
+
+// VALIDAÇÃO DO CEP
+
+// 8 REMOVER FORMATAÇÃO (traço)
+// Exemplo: "01310-100" -> "01310100"
+$cep = preg_replace('/[^0-9]/', '', $_POST['cep']);
+
+// 9 VALIDAR TAMANHO (CEP brasileiro tem 8 dígitos)
+if (strlen($cep) !== 8) {
+    http_response_code(400);
+    echo json_encode([
+        'success' => false,
+        'message' => __('Invalid CEP: must have 8 digits', 'newbase'),
+    ]);
+    exit;
+}
+
+// 10 VALIDAR SE É UM CEP REAL (não todos zeros)
+if (preg_match('/^0+$/', $cep)) {
+    http_response_code(400);
+    echo json_encode([
+        'success' => false,
+        'message' => __('Invalid CEP: cannot be all zeros', 'newbase'),
+    ]);
+    exit;
+}
+
+// PROCESSAMENTO
+
+try {
+    // 11 CONSULTAR API ViaCEP
+    $url = "https://viacep.com.br/ws/{$cep}/json/";
+
+    $ch = curl_init();
+    curl_setopt_array($ch, [
+        CURLOPT_URL => $url,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => 10,
+        CURLOPT_SSL_VERIFYPEER => true,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_USERAGENT => 'GLPI Newbase Plugin/2.0',
+    ]);
+
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $error = curl_error($ch);
+    curl_close($ch);
+
+    // 12 VERIFICAR ERRO DE CURL
+    if ($error) {
+        Toolbox::logInFile(
+            'newbase_plugin',
+            "ViaCEP CURL Error for CEP $cep: $error\n"
+        );
+
+        http_response_code(503); // Service Unavailable
+        echo json_encode([
+            'success' => false,
+            'message' => __('Error connecting to address service', 'newbase'),
+        ]);
+        exit;
+    }
+
+    // 13 VERIFICAR CÓDIGO HTTP
+    if ($httpCode !== 200) {
+        http_response_code($httpCode);
+        echo json_encode([
+            'success' => false,
+            'message' => __('Error searching CEP', 'newbase'),
+        ]);
+        exit;
+    }
+
+    // 14 DECODIFICAR RESPOSTA JSON
+    $data = json_decode($response, true);
+
+    if (!$data) {
+        http_response_code(500);
+        echo json_encode([
+            'success' => false,
+            'message' => __('Invalid response from address service', 'newbase'),
+        ]);
+        exit;
+    }
+
+    // 15 VERIFICAR SE CEP NÃO FOI ENCONTRADO
+    // ViaCEP retorna {"erro": true} quando CEP não existe
+    if (isset($data['erro']) && $data['erro'] === true) {
+        http_response_code(404);
+        echo json_encode([
+            'success' => false,
+            'message' => __('CEP not found', 'newbase'),
+        ]);
+
+        Toolbox::logInFile(
+            'newbase_plugin',
+            "CEP not found: $cep\n"
+        );
+
+        exit;
+    }
+
+    // 16 RESPOSTA DE SUCESSO
+    echo json_encode([
+        'success' => true,
+        'data' => [
+            'cep' => $data['cep'] ?? '',                    // "01310-100"
+            'logradouro' => $data['logradouro'] ?? '',      // "Avenida Paulista"
+            'complemento' => $data['complemento'] ?? '',     // "lado ímpar"
+            'bairro' => $data['bairro'] ?? '',              // "Bela Vista"
+            'localidade' => $data['localidade'] ?? '',      // "São Paulo"
+            'uf' => $data['uf'] ?? '',                      // "SP"
+            'ibge' => $data['ibge'] ?? '',                  // "3550308"
+            'gia' => $data['gia'] ?? '',                    // "1004"
+            'ddd' => $data['ddd'] ?? '',                    // "11"
+            'siafi' => $data['siafi'] ?? '',                // "7107"
+        ],
+        'message' => __('Address loaded successfully', 'newbase'),
+    ]);
+
+    // 17 LOG DE SUCESSO
+    Toolbox::logInFile(
+        'newbase_plugin',
+        sprintf(
+            "CEP found: %s - %s, %s - %s/%s\n",
+            $cep,
+            $data['logradouro'] ?? '',
+            $data['bairro'] ?? '',
+            $data['localidade'] ?? '',
+            $data['uf'] ?? ''
+        )
+    );
+
+} catch (Exception $e) {
+    // 18 TRATAMENTO DE ERRO
+    http_response_code(500);
+    echo json_encode([
+        'success' => false,
+        'message' => __('Error searching address', 'newbase'),
+        'error' => GLPI_DEBUG ? $e->getMessage() : null,
+    ]);
+
+    Toolbox::logInFile(
+        'newbase_plugin',
+        "ERROR in searchAddress.php: " . $e->getMessage() . "\n"
+    );
+}

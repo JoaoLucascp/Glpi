@@ -12,16 +12,12 @@
 
 namespace GlpiPlugin\Newbase;
 
-use GlpiPlugin\Newbase\Task;
-use GlpiPlugin\Newbase\Common;
-use Session;
-use Html;
-use Toolbox;
+use CommonDBTM;
 
 /**
 * Undocumented class
 */
-class TaskSignature extends Common
+class TaskSignature extends CommonDBTM
 {
     // Nome correto para permissões
     public static $rightname = 'plugin_newbase_task';

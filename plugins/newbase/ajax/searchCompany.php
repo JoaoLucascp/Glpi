@@ -1,13 +1,19 @@
 <?php
 
 /**
-* AJAX endpoint for searching company by CNPJ
+* ---------------------------------------------------------------------
+* AJAX - Busca de Empresa por CNPJ - Plugin Newbase
+* ---------------------------------------------------------------------
 *
-* @package   PluginNewbase
+* Este arquivo busca dados de empresa pelo CNPJ:
+* 1. Primeiro busca no banco de dados local
+* 2. Se não encontrar, consulta API externa (ReceitaWS)
+* 3. Retorna dados formatados em JSON
+*
+* Usado no formulário de cadastro de empresas para preenchimento automático.
+* @package   Plugin - Newbase
 * @author    João Lucas
-* @copyright Copyright (c) 2026 João Lucas
 * @license   GPLv2+
-* @since     2.1.0
 *
 * ---------------------------------------------------------------------
 * GLPI - Gestionnaire Libre de Parc Informatique
@@ -16,7 +22,6 @@
 * http://glpi-project.org
 *
 * based on GLPI - Copyright (C) 2003-2014 by the INDEPNET Development Team.
-*
 * ---------------------------------------------------------------------
 *
 * LICENSE
@@ -38,33 +43,50 @@
 * ---------------------------------------------------------------------
 */
 
-// Carrega o GLPI core
+// 1 SEGURANÇA: Carregar o núcleo do GLPI
 include('../../../inc/includes.php');
 
-// Security check
-if (!defined('GLPI_ROOT')) {
-    define('GLPI_ROOT', dirname(dirname(dirname(dirname(__FILE__)))));
-}
-
-// Evita acesso direto
-if (!defined('GLPI_ROOT')) {
-    include('../../../inc/includes.php');
-}
-
-// Verifica sessão ativa
+// 2 SEGURANÇA: Verificar se usuário está logado
 Session::checkLoginUser();
-// Check rights
-Session::checkRight('plugin_newbase_task', READ);
-// Verifica token CSRF (OBRIGATÓRIO para GLPI 10+)
-Session::checkCSRF($_POST);
-// Força modo AJAX
-header('Content-Type: application/json; charset=utf-8');
 
-use GlpiPlugin\Newbase\Src\Common;
-use GlpiPlugin\Newbase\Src\CompanyData;
+// 3 IMPORTAR CLASSES NECESSÁRIAS
+use GlpiPlugin\Newbase\Common;
+use GlpiPlugin\Newbase\CompanyData;
+
+// 4 CONFIGURAR RESPOSTA JSON
+header('Content-Type: application/json; charset=utf-8');
+header('Cache-Control: no-cache, must-revalidate');
+header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
+
+// VALIDAÇÕES DE SEGURANÇA
+
+// 5 VERIFICAR SE É REQUISIÇÃO POST
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    echo json_encode([
+        'success' => false,
+        'message' => __('Only POST requests are allowed', 'newbase'),
+    ]);
+    exit;
+}
+
+// 6 VERIFICAR TOKEN CSRF
+Session::checkCSRF($_POST);
+
+// 7 VERIFICAR PERMISSÕES
+if (!CompanyData::canCreate() && !CompanyData::canUpdate()) {
+    http_response_code(403);
+    echo json_encode([
+        'success' => false,
+        'message' => __('You do not have permission to search companies', 'newbase'),
+    ]);
+    exit;
+}
+
+// PROCESSAMENTO
 
 try {
-    // Get CNPJ from POST
+    // 8 OBTER CNPJ DO POST
     $cnpj = $_POST['cnpj'] ?? '';
 
     if (empty($cnpj)) {
@@ -75,78 +97,118 @@ try {
         exit;
     }
 
-    // Remove formatting
+    // 9 REMOVER FORMATAÇÃO (pontos, traços, barras)
+    // Exemplo: "12.345.678/0001-90" -> "12345678000190"
     $cnpj = preg_replace('/[^0-9]/', '', $cnpj);
 
-    // Validate CNPJ length
+    // 10 VALIDAR TAMANHO DO CNPJ (deve ter 14 dígitos)
     if (strlen($cnpj) !== 14) {
         echo json_encode([
             'success' => false,
-            'message' => __('Invalid CNPJ length', 'newbase'),
+            'message' => __('Invalid CNPJ: must have 14 digits', 'newbase'),
         ]);
         exit;
     }
 
-    // Validate CNPJ check digits
+    // 11 VALIDAR DÍGITOS VERIFICADORES
     if (!Common::validateCNPJ($cnpj)) {
         echo json_encode([
             'success' => false,
-            'message' => __('Invalid CNPJ', 'newbase'),
+            'message' => __('Invalid CNPJ: verification digits do not match', 'newbase'),
         ]);
         exit;
     }
 
-    // First: try to find company in database
+    // ESTRATÉGIA 1: BUSCAR NO BANCO LOCAL
+
+    // 12 TENTAR ENCONTRAR EMPRESA JÁ CADASTRADA
     $company = CompanyData::getCompanyByCNPJ($cnpj);
 
     if ($company) {
-        // Company already in database, return its data
+        // Empresa já existe no banco, retornar dados
         echo json_encode([
             'success' => true,
+            'source' => 'local',  // Indica que veio do banco local
             'data' => [
                 'corporate_name' => $company['name'] ?? '',
                 'fantasy_name' => $company['fantasy_name'] ?? '',
                 'email' => $company['email'] ?? '',
                 'phone' => Common::formatPhone($company['phone'] ?? ''),
+                'address' => $company['address'] ?? '',
+                'city' => $company['city'] ?? '',
+                'state' => $company['state'] ?? '',
+                'postcode' => $company['postcode'] ?? '',
             ],
-            'message' => __('Company data loaded successfully', 'newbase'),
-        ]);
-    } else {
-        // Company not in database, search via API
-        $companyData = Common::searchCompanyByCNPJ($cnpj);
-
-        if ($companyData === false) {
-            echo json_encode([
-                'success' => false,
-                'message' => __('Company not found or API error', 'newbase'),
-            ]);
-            Toolbox::logInFile('newbase_plugin', "CNPJ search failed for: $cnpj\n");
-            exit;
-        }
-
-        // Search for additional data (email and phone)
-        $additionalData = Common::searchCompanyAdditionalData($cnpj, $companyData['legal_name'] ?? '');
-
-        // Success response
-        echo json_encode([
-            'success' => true,
-            'data' => [
-                'corporate_name' => $companyData['legal_name'] ?? '',
-                'fantasy_name' => $companyData['fantasy_name'] ?? '',
-                'email' => $additionalData['email'] ?? '',
-                'phone' => Common::formatPhone($additionalData['phone'] ?? ''),
-            ],
-            'message' => __('Company data loaded successfully', 'newbase'),
+            'message' => __('Company data loaded from database', 'newbase'),
         ]);
 
-        Toolbox::logInFile('newbase_plugin', "CNPJ search successful for: $cnpj\n");
+        Toolbox::logInFile(
+            'newbase_plugin',
+            "Company found in database: CNPJ $cnpj\n"
+        );
+
+        exit;
     }
-} catch (Exception $e) {
-    // Error response
+
+    // ESTRATÉGIA 2: CONSULTAR API EXTERNA
+
+    // 13 BUSCAR NA API DA RECEITA FEDERAL
+    $companyData = Common::searchCompanyByCNPJ($cnpj);
+
+    if ($companyData === false) {
+        echo json_encode([
+            'success' => false,
+            'message' => __('Company not found in government database or API error', 'newbase'),
+        ]);
+
+        Toolbox::logInFile(
+            'newbase_plugin',
+            "API search failed for CNPJ: $cnpj\n"
+        );
+
+        exit;
+    }
+
+    // 14 BUSCAR DADOS COMPLEMENTARES (telefone, email)
+    // APIs públicas geralmente não retornam esses dados
+    $additionalData = Common::searchCompanyAdditionalData(
+        $cnpj,
+        $companyData['legal_name'] ?? ''
+    );
+
+    // 15 RESPOSTA DE SUCESSO COM DADOS DA API
     echo json_encode([
-        'success' => false,
-        'message' => __('Server error', 'newbase'),
+        'success' => true,
+        'source' => 'api',  // Indica que veio da API externa
+        'data' => [
+            'corporate_name' => $companyData['legal_name'] ?? '',
+            'fantasy_name' => $companyData['fantasy_name'] ?? '',
+            'email' => $additionalData['email'] ?? '',
+            'phone' => Common::formatPhone($additionalData['phone'] ?? ''),
+            'address' => $companyData['address'] ?? '',
+            'city' => $companyData['city'] ?? '',
+            'state' => $companyData['state'] ?? '',
+            'postcode' => $companyData['postcode'] ?? '',
+        ],
+        'message' => __('Company data loaded from government database', 'newbase'),
     ]);
 
-    Toolbox::logInFile('newbase_plugin', "ERROR in searchCompany.php: " . $e->getMessage() . "\n");
+    Toolbox::logInFile(
+        'newbase_plugin',
+        "API search successful for CNPJ: $cnpj\n"
+    );
+
+} catch (Exception $e) {
+    // 16 RESPOSTA DE ERRO
+    http_response_code(500);
+    echo json_encode([
+        'success' => false,
+        'message' => __('Error searching company data', 'newbase'),
+        'error' => GLPI_DEBUG ? $e->getMessage() : null,
+    ]);
+
+    Toolbox::logInFile(
+        'newbase_plugin',
+        "ERROR in searchCompany.php: " . $e->getMessage() . "\n"
+    );
 }

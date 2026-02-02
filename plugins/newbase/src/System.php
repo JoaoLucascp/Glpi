@@ -1,4 +1,5 @@
 <?php
+
 /**
 * System Class - Gerenciamento de sistema para o plugin Newbase
 * @package   PluginNewbase
@@ -10,18 +11,14 @@
 
 namespace GlpiPlugin\Newbase;
 
-use GlpiPlugin\Newbase\Common;
 use CommonDBTM;
-use CommonGLPI;
-use Session;
-use Html;
-use Entity;
+
 /**
 * System - Gerencia sistemas de empresas (PABX, IPBX, Chatbot, etc)
 * Manipula operações CRUD para sistemas de telefonia com formulários dinâmicos
 * baseados no tipo de sistema
 */
-class System extends Common
+class System extends CommonDBTM
 {
     // ===== CONFIGURAÇÕES GLPI =====
     /**
@@ -47,7 +44,7 @@ class System extends Common
     * Tipo de item ao qual esta classe pertence
     * @var string
     */
-    public static $itemtype = 'GlpiPlugin\\Newbase\\Src\\CompanyData';
+    public static $itemtype = 'GlpiPlugin\\Newbase\\CompanyData';
 
     // ===== MÉTODOS GLPI OBRIGATÓRIOS =====
     /**

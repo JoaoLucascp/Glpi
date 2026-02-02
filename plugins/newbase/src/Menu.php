@@ -1,8 +1,8 @@
 <?php
+
 /**
-* Newbase Plugin - Menu Class (SIMPLIFICADO)
-*
-* @package   PluginNewbase
+* Menu Configuration - Plugin Newbase
+* @package   Plugin - Newbase
 * @author    João Lucas
 * @copyright 2026 João Lucas
 * @license   GPLv2+
@@ -11,86 +11,131 @@
 
 namespace GlpiPlugin\Newbase;
 
-use GlpiPlugin\Newbase\Common;
+use Session;
+use Plugin;
 
-if (!defined('GLPI_ROOT')) {
-    die("Sorry. You can't access this file directly");
-}
-
-/**
- * Menu Class - Gerenciamento do menu do plugin
- */
-class Menu extends Common
+// Menu class - Defines plugin menu structure for GLPI
+class Menu
 {
-    /**
-     * Retorna o nome do menu
-     *
-     * @return string
-     */
-    public static function getMenuName(): string
-    {
-        return __('Newbase', 'newbase');
-    }
 
-    /**
-     * Retorna o conteúdo do menu
-     *
-     * @return array
-     */
+    // Get menu content for GLPI navigation
     public static function getMenuContent(): array
     {
         global $CFG_GLPI;
 
         $menu = [];
 
-        $menu['title'] = self::getMenuName();
-        $menu['page'] = $CFG_GLPI['root_doc'] . '/plugins/newbase/front/companydata.php';
-        $menu['icon'] = 'ti ti-building';
+        // VERIFICAR PERMISSÕES
+        if (!Session::haveRight('plugin_newbase', READ)) {
+            return $menu;
+        }
 
-        $menu['options'] = [
-            'companydata' => [
-                'title' => __('Company Data', 'newbase'),
-                'page' => $CFG_GLPI['root_doc'] . '/plugins/newbase/front/companydata.php',
-                'icon' => 'ti ti-building',
-                'links' => [
-                    'search' => $CFG_GLPI['root_doc'] . '/plugins/newbase/front/companydata.php',
-                    'add' => $CFG_GLPI['root_doc'] . '/plugins/newbase/front/companydata.form.php',
-                ],
-            ],
-            'system' => [
-                'title' => __('Systems', 'newbase'),
-                'page' => $CFG_GLPI['root_doc'] . '/plugins/newbase/front/system.php',
-                'icon' => 'ti ti-phone',
-                'links' => [
-                    'search' => $CFG_GLPI['root_doc'] . '/plugins/newbase/front/system.php',
-                    'add' => $CFG_GLPI['root_doc'] . '/plugins/newbase/front/system.form.php',
-                ],
-            ],
-            'address' => [
-                'title' => __('Addresses', 'newbase'),
-                'page' => $CFG_GLPI['root_doc'] . '/plugins/newbase/front/address.php',
-                'icon' => 'ti ti-map-pin',
-                'links' => [
-                    'search' => $CFG_GLPI['root_doc'] . '/plugins/newbase/front/address.php',
-                    'add' => $CFG_GLPI['root_doc'] . '/plugins/newbase/front/address.form.php',
-                ],
-            ],
-            'task' => [
-                'title' => __('Tasks', 'newbase'),
-                'page' => $CFG_GLPI['root_doc'] . '/plugins/newbase/front/task.php',
-                'icon' => 'ti ti-checkbox',
-                'links' => [
-                    'search' => $CFG_GLPI['root_doc'] . '/plugins/newbase/front/task.php',
-                    'add' => $CFG_GLPI['root_doc'] . '/plugins/newbase/front/task.form.php',
-                ],
-            ],
-            'config' => [
-                'title' => __('Configuration', 'newbase'),
-                'page' => $CFG_GLPI['root_doc'] . '/plugins/newbase/front/config.php',
-                'icon' => 'ti ti-settings',
+        // OBTER URL BASE DO PLUGIN
+        $baseUrl = Plugin::getWebDir('newbase');
+
+        // MENU PRINCIPAL
+        $menu['title'] = __('Newbase', 'newbase');
+        $menu['page'] = $baseUrl . '/front/index.php';
+        $menu['icon'] = 'ti ti-database';
+
+        // OPÇÕES DO MENU
+        $menu['options'] = [];
+
+        // DASHBOARD
+        $menu['options']['dashboard'] = [
+            'title' => __('Dashboard', 'newbase'),
+            'page' => $baseUrl . '/front/index.php',
+            'icon' => 'ti ti-dashboard',
+        ];
+
+        // DADOS DE EMPRESA
+        $menu['options']['companydata'] = [
+            'title' => __('Company Data', 'newbase'),
+            'page' => $baseUrl . '/front/companydata.php',
+            'icon' => 'ti ti-building',
+            'links' => [
+                'search' => $baseUrl . '/front/companydata.php',
+                'add' => $baseUrl . '/front/companydata.form.php',
             ],
         ];
 
+        // SISTEMAS
+        $menu['options']['system'] = [
+            'title' => __('Systems', 'newbase'),
+            'page' => $baseUrl . '/front/system.php',
+            'icon' => 'ti ti-server',
+            'links' => [
+                'search' => $baseUrl . '/front/system.php',
+                'add' => $baseUrl . '/front/system.form.php',
+            ],
+        ];
+
+        // ENDEREÇOS
+        $menu['options']['address'] = [
+            'title' => __('Addresses', 'newbase'),
+            'page' => $baseUrl . '/front/address.php',
+            'icon' => 'ti ti-map-pin',
+            'links' => [
+                'search' => $baseUrl . '/front/address.php',
+                'add' => $baseUrl . '/front/address.form.php',
+            ],
+        ];
+
+        // TAREFAS
+        $menu['options']['task'] = [
+            'title' => __('Tasks', 'newbase'),
+            'page' => $baseUrl . '/front/task.php',
+            'icon' => 'ti ti-checkbox',
+            'links' => [
+                'search' => $baseUrl . '/front/task.php',
+                'add' => $baseUrl . '/front/task.form.php',
+            ],
+        ];
+
+        // RELATÓRIOS (apenas se tiver permissão UPDATE)
+        if (Session::haveRight('plugin_newbase', UPDATE)) {
+            $menu['options']['report'] = [
+                'title' => __('Reports', 'newbase'),
+                'page' => $baseUrl . '/front/report.php',
+                'icon' => 'ti ti-chart-line',
+            ];
+        }
+
+        // CONFIGURAÇÃO (apenas para admins)
+        if (Session::haveRight('config', UPDATE)) {
+            $menu['options']['config'] = [
+                'title' => __('Configuration', 'newbase'),
+                'page' => $baseUrl . '/front/config.php',
+                'icon' => 'ti ti-settings',
+            ];
+        }
+
         return $menu;
+    }
+
+    // Display menu item
+    public static function displayMenu(): void
+    {
+        $menu = self::getMenuContent();
+
+        if (empty($menu)) {
+            return;
+        }
+
+        echo "<div class='newbase-menu'>";
+        echo "<h2>" . $menu['title'] . "</h2>";
+        echo "<ul class='menu-list'>";
+
+        foreach ($menu['options'] as $key => $option) {
+            echo "<li>";
+            echo "<a href='" . $option['page'] . "'>";
+            echo "<i class='" . $option['icon'] . "'></i> ";
+            echo $option['title'];
+            echo "</a>";
+            echo "</li>";
+        }
+
+        echo "</ul>";
+        echo "</div>";
     }
 }

@@ -1,4 +1,5 @@
 <?php
+
 /**
 * Config Class - Plugin Configuration Management
 *
@@ -11,9 +12,9 @@
 
 namespace GlpiPlugin\Newbase;
 
-use GlpiPlugin\Newbase\common;
+use CommonDBTM;
 
-class Config extends Common
+class Config extends CommonDBTM
 {
     // Right name for permissions
     public static $rightname = 'plugin_newbase_config';
