@@ -6,18 +6,14 @@ $vendorDir = dirname(__DIR__);
 $baseDir = dirname($vendorDir);
 
 return array(
-    'Address' => $baseDir . '/src/GlobalAliases.php',
-    'CompanyData' => $baseDir . '/src/GlobalAliases.php',
     'Composer\\InstalledVersions' => $vendorDir . '/composer/InstalledVersions.php',
-    'Config' => $baseDir . '/src/GlobalAliases.php',
-    'GlpiPlugin\\Newbase\\Address' => $baseDir . '/src/LegacyAliases.php',
-    'GlpiPlugin\\Newbase\\CompanyData' => $baseDir . '/src/LegacyAliases.php',
-    'GlpiPlugin\\Newbase\\Config' => $baseDir . '/src/LegacyAliases.php',
+    'GlpiPlugin\\Newbase\\Address' => $baseDir . '/src/Address.php',
+    'GlpiPlugin\\Newbase\\AddressHandler' => $baseDir . '/src/AddressHandler.php',
+    'GlpiPlugin\\Newbase\\Common' => $baseDir . '/src/Common.php',
+    'GlpiPlugin\\Newbase\\CompanyData' => $baseDir . '/src/CompanyData.php',
+    'GlpiPlugin\\Newbase\\Config' => $baseDir . '/src/Config.php',
     'GlpiPlugin\\Newbase\\Menu' => $baseDir . '/src/Menu.php',
-    'GlpiPlugin\\Newbase\\System' => $baseDir . '/src/LegacyAliases.php',
-    'GlpiPlugin\\Newbase\\Task' => $baseDir . '/src/LegacyAliases.php',
-    'GlpiPlugin\\Newbase\\TaskSignature' => $baseDir . '/src/LegacyAliases.php',
-    'System' => $baseDir . '/src/GlobalAliases.php',
-    'Task' => $baseDir . '/src/GlobalAliases.php',
-    'TaskSignature' => $baseDir . '/src/GlobalAliases.php',
+    'GlpiPlugin\\Newbase\\System' => $baseDir . '/src/System.php',
+    'GlpiPlugin\\Newbase\\Task' => $baseDir . '/src/Task.php',
+    'GlpiPlugin\\Newbase\\TaskSignature' => $baseDir . '/src/TaskSignature.php',
 );

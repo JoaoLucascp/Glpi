@@ -1,197 +1,162 @@
 -- Newbase Plugin - Database Installation
 -- Version: 2.1.0
 -- Compatible with GLPI 10.0.20+
---
--- NOTA: Este plugin AGORA utiliza apenas tabelas nativas do GLPI para gestão de empresas
--- Lê diretamente de glpi_entities, eliminando duplicação de dados e mantendo sincronização automática
---
--- Tabelas criadas APENAS para funcionalidades exclusivas do Newbase:
--- - Complementos de empresa
--- - Documentação de sistemas (Asterisk, CloudPBX, Chatbot)
--- - Tarefas com geolocalização
--- - Assinaturas digitais
+-- Author: João Lucas
+-- License: GPLv2+
 
 SET FOREIGN_KEY_CHECKS = 0;
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 
-SET time_zone = "+00:00";
+SET time_zone = "-03:00";
 
--- ============================================================================
--- Tabela 1: glpi_plugin_newbase_company_extras (Complementos de Empresa)
--- ============================================================================
--- Armazena dados COMPLEMENTARES de uma empresa (não duplica dados de glpi_entities)
--- Cada empresa está vinculada a uma Entity do GLPI via chave estrangeira
+-- TABELA 1: glpi_plugin_newbase_addresses (Endereços)
+DROP TABLE IF EXISTS `glpi_plugin_newbase_addresses`;
 
-DROP TABLE IF EXISTS `glpi_plugin_newbase_company_extras`;
-
-CREATE TABLE `glpi_plugin_newbase_company_extras` (
+CREATE TABLE `glpi_plugin_newbase_addresses` (
     `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    `entities_id` INT UNSIGNED NOT NULL COMMENT 'FK para glpi_entities',
-    `cnpj` VARCHAR(18) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'CNPJ da empresa',
-    `corporate_name` VARCHAR(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Razão Social',
-    `fantasy_name` VARCHAR(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Nome Fantasia',
-    `cep` VARCHAR(10) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'CEP Principal',
-    `website` VARCHAR(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Website',
-    `contract_status` ENUM(
-        'active',
-        'inactive',
-        'canceled'
-    ) DEFAULT 'active' COMMENT 'Status do contrato',
-    `notes` TEXT COLLATE utf8mb4_unicode_ci COMMENT 'Notas sobre a empresa',
-    `is_deleted` TINYINT NOT NULL DEFAULT '0',
+    `entities_id` INT UNSIGNED NOT NULL DEFAULT 0,
+    `name` VARCHAR(255) NOT NULL,
+    `cep` VARCHAR(10) DEFAULT NULL,
+    `street` VARCHAR(255) DEFAULT NULL,
+    `number` VARCHAR(20) DEFAULT NULL,
+    `complement` VARCHAR(255) DEFAULT NULL,
+    `neighborhood` VARCHAR(255) DEFAULT NULL,
+    `city` VARCHAR(255) DEFAULT NULL,
+    `state` VARCHAR(2) DEFAULT NULL,
+    `latitude` DECIMAL(10, 8) DEFAULT NULL,
+    `longitude` DECIMAL(11, 8) DEFAULT NULL,
+    `is_recursive` TINYINT NOT NULL DEFAULT 0,
+    `is_deleted` TINYINT NOT NULL DEFAULT 0,
     `date_creation` TIMESTAMP NULL DEFAULT NULL,
     `date_mod` TIMESTAMP NULL DEFAULT NULL,
     PRIMARY KEY (`id`),
-    UNIQUE KEY `entities_id` (`entities_id`),
-    KEY `cnpj` (`cnpj`),
+    KEY `entities_id` (`entities_id`),
+    KEY `cep` (`cep`),
     KEY `is_deleted` (`is_deleted`),
-    CONSTRAINT `fk_company_extras_entity` FOREIGN KEY (`entities_id`) REFERENCES `glpi_entities` (`id`) ON DELETE CASCADE
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC COMMENT = 'Dados complementares de empresas (Newbase)';
+    CONSTRAINT `fk_addresses_entities` FOREIGN KEY (`entities_id`) REFERENCES `glpi_entities` (`id`) ON DELETE CASCADE
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = 'Endereços cadastrados no Newbase';
 
--- ============================================================================
--- Tabela 2: glpi_plugin_newbase_systems (Documentação de Sistemas)
--- ============================================================================
--- Documentação de sistemas telefônicos e ferramentas relacionadas
--- IPBX, PABX, CloudPBX, Chatbot, Linhas telefônicas, etc.
-
+-- TABELA 2: glpi_plugin_newbase_systems (Sistemas)
 DROP TABLE IF EXISTS `glpi_plugin_newbase_systems`;
 
 CREATE TABLE `glpi_plugin_newbase_systems` (
     `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    `entities_id` INT UNSIGNED NOT NULL COMMENT 'FK para glpi_entities (empresa)',
-    `name` VARCHAR(255) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Nome do sistema',
-    `system_type` ENUM(
-        'ipbx',
-        'pabx',
-        'cloudpbx',
-        'chatbot',
-        'line',
-        'other'
-    ) DEFAULT 'other' COMMENT 'Tipo de sistema',
-    `ip_address` VARCHAR(45) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Endereço IP (suporta IPv4 e IPv6)',
-    `port` INT DEFAULT NULL COMMENT 'Porta',
-    `username` VARCHAR(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Usuário',
-    `password_encrypted` TEXT COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Senha criptografada',
-    `status` ENUM(
-        'active',
-        'inactive',
-        'maintenance'
-    ) DEFAULT 'active' COMMENT 'Status',
-    `description` TEXT COLLATE utf8mb4_unicode_ci COMMENT 'Descrição do sistema',
-    `is_deleted` TINYINT NOT NULL DEFAULT '0',
+    `entities_id` INT UNSIGNED NOT NULL DEFAULT 0,
+    `name` VARCHAR(255) NOT NULL,
+    `system_type` VARCHAR(50) NOT NULL DEFAULT 'pabx',
+    `status` VARCHAR(50) NOT NULL DEFAULT 'active',
+    `description` TEXT,
+    `configuration` LONGTEXT,
+    `is_recursive` TINYINT NOT NULL DEFAULT 0,
+    `is_deleted` TINYINT NOT NULL DEFAULT 0,
     `date_creation` TIMESTAMP NULL DEFAULT NULL,
     `date_mod` TIMESTAMP NULL DEFAULT NULL,
     PRIMARY KEY (`id`),
     KEY `entities_id` (`entities_id`),
     KEY `system_type` (`system_type`),
-    KEY `status` (`status`),
     KEY `is_deleted` (`is_deleted`),
-    CONSTRAINT `fk_systems_entity` FOREIGN KEY (`entities_id`) REFERENCES `glpi_entities` (`id`) ON DELETE CASCADE
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC COMMENT = 'Documentação de sistemas telefônicos e ferramentas';
+    CONSTRAINT `fk_systems_entities` FOREIGN KEY (`entities_id`) REFERENCES `glpi_entities` (`id`) ON DELETE CASCADE
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = 'Documentação de sistemas (IPBX, Chatbot, etc)';
 
--- ============================================================================
--- Tabela 3: glpi_plugin_newbase_chatbot (Chatbot Omnichannel)
--- ============================================================================
--- Configuração e documentação de Chatbots Omnichannel
-
-DROP TABLE IF EXISTS `glpi_plugin_newbase_chatbot`;
-
-CREATE TABLE `glpi_plugin_newbase_chatbot` (
-    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    `entities_id` INT UNSIGNED NOT NULL COMMENT 'FK para glpi_entities',
-    `name` VARCHAR(255) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Nome do Chatbot',
-    `provider` VARCHAR(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Provedor (Zendesk, Landbot, etc)',
-    `api_url` VARCHAR(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'URL da API',
-    `api_key` TEXT COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Chave de API criptografada',
-    `channels` JSON DEFAULT NULL COMMENT 'Canais suportados (WhatsApp, Telegram, etc)',
-    `status` ENUM(
-        'active',
-        'inactive',
-        'testing'
-    ) DEFAULT 'testing' COMMENT 'Status',
-    `description` TEXT COLLATE utf8mb4_unicode_ci COMMENT 'Descrição',
-    `is_deleted` TINYINT NOT NULL DEFAULT '0',
-    `date_creation` TIMESTAMP NULL DEFAULT NULL,
-    `date_mod` TIMESTAMP NULL DEFAULT NULL,
-    PRIMARY KEY (`id`),
-    KEY `entities_id` (`entities_id`),
-    KEY `status` (`status`),
-    KEY `is_deleted` (`is_deleted`),
-    CONSTRAINT `fk_chatbot_entity` FOREIGN KEY (`entities_id`) REFERENCES `glpi_entities` (`id`) ON DELETE CASCADE
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC COMMENT = 'Configuração de Chatbot Omnichannel';
-
--- ============================================================================
--- Tabela 4: glpi_plugin_newbase_tasks (Tarefas com Geolocalização)
--- ============================================================================
--- Gerenciamento de tarefas com rastreamento de localização e quilometragem
-
+-- TABELA 3: glpi_plugin_newbase_tasks (Tarefas)
 DROP TABLE IF EXISTS `glpi_plugin_newbase_tasks`;
 
 CREATE TABLE `glpi_plugin_newbase_tasks` (
     `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    `entities_id` INT UNSIGNED NOT NULL COMMENT 'FK para glpi_entities',
-    `users_id` INT UNSIGNED DEFAULT NULL COMMENT 'Usuário atribuído',
-    `title` VARCHAR(255) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Título da tarefa',
-    `description` TEXT COLLATE utf8mb4_unicode_ci COMMENT 'Descrição',
-    `status` ENUM(
-        'open',
-        'in_progress',
-        'paused',
-        'completed',
-        'canceled'
-    ) DEFAULT 'open' COMMENT 'Status da tarefa',
-    `priority` ENUM(
-        'low',
-        'medium',
-        'high',
-        'urgent'
-    ) DEFAULT 'medium' COMMENT 'Prioridade',
-    `start_latitude` DECIMAL(10, 8) DEFAULT NULL COMMENT 'Latitude inicial',
-    `start_longitude` DECIMAL(11, 8) DEFAULT NULL COMMENT 'Longitude inicial',
-    `end_latitude` DECIMAL(10, 8) DEFAULT NULL COMMENT 'Latitude final',
-    `end_longitude` DECIMAL(11, 8) DEFAULT NULL COMMENT 'Longitude final',
-    `estimated_kilometers` DECIMAL(10, 2) DEFAULT NULL COMMENT 'Quilometragem estimada',
-    `actual_kilometers` DECIMAL(10, 2) DEFAULT NULL COMMENT 'Quilometragem real',
-    `start_date` TIMESTAMP NULL DEFAULT NULL COMMENT 'Data/hora de início',
-    `end_date` TIMESTAMP NULL DEFAULT NULL COMMENT 'Data/hora de término',
-    `is_deleted` TINYINT NOT NULL DEFAULT '0',
+    `entities_id` INT UNSIGNED NOT NULL DEFAULT 0,
+    `users_id` INT UNSIGNED DEFAULT 0,
+    `plugin_newbase_addresses_id` INT UNSIGNED DEFAULT NULL,
+    `plugin_newbase_systems_id` INT UNSIGNED DEFAULT NULL,
+    `title` VARCHAR(255) NOT NULL,
+    `description` TEXT,
+    `status` VARCHAR(50) NOT NULL DEFAULT 'new',
+    `date_start` TIMESTAMP NULL DEFAULT NULL,
+    `date_end` TIMESTAMP NULL DEFAULT NULL,
+    `gps_start_lat` DECIMAL(10, 8) DEFAULT NULL,
+    `gps_start_lng` DECIMAL(11, 8) DEFAULT NULL,
+    `gps_end_lat` DECIMAL(10, 8) DEFAULT NULL,
+    `gps_end_lng` DECIMAL(11, 8) DEFAULT NULL,
+    `mileage` DECIMAL(10, 2) DEFAULT NULL,
+    `is_recursive` TINYINT NOT NULL DEFAULT 0,
+    `is_deleted` TINYINT NOT NULL DEFAULT 0,
     `date_creation` TIMESTAMP NULL DEFAULT NULL,
     `date_mod` TIMESTAMP NULL DEFAULT NULL,
     PRIMARY KEY (`id`),
     KEY `entities_id` (`entities_id`),
     KEY `users_id` (`users_id`),
+    KEY `addresses_id` (`plugin_newbase_addresses_id`),
+    KEY `systems_id` (`plugin_newbase_systems_id`),
     KEY `status` (`status`),
     KEY `is_deleted` (`is_deleted`),
-    KEY `start_date` (`start_date`),
-    CONSTRAINT `fk_tasks_entity` FOREIGN KEY (`entities_id`) REFERENCES `glpi_entities` (`id`) ON DELETE CASCADE,
-    CONSTRAINT `fk_tasks_user` FOREIGN KEY (`users_id`) REFERENCES `glpi_users` (`id`) ON DELETE SET NULL
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC COMMENT = 'Tarefas com rastreamento de geolocalização';
+    CONSTRAINT `fk_tasks_entities` FOREIGN KEY (`entities_id`) REFERENCES `glpi_entities` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_tasks_users` FOREIGN KEY (`users_id`) REFERENCES `glpi_users` (`id`) ON DELETE SET NULL,
+    CONSTRAINT `fk_tasks_addresses` FOREIGN KEY (`plugin_newbase_addresses_id`) REFERENCES `glpi_plugin_newbase_addresses` (`id`) ON DELETE SET NULL,
+    CONSTRAINT `fk_tasks_systems` FOREIGN KEY (`plugin_newbase_systems_id`) REFERENCES `glpi_plugin_newbase_systems` (`id`) ON DELETE SET NULL
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = 'Tarefas com geolocalização e quilometragem';
 
--- ============================================================================
--- Tabela 5: glpi_plugin_newbase_signatures (Assinaturas Digitais)
--- ============================================================================
--- Armazenamento de assinaturas digitais capturadas em tarefas
+-- TABELA 4: glpi_plugin_newbase_task_signatures (Assinaturas)
+DROP TABLE IF EXISTS `glpi_plugin_newbase_task_signatures`;
 
-DROP TABLE IF EXISTS `glpi_plugin_newbase_signatures`;
-
-CREATE TABLE `glpi_plugin_newbase_signatures` (
+CREATE TABLE `glpi_plugin_newbase_task_signatures` (
     `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    `tasks_id` INT UNSIGNED NOT NULL COMMENT 'FK para tarefas',
-    `users_id` INT UNSIGNED NOT NULL COMMENT 'Usuário que assinou',
-    `signature_data` LONGBLOB NOT NULL COMMENT 'Dados da assinatura (imagem)',
-    `signature_format` VARCHAR(20) COLLATE utf8mb4_unicode_ci DEFAULT 'png' COMMENT 'Formato (png, jpg, etc)',
-    `ip_address` VARCHAR(45) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'IP de origem',
-    `user_agent` TEXT COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'User Agent do navegador',
-    `is_deleted` TINYINT NOT NULL DEFAULT '0',
+    `plugin_newbase_tasks_id` INT UNSIGNED NOT NULL,
+    `signature_data` LONGTEXT NOT NULL,
+    `signer_name` VARCHAR(255) DEFAULT NULL,
+    `users_id` INT UNSIGNED DEFAULT NULL,
+    `is_deleted` TINYINT NOT NULL DEFAULT 0,
     `date_creation` TIMESTAMP NULL DEFAULT NULL,
     `date_mod` TIMESTAMP NULL DEFAULT NULL,
     PRIMARY KEY (`id`),
-    KEY `tasks_id` (`tasks_id`),
+    KEY `tasks_id` (`plugin_newbase_tasks_id`),
     KEY `users_id` (`users_id`),
     KEY `is_deleted` (`is_deleted`),
-    CONSTRAINT `fk_signatures_task` FOREIGN KEY (`tasks_id`) REFERENCES `glpi_plugin_newbase_tasks` (`id`) ON DELETE CASCADE,
-    CONSTRAINT `fk_signatures_user` FOREIGN KEY (`users_id`) REFERENCES `glpi_users` (`id`) ON DELETE RESTRICT
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = DYNAMIC COMMENT = 'Assinaturas digitais de tarefas';
+    CONSTRAINT `fk_signatures_tasks` FOREIGN KEY (`plugin_newbase_tasks_id`) REFERENCES `glpi_plugin_newbase_tasks` (`id`) ON DELETE CASCADE
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = 'Assinaturas digitais de tarefas';
+
+-- TABELA 5: glpi_plugin_newbase_company_extras (Complementos de Empresa)
+DROP TABLE IF EXISTS `glpi_plugin_newbase_company_extras`;
+
+CREATE TABLE `glpi_plugin_newbase_company_extras` (
+    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `entities_id` INT UNSIGNED NOT NULL,
+    `cnpj` VARCHAR(18) DEFAULT NULL,
+    `corporate_name` VARCHAR(255) DEFAULT NULL,
+    `fantasy_name` VARCHAR(255) DEFAULT NULL,
+    `contact_person` VARCHAR(255) DEFAULT NULL,
+    `phone` VARCHAR(20) DEFAULT NULL,
+    `email` VARCHAR(255) DEFAULT NULL,
+    `notes` LONGTEXT,
+    `is_deleted` TINYINT NOT NULL DEFAULT 0,
+    `date_creation` TIMESTAMP NULL DEFAULT NULL,
+    `date_mod` TIMESTAMP NULL DEFAULT NULL,
+    PRIMARY KEY (`id`),
+    KEY `entities_id` (`entities_id`),
+    KEY `cnpj` (`cnpj`),
+    KEY `is_deleted` (`is_deleted`),
+    UNIQUE KEY `unique_entities_id` (`entities_id`),
+    CONSTRAINT `fk_company_extras_entities` FOREIGN KEY (`entities_id`) REFERENCES `glpi_entities` (`id`) ON DELETE CASCADE
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = 'Dados complementares de empresas';
+
+-- TABELA 6: glpi_plugin_newbase_config (Configuração)
+DROP TABLE IF EXISTS `glpi_plugin_newbase_config`;
+
+CREATE TABLE `glpi_plugin_newbase_config` (
+    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `config_key` VARCHAR(255) NOT NULL,
+    `config_value` LONGTEXT,
+    `date_mod` TIMESTAMP NULL DEFAULT NULL,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `unique_config_key` (`config_key`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = 'Configurações do plugin';
+
+-- INSERIR CONFIGURAÇÕES PADRÃO
+INSERT INTO
+    `glpi_plugin_newbase_config` (`config_key`, `config_value`)
+VALUES ('enable_signature', '1'),
+    ('require_signature', '0'),
+    ('enable_gps', '1'),
+    ('calculate_mileage', '1'),
+    ('default_map_zoom', '13');
 
 SET FOREIGN_KEY_CHECKS = 1;

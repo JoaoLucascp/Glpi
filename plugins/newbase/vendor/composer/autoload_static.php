@@ -6,6 +6,10 @@ namespace Composer\Autoload;
 
 class ComposerStaticInit9c805e0428f2a34fed5c26d57fc22662
 {
+    public static $files = array (
+        '9b38cf48e83f5d8f60375221cd213eee' => __DIR__ . '/..' . '/phpstan/phpstan/bootstrap.php',
+    );
+
     public static $prefixLengthsPsr4 = array (
         'G' =>
         array (
@@ -21,20 +25,16 @@ class ComposerStaticInit9c805e0428f2a34fed5c26d57fc22662
     );
 
     public static $classMap = array (
-        'Address' => __DIR__ . '/../..' . '/src/GlobalAliases.php',
-        'CompanyData' => __DIR__ . '/../..' . '/src/GlobalAliases.php',
         'Composer\\InstalledVersions' => __DIR__ . '/..' . '/composer/InstalledVersions.php',
-        'Config' => __DIR__ . '/../..' . '/src/GlobalAliases.php',
-        'GlpiPlugin\\Newbase\\Address' => __DIR__ . '/../..' . '/src/LegacyAliases.php',
-        'GlpiPlugin\\Newbase\\CompanyData' => __DIR__ . '/../..' . '/src/LegacyAliases.php',
-        'GlpiPlugin\\Newbase\\Config' => __DIR__ . '/../..' . '/src/LegacyAliases.php',
+        'GlpiPlugin\\Newbase\\Address' => __DIR__ . '/../..' . '/src/Address.php',
+        'GlpiPlugin\\Newbase\\AddressHandler' => __DIR__ . '/../..' . '/src/AddressHandler.php',
+        'GlpiPlugin\\Newbase\\Common' => __DIR__ . '/../..' . '/src/Common.php',
+        'GlpiPlugin\\Newbase\\CompanyData' => __DIR__ . '/../..' . '/src/CompanyData.php',
+        'GlpiPlugin\\Newbase\\Config' => __DIR__ . '/../..' . '/src/Config.php',
         'GlpiPlugin\\Newbase\\Menu' => __DIR__ . '/../..' . '/src/Menu.php',
-        'GlpiPlugin\\Newbase\\System' => __DIR__ . '/../..' . '/src/LegacyAliases.php',
-        'GlpiPlugin\\Newbase\\Task' => __DIR__ . '/../..' . '/src/LegacyAliases.php',
-        'GlpiPlugin\\Newbase\\TaskSignature' => __DIR__ . '/../..' . '/src/LegacyAliases.php',
-        'System' => __DIR__ . '/../..' . '/src/GlobalAliases.php',
-        'Task' => __DIR__ . '/../..' . '/src/GlobalAliases.php',
-        'TaskSignature' => __DIR__ . '/../..' . '/src/GlobalAliases.php',
+        'GlpiPlugin\\Newbase\\System' => __DIR__ . '/../..' . '/src/System.php',
+        'GlpiPlugin\\Newbase\\Task' => __DIR__ . '/../..' . '/src/Task.php',
+        'GlpiPlugin\\Newbase\\TaskSignature' => __DIR__ . '/../..' . '/src/TaskSignature.php',
     );
 
     public static function getInitializer(ClassLoader $loader)
