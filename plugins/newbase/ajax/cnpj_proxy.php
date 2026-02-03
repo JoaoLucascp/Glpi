@@ -1,136 +1,142 @@
 <?php
 
 /**
-* ---------------------------------------------------------------------
-* AJAX - Proxy para APIs de CNPJ - Plugin Newbase
-* ---------------------------------------------------------------------
-*
-* Este arquivo atua como proxy para consultar múltiplas APIs de CNPJ:
-* 1. BrasilAPI (prioridade)
-* 2. ReceitaWS (fallback)
-*
-* Funcionalidades:
-* - Resolve problema de CORS (Cross-Origin)
-* - Mescla dados de múltiplas fontes
-* - Fallback automático entre APIs
-* - Cache local (opcional)
-*
-* @package   Plugin - Newbase
-* @author    João Lucas
-* @license   GPLv2+
-*
-* ---------------------------------------------------------------------
-* GLPI - Gestionnaire Libre de Parc Informatique
-* Copyright (C) 2015-2026 Teclib' and contributors.
-*
-* http://glpi-project.org
-*
-* based on GLPI - Copyright (C) 2003-2014 by the INDEPNET Development Team.
-* ---------------------------------------------------------------------
-*
-* LICENSE
-*
-* This file is part of GLPI.
-*
-* GLPI is free software; you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation; either version 2 of the License, or
-* (at your option) any later version.
-*
-* GLPI is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with GLPI. If not, see <http://www.gnu.org/licenses/>.
-* ---------------------------------------------------------------------
-*/
+ * AJAX Proxy for CNPJ APIs - Newbase Plugin
+ *
+ * Acts as a proxy to query multiple CNPJ APIs:
+ * 1. Brasil API (priority)
+ * 2. ReceitaWS (fallback)
+ *
+ * Features:
+ * - Solves CORS (Cross-Origin) issues
+ * - Merges data from multiple sources
+ * - Automatic fallback between APIs
+ * - Local caching (optional)
+ *
+ * @package   GlpiPlugin\Newbase
+ * @author    João Lucas
+ * @license   GPLv2+
+ * @version   2.1.0
+ */
 
-// 1 SEGURANÇA: Carregar o núcleo do GLPI
-include('../../../inc/includes.php');
+declare(strict_types=1);
 
-// 2 SEGURANÇA: Verificar se usuário está logado
+// SECURITY: Load GLPI core
+include '../../../inc/includes.php';
+
+// SECURITY: Check authentication
 Session::checkLoginUser();
 
-// 3 IMPORTAR CLASSES NECESSÁRIAS
+// Import required classes
 use GlpiPlugin\Newbase\Common;
 use GlpiPlugin\Newbase\CompanyData;
 
-// 4 CONFIGURAR RESPOSTA JSON
+// Set JSON response headers
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-cache, must-revalidate');
 header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
 
-// VALIDAÇÕES DE SEGURANÇA
-
-// 5 VERIFICAR SE É REQUISIÇÃO POST
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    echo json_encode([
-        'success' => false,
-        'error' => __('Only POST requests are allowed', 'newbase'),
-    ]);
-    exit;
+/**
+ * Validate HTTP method and exit with error if not POST
+ *
+ * @return void
+ */
+function validateRequestMethod(): void
+{
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        http_response_code(405);
+        exit(json_encode([
+            'success' => false,
+            'error' => __('Only POST requests are allowed', 'newbase'),
+        ]));
+    }
 }
-
-// 6 VERIFICAR TOKEN CSRF
-Session::checkCSRF($_POST);
-
-// 7 VERIFICAR PERMISSÕES
-if (!CompanyData::canCreate() && !CompanyData::canUpdate()) {
-    http_response_code(403);
-    echo json_encode([
-        'success' => false,
-        'error' => __('You do not have permission to search companies', 'newbase'),
-    ]);
-    exit;
-}
-
-// VALIDAR CNPJ
-
-// 8 VERIFICAR SE CNPJ FOI ENVIADO
-if (empty($_POST['cnpj'])) {
-    http_response_code(400);
-    echo json_encode([
-        'success' => false,
-        'error' => __('CNPJ is required', 'newbase'),
-    ]);
-    exit;
-}
-
-// 9 REMOVER FORMATAÇÃO
-$cnpj = preg_replace('/[^0-9]/', '', $_POST['cnpj']);
-
-// 10 VALIDAR TAMANHO
-if (strlen($cnpj) !== 14) {
-    http_response_code(400);
-    echo json_encode([
-        'success' => false,
-        'error' => __('Invalid CNPJ: must have 14 digits', 'newbase'),
-    ]);
-    exit;
-}
-
-// 11 VALIDAR DÍGITOS VERIFICADORES
-if (!Common::validateCNPJ($cnpj)) {
-    http_response_code(400);
-    echo json_encode([
-        'success' => false,
-        'error' => __('Invalid CNPJ: verification digits do not match', 'newbase'),
-    ]);
-    exit;
-}
-
-// FUNÇÕES AUXILIARES
 
 /**
-* Busca dados na BrasilAPI
-*
-* @param string $cnpj CNPJ sem formatação (14 dígitos)
-* @return array|null Dados da empresa ou null se não encontrado
-*/
-function buscarBrasilAPI($cnpj)
+ * Validate CSRF token and exit with error if invalid
+ *
+ * @return void
+ */
+function validateCSRFToken(): void
+{
+    if (!isset($_POST['_glpi_csrf_token'])) {
+        http_response_code(403);
+        exit(json_encode([
+            'success' => false,
+            'error' => __('CSRF token is missing', 'newbase'),
+        ]));
+    }
+
+    Session::checkCSRF($_POST);
+}
+
+/**
+ * Check user permissions for company operations
+ *
+ * @return void
+ */
+function checkPermissions(): void
+{
+    // Check if user has permission to create or update companies
+    if (!Session::haveRight('plugin_newbase', CREATE)
+        && !Session::haveRight('plugin_newbase', UPDATE)) {
+        http_response_code(403);
+        exit(json_encode([
+            'success' => false,
+            'error' => __('You do not have permission to access this feature', 'newbase'),
+        ]));
+    }
+}
+
+/**
+ * Validate and sanitize CNPJ input
+ *
+ * @return string Validated and cleaned CNPJ
+ * @throws Exception If validation fails
+ */
+function validateAndSanitizeCNPJ(): string
+{
+    // Check if CNPJ was provided
+    if (empty($_POST['cnpj'])) {
+        http_response_code(400);
+        exit(json_encode([
+            'success' => false,
+            'error' => __('CNPJ is required', 'newbase'),
+        ]));
+    }
+
+    // Remove formatting
+    $cnpj = preg_replace('/[^0-9]/', '', (string)$_POST['cnpj']);
+
+    // Validate size
+    if (strlen($cnpj) !== 14) {
+        http_response_code(400);
+        exit(json_encode([
+            'success' => false,
+            'error' => __('Invalid CNPJ: must have 14 digits', 'newbase'),
+        ]));
+    }
+
+    // Validate check digits
+    if (!Common::validateCNPJ($cnpj)) {
+        http_response_code(400);
+        exit(json_encode([
+            'success' => false,
+            'error' => __('Invalid CNPJ: check digits do not match', 'newbase'),
+        ]));
+    }
+
+    return $cnpj;
+}
+
+/**
+ * Search company data in Brasil API
+ *
+ * @param string $cnpj CNPJ without formatting (14 digits)
+ *
+ * @return array|null Company data or null if not found
+ */
+function searchBrasilAPI(string $cnpj): ?array
 {
     $url = "https://brasilapi.com.br/api/cnpj/v1/{$cnpj}";
 
@@ -139,9 +145,9 @@ function buscarBrasilAPI($cnpj)
         CURLOPT_URL => $url,
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_TIMEOUT => 10,
-        CURLOPT_SSL_VERIFYPEER => true,  // Segurança: verificar certificado SSL
+        CURLOPT_SSL_VERIFYPEER => true,
         CURLOPT_FOLLOWLOCATION => true,
-        CURLOPT_USERAGENT => 'GLPI Newbase Plugin/2.0',
+        CURLOPT_USERAGENT => 'GLPI-Newbase/2.1.0',
     ]);
 
     $response = curl_exec($ch);
@@ -149,28 +155,32 @@ function buscarBrasilAPI($cnpj)
     $error = curl_error($ch);
     curl_close($ch);
 
-    // Log de erro se houver
+    // Log error if any
     if ($error) {
-        Toolbox::logInFile('newbase_cnpj', "BrasilAPI CURL Error: $error\n");
+        Toolbox::logInFile('newbase_cnpj', "Brasil API CURL Error: {$error}");
     }
 
-    // Se sucesso, retornar dados
-    if ($httpCode === 200 && $response) {
-        return json_decode($response, true);
+    // Return data on success
+    if ($httpCode === 200 && $response !== false) {
+        $data = json_decode($response, true);
+        if (is_array($data) && isset($data['cnpj'])) {
+            return $data;
+        }
     }
 
     return null;
 }
 
 /**
-* Busca dados na ReceitaWS
-*
-* @param string $cnpj CNPJ sem formatação (14 dígitos)
-* @return array|null Dados da empresa ou null se não encontrado
-*/
-function buscarReceitaWS($cnpj)
+ * Search company data in ReceitaWS API
+ *
+ * @param string $cnpj CNPJ without formatting (14 digits)
+ *
+ * @return array|null Company data or null if not found
+ */
+function searchReceitaWSAPI(string $cnpj): ?array
 {
-    $url = "https://receitaws.com.br/v1/cnpj/{$cnpj}";
+    $url = "https://www.receitaws.com.br/v1/cnpj/{$cnpj}";
 
     $ch = curl_init();
     curl_setopt_array($ch, [
@@ -179,7 +189,7 @@ function buscarReceitaWS($cnpj)
         CURLOPT_TIMEOUT => 10,
         CURLOPT_SSL_VERIFYPEER => true,
         CURLOPT_FOLLOWLOCATION => true,
-        CURLOPT_USERAGENT => 'GLPI Newbase Plugin/2.0',
+        CURLOPT_USERAGENT => 'GLPI-Newbase/2.1.0',
     ]);
 
     $response = curl_exec($ch);
@@ -188,33 +198,32 @@ function buscarReceitaWS($cnpj)
     curl_close($ch);
 
     if ($error) {
-        Toolbox::logInFile('newbase_cnpj', "ReceitaWS CURL Error: $error\n");
+        Toolbox::logInFile('newbase_cnpj', "ReceitaWS CURL Error: {$error}");
     }
 
-    if ($httpCode === 200 && $response) {
+    if ($httpCode === 200 && $response !== false) {
         $data = json_decode($response, true);
 
-        // ReceitaWS retorna erro dentro do JSON
-        if (isset($data['status']) && $data['status'] === 'ERROR') {
-            return null;
+        // ReceitaWS returns error within JSON
+        if (isset($data['status']) && $data['status'] === 'OK') {
+            return $data;
         }
-
-        return $data;
     }
 
     return null;
 }
 
 /**
-* Mescla dados de múltiplas APIs priorizando BrasilAPI
-*
-* @param array|null $brasilAPI Dados da BrasilAPI
-* @param array|null $receitaWS Dados da ReceitaWS
-* @return array Dados mesclados
-*/
-function mesclarDados($brasilAPI, $receitaWS)
+ * Merge data from multiple APIs prioritizing Brasil API
+ *
+ * @param array|null $brasilAPI Brasil API data
+ * @param array|null $receitaWS ReceitaWS data
+ *
+ * @return array Merged data
+ */
+function mergeAPIData(?array $brasilAPI, ?array $receitaWS): array
 {
-    $resultado = [
+    $result = [
         'razao_social' => '',
         'nome_fantasia' => '',
         'email' => '',
@@ -229,116 +238,129 @@ function mesclarDados($brasilAPI, $receitaWS)
         'fonte' => [],
     ];
 
-    // 12 PRIORIZAR BrasilAPI
-    if ($brasilAPI) {
-        $resultado['razao_social'] = $brasilAPI['razao_social'] ?? '';
-        $resultado['nome_fantasia'] = $brasilAPI['nome_fantasia'] ?? '';
-        $resultado['email'] = $brasilAPI['email'] ?? '';
-        $resultado['telefone'] = $brasilAPI['ddd_telefone_1'] ?? '';
-        $resultado['cep'] = $brasilAPI['cep'] ?? '';
-        $resultado['logradouro'] = $brasilAPI['descricao_tipo_logradouro'] . ' ' . ($brasilAPI['logradouro'] ?? '');
-        $resultado['numero'] = $brasilAPI['numero'] ?? '';
-        $resultado['complemento'] = $brasilAPI['complemento'] ?? '';
-        $resultado['bairro'] = $brasilAPI['bairro'] ?? '';
-        $resultado['municipio'] = $brasilAPI['municipio'] ?? '';
-        $resultado['uf'] = $brasilAPI['uf'] ?? '';
-        $resultado['fonte'][] = 'BrasilAPI';
+    // Prioritize Brasil API
+    if ($brasilAPI !== null) {
+        $result['razao_social'] = $brasilAPI['razao_social'] ?? '';
+        $result['nome_fantasia'] = $brasilAPI['nome_fantasia'] ?? '';
+        $result['email'] = $brasilAPI['email'] ?? '';
+        $result['telefone'] = $brasilAPI['ddd_telefone_1'] ?? '';
+        $result['cep'] = $brasilAPI['cep'] ?? '';
+        $result['logradouro'] = ($brasilAPI['descricao_tipo_logradouro'] ?? '')
+            . ' ' . ($brasilAPI['logradouro'] ?? '');
+        $result['numero'] = $brasilAPI['numero'] ?? '';
+        $result['complemento'] = $brasilAPI['complemento'] ?? '';
+        $result['bairro'] = $brasilAPI['bairro'] ?? '';
+        $result['municipio'] = $brasilAPI['municipio'] ?? '';
+        $result['uf'] = $brasilAPI['uf'] ?? '';
+        $result['fonte'][] = 'Brasil API';
     }
 
-    // 13 COMPLEMENTAR COM ReceitaWS (se necessário)
-    if ($receitaWS) {
-        if (empty($resultado['razao_social'])) {
-            $resultado['razao_social'] = $receitaWS['nome'] ?? '';
+    // Complement with ReceitaWS if necessary
+    if ($receitaWS !== null) {
+        if (empty($result['razao_social'])) {
+            $result['razao_social'] = $receitaWS['nome'] ?? '';
         }
 
-        if (empty($resultado['nome_fantasia'])) {
-            $resultado['nome_fantasia'] = $receitaWS['fantasia'] ?? '';
+        if (empty($result['nome_fantasia'])) {
+            $result['nome_fantasia'] = $receitaWS['fantasia'] ?? '';
         }
 
-        if (empty($resultado['email']) && !empty($receitaWS['email'])) {
-            $resultado['email'] = $receitaWS['email'];
-            $resultado['fonte'][] = 'ReceitaWS (email)';
+        if (empty($result['email']) && !empty($receitaWS['email'])) {
+            $result['email'] = $receitaWS['email'];
+            $result['fonte'][] = 'ReceitaWS (email)';
         }
 
-        if (empty($resultado['telefone']) && !empty($receitaWS['telefone'])) {
-            $resultado['telefone'] = $receitaWS['telefone'];
-            $resultado['fonte'][] = 'ReceitaWS (telefone)';
+        if (empty($result['telefone']) && !empty($receitaWS['telefone'])) {
+            $result['telefone'] = $receitaWS['telefone'];
+            $result['fonte'][] = 'ReceitaWS (telefone)';
         }
 
-        if (empty($resultado['cep'])) {
-            $resultado['cep'] = $receitaWS['cep'] ?? '';
-            $resultado['logradouro'] = $receitaWS['logradouro'] ?? '';
-            $resultado['numero'] = $receitaWS['numero'] ?? '';
-            $resultado['complemento'] = $receitaWS['complemento'] ?? '';
-            $resultado['bairro'] = $receitaWS['bairro'] ?? '';
-            $resultado['municipio'] = $receitaWS['municipio'] ?? '';
-            $resultado['uf'] = $receitaWS['uf'] ?? '';
+        if (empty($result['cep'])) {
+            $result['cep'] = $receitaWS['cep'] ?? '';
+            $result['logradouro'] = $receitaWS['logradouro'] ?? '';
+            $result['numero'] = $receitaWS['numero'] ?? '';
+            $result['complemento'] = $receitaWS['complemento'] ?? '';
+            $result['bairro'] = $receitaWS['bairro'] ?? '';
+            $result['municipio'] = $receitaWS['municipio'] ?? '';
+            $result['uf'] = $receitaWS['uf'] ?? '';
         }
     }
 
-    return $resultado;
+    return $result;
 }
 
-// PROCESSAMENTO PRINCIPAL
+// ==================== MAIN PROCESSING ====================
 
 try {
-    // 14 TENTAR BrasilAPI PRIMEIRO
-    $dadosBrasilAPI = buscarBrasilAPI($cnpj);
-    $dadosReceitaWS = null;
+    // Validate HTTP method
+    validateRequestMethod();
 
-    // 15 SE BrasilAPI NÃO RETORNOU EMAIL, TENTAR ReceitaWS
-    if (!$dadosBrasilAPI || empty($dadosBrasilAPI['email'])) {
-        $dadosReceitaWS = buscarReceitaWS($cnpj);
+    // Validate CSRF token
+    validateCSRFToken();
+
+    // Check permissions
+    checkPermissions();
+
+    // Validate and sanitize CNPJ
+    $cnpj = validateAndSanitizeCNPJ();
+
+    // Try Brasil API first
+    $brasilAPIData = searchBrasilAPI($cnpj);
+    $receitaWSData = null;
+
+    // If Brasil API didn't return email, try ReceitaWS
+    if ($brasilAPIData === null || empty($brasilAPIData['email'])) {
+        $receitaWSData = searchReceitaWSAPI($cnpj);
     }
 
-    // 16 SE NENHUMA API FUNCIONOU
-    if (!$dadosBrasilAPI && !$dadosReceitaWS) {
+    // If neither API worked
+    if ($brasilAPIData === null && $receitaWSData === null) {
         http_response_code(404);
-        echo json_encode([
+        exit(json_encode([
             'success' => false,
             'error' => __('CNPJ not found in any API', 'newbase'),
-        ]);
-
-        Toolbox::logInFile(
-            'newbase_cnpj',
-            "CNPJ not found in any API: $cnpj\n"
-        );
-
-        exit;
+        ]));
     }
 
-    // 17 MESCLAR DADOS DAS DUAS APIs
-    $resultado = mesclarDados($dadosBrasilAPI, $dadosReceitaWS);
+    // Merge data from both APIs
+    $result = mergeAPIData($brasilAPIData, $receitaWSData);
 
-    // 18 LOG DE SUCESSO
+    // Log success
     Toolbox::logInFile(
         'newbase_cnpj',
         sprintf(
-            "CNPJ: %s | Email: %s | Fontes: %s\n",
+            "CNPJ: %s | Email: %s | Sources: %s",
             $cnpj,
-            $resultado['email'] ?: 'NOT FOUND',
-            implode(', ', $resultado['fonte'])
+            $result['email'] ?: 'NOT FOUND',
+            implode(', ', $result['fonte'])
         )
     );
 
-    // 19 RETORNAR RESULTADO
+    // Return result
     echo json_encode([
         'success' => true,
-        'data' => $resultado,
+        'data' => $result,
         'message' => __('Company data loaded successfully', 'newbase'),
     ]);
 
 } catch (Exception $e) {
-    // 20 TRATAMENTO DE ERRO
+    // Error handling
     http_response_code(500);
-    echo json_encode([
+
+    $response = [
         'success' => false,
         'error' => __('Error searching company data', 'newbase'),
-        'details' => GLPI_DEBUG ? $e->getMessage() : null,
-    ]);
+    ];
+
+    // Include details only in debug mode
+    if (defined('GLPI_DEBUG') && GLPI_DEBUG) {
+        $response['details'] = $e->getMessage();
+    }
+
+    echo json_encode($response);
 
     Toolbox::logInFile(
         'newbase_cnpj',
-        "ERROR in cnpj_proxy.php: " . $e->getMessage() . "\n"
+        "ERROR in cnpj_proxy.php: " . $e->getMessage()
     );
 }

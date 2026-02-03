@@ -59,7 +59,7 @@ class CompanyData extends CommonDBTM
 * @param bool $full Full path
 * @return string Search URL
 */
-    public static function getSearchURL(bool $full = true): string
+    public static function getSearchURL($full = true)
     {
         return Plugin::getWebDir('newbase', $full) . '/front/companydata.php';
     }
@@ -176,7 +176,7 @@ class CompanyData extends CommonDBTM
 * @param array $data Data to save (cnpj, corporate_name, fantasy_name, etc)
 * @return int|bool Record ID or false
 */
-    public static function saveCompanyExtras(int $entity_id, array $data)
+    public static function saveCompanyExtras(int $entity_id, array $data): int|bool
     {
         global $DB;
 
@@ -293,7 +293,7 @@ class CompanyData extends CommonDBTM
 * @param array $options Dropdown options
 * @return int|string Dropdown result
 */
-    public static function dropdown(array $options = [])
+    public static function dropdown($options = [])
     {
         $defaults = [
             'name' => 'entities_id',
@@ -313,7 +313,7 @@ class CompanyData extends CommonDBTM
 * (Used if CompanyData becomes a full CommonDBTM in the future)
 * @return array Search options
 */
-    public static function rawSearchOptions(): array
+    public function rawSearchOptions(): array
     {
         return [
             [

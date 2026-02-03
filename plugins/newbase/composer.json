@@ -13,7 +13,7 @@
         "ipbx",
         "chatbot"
     ],
-    "homepage": "https://github.com/JoaoLucascp/Glpi.git",
+    "homepage": "https://github.com/JoaoLucascp/Glpi",
     "license": "GPL-2.0-or-later",
     "authors": [
         {
@@ -23,8 +23,8 @@
         }
     ],
     "support": {
-        "issues": "https://github.com/JoaoLucascp/Glpi.git",
-        "source": "https://github.com/JoaoLucascp/Glpi.git"
+        "issues": "https://github.com/JoaoLucascp/Glpi/issues",
+        "source": "https://github.com/JoaoLucascp/Glpi"
     },
     "require": {
         "php": ">=8.3",

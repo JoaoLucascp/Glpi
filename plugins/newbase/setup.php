@@ -2,209 +2,110 @@
 
 /**
 * Setup for Newbase Plugin
-* @package   Plugin - Newbase
+* @package   GlpiPlugin\Newbase
 * @author    João Lucas
 * @copyright 2026 João Lucas
 * @license   GPLv2+
 * @version   2.1.0
 */
 
-// Prevenir acesso direto
+declare(strict_types=1);
+
+// Prevent direct access
 if (!defined('GLPI_ROOT')) {
-    die("Sorry. You can't access this file directly");
+    die('Direct access not allowed');
 }
-
-// PASSO 1: CARREGAR AUTOLOADER PRIMEIRO
-$autoload = __DIR__ . '/vendor/autoload.php';
-if (file_exists($autoload)) {
-    require_once $autoload;
-}
-
-// PASSO 2: CONSTANTES DO PLUGIN
-define('PLUGIN_NEWBASE_VERSION', '2.1.0');
-define('PLUGIN_NEWBASE_NAME', 'Newbase');
-define('PLUGIN_NEWBASE_AUTHOR', 'João Lucas');
-define('PLUGIN_NEWBASE_LICENSE', 'GPLv2+');
-define('PLUGIN_NEWBASE_HOMEPAGE', 'https://github.com/joaolucas/glpi-newbase');
-define('PLUGIN_NEWBASE_MIN_GLPI', '10.0.20');
-define('PLUGIN_NEWBASE_MAX_GLPI', '10.0.99');
-define('PLUGIN_NEWBASE_DESCRIPTION', 'Sistema completo de Gestão de documentação de empresas para GLPI');
-
-// CAMINHOS DO PLUGIN
-define('PLUGIN_NEWBASE_DIR', __DIR__);
-define('PLUGIN_NEWBASE_WEB_DIR', '/plugins/newbase');
-
-// PASSO 3: INICIALIZAÇÃO DO PLUGIN
 
 /**
-* Plugin init function
-* @global array $PLUGIN_HOOKS
-* @return void
+* Newbase Plugin for GLPI
+* System for complete company documentation management
 */
-function plugin_init_newbase(): void
-{
-    global $PLUGIN_HOOKS;
 
-    $plugin = new Plugin();
-
-    // Verificar se plugin está instalado e ativado
-    if (!$plugin->isInstalled('newbase') || !$plugin->isActivated('newbase')) {
-        return;
-    }
-
-    // REGISTRAR CLASSES PRINCIPAIS
-    Plugin::registerClass('GlpiPlugin\\Newbase\\Address');
-    Plugin::registerClass('GlpiPlugin\\Newbase\\CompanyData');
-    Plugin::registerClass('GlpiPlugin\\Newbase\\System');
-    Plugin::registerClass('GlpiPlugin\\Newbase\\Task');
-    Plugin::registerClass('GlpiPlugin\\Newbase\\TaskSignature');
-    Plugin::registerClass('GlpiPlugin\\Newbase\\Config');
-
-    // MENU PRINCIPAL
-    $PLUGIN_HOOKS['menu_entry']['newbase'] = true;
-
-    // PÁGINA DE CONFIGURAÇÃO
-    $PLUGIN_HOOKS['config_page']['newbase'] = 'front/config.php';
-
-    // CSS DO PLUGIN
-    $PLUGIN_HOOKS['add_css']['newbase'] = [
-        'css/newbase.css',
-        'css/forms.css',
-        'css/responsive.css',
-    ];
-
-    // JAVASCRIPT DO PLUGIN
-    $PLUGIN_HOOKS['add_javascript']['newbase'] = [
-        'js/newbase.js',
-        'js/forms.js',
-        'js/map.js',
-        'js/signature.js',
-        'js/mileage.js',
-        'js/mobile.js',
-        'js/jquery.mask.min.js',
-    ];
-
-    // CSRF COMPLIANCE (GLPI 10+)
-    $PLUGIN_HOOKS['csrf_compliant']['newbase'] = true;
-
-    // HOOKS DE ITENS (DISPLAY TABS)
-    $PLUGIN_HOOKS['item_get_tabs']['newbase'] = [
-        'Entity' => 'GlpiPlugin\\Newbase\\System',
-        'Entity' => 'GlpiPlugin\\Newbase\\Task',
-    ];
-}
-
-// PASSO 4: INFORMAÇÕES DO PLUGIN
+define('NEWBASE_VERSION', '2.1.0');
+define('NEWBASE_MIN_GLPI', '10.0.20');
+define('NEWBASE_MAX_GLPI', '10.0.99');
+define('NEWBASE_MIN_PHP', '8.3');
 
 /**
-* Get plugin version and information for GLPI
-* Razão: GLPI espera essa chave na função plugin_version_*
-* @return array Plugin information
+* Plugin Version Declaration - REQUIRED BY GLPI
+*
+* @return array Plugin information required by GLPI
 */
 function plugin_version_newbase(): array
 {
     return [
-        'name' => PLUGIN_NEWBASE_NAME,
-        'version' => PLUGIN_NEWBASE_VERSION,
-        'author' => PLUGIN_NEWBASE_AUTHOR,
-        'license' => PLUGIN_NEWBASE_LICENSE,
-        'homepage' => PLUGIN_NEWBASE_HOMEPAGE,
-        'description' => PLUGIN_NEWBASE_DESCRIPTION,
-        'requirements' => [
-            'glpi' => [
-                'min' => PLUGIN_NEWBASE_MIN_GLPI,
-                'max' => PLUGIN_NEWBASE_MAX_GLPI,
-            ],
-            'php' => [
-                'min' => '8.1',
-            ],
-        ],
-        'csrf_compliant' => true,
+        'name'           => 'Newbase',
+        'version'        => NEWBASE_VERSION,
+        'author'         => 'João Lucas',
+        'license'        => 'GPLv2+',
+        'homepage'       => 'https://github.com/JoaoLucascp/Glpi',
+        'description'    => 'Complete system for managing company documentation in GLPI with support for telephone systems (Asterisk, CloudPBX), field tasks with geolocation, digital signatures and mileage calculation',
+        'requirements'   => [
+            'glpi' => NEWBASE_MIN_GLPI,
+            'php'  => NEWBASE_MIN_PHP
+        ]
     ];
 }
 
-// PASSO 5: VERIFICAÇÃO DE PRÉ-REQUISITOS
-
 /**
-* Check plugin prerequisites before installation
-* @return bool True if compatible
+* Check Prerequisites - REQUIRED BY GLPI
+* Called before installation
+*
+* @return bool Whether prerequisites are met
 */
 function plugin_newbase_check_prerequisites(): bool
 {
-    // VERIFICAR VERSÃO DO GLPI
-    if (version_compare(GLPI_VERSION, PLUGIN_NEWBASE_MIN_GLPI, '<')) {
+    // Check GLPI version
+    if (version_compare(GLPI_VERSION, NEWBASE_MIN_GLPI, '<')) {
         echo sprintf(
-            '<p class="red">Este plugin requer GLPI %s ou superior. Sua versão é %s.</p>',
-            PLUGIN_NEWBASE_MIN_GLPI,
+            __('This plugin requires GLPI %s or higher', 'newbase'),
+            NEWBASE_MIN_GLPI
+        );
+        return false;
+    }
+
+    // Check GLPI max version (optional but recommended)
+    if (version_compare(GLPI_VERSION, NEWBASE_MAX_GLPI, '>')) {
+        echo sprintf(
+            __('This plugin is not tested with GLPI %s', 'newbase'),
             GLPI_VERSION
         );
-        return false;
+        // Don't return false here - let it install anyway with warning
     }
 
-    if (version_compare(GLPI_VERSION, PLUGIN_NEWBASE_MAX_GLPI, '>')) {
+    // Check PHP version
+    if (version_compare(PHP_VERSION, NEWBASE_MIN_PHP, '<')) {
         echo sprintf(
-            '<p class="red">Este plugin não é compatível com GLPI %s. Versão máxima suportada: %s.</p>',
-            GLPI_VERSION,
-            PLUGIN_NEWBASE_MAX_GLPI
+            __('This plugin requires PHP %s or higher', 'newbase'),
+            NEWBASE_MIN_PHP
         );
         return false;
     }
 
-    // VERIFICAR VERSÃO DO PHP
-    if (version_compare(PHP_VERSION, '8.1', '<')) {
-        echo '<p class="red">Este plugin requer PHP 8.1 ou superior.</p>';
-        return false;
-    }
-
-    // VERIFICAR EXTENSÕES PHP OBRIGATÓRIAS
-    $required_extensions = ['json', 'mysqli', 'mbstring', 'curl', 'gd'];
-    $missing = [];
-
+    // Check required PHP extensions
+    $required_extensions = ['json', 'curl', 'gd', 'mysqli'];
     foreach ($required_extensions as $ext) {
         if (!extension_loaded($ext)) {
-            $missing[] = $ext;
+            echo sprintf(
+                __('PHP extension "%s" is required but not installed', 'newbase'),
+                $ext
+            );
+            return false;
         }
     }
 
-    if (!empty($missing)) {
-        echo sprintf(
-            '<p class="red">Extensões PHP faltando: <strong>%s</strong></p>',
-            implode(', ', $missing)
-        );
-        return false;
-    }
-
-    // VERIFICAR AUTOLOADER
-    $autoload = __DIR__ . '/vendor/autoload.php';
-    if (!file_exists($autoload)) {
-        echo '<p class="red">Autoloader não encontrado. Execute: <code>composer install</code></p>';
-        return false;
-    }
-
     return true;
 }
 
 /**
-* Check plugin configuration
-* @param bool $verbose Display messages
-* @return bool True if configured
+* Check Configuration - REQUIRED BY GLPI
+* Called during plugin activation
+*
+* @return bool Whether configuration is valid
 */
-function plugin_newbase_check_config(bool $verbose = false): bool
+function plugin_newbase_check_config(): bool
 {
-    if ($verbose) {
-        echo '<p class="green">Plugin Newbase instalado e configurado corretamente</p>';
-    }
-
+    // Basic configuration check
+    // More comprehensive checks could be added here
     return true;
-}
-
-// PASSO 6: MENU DO PLUGIN
-
-/**
-* Define menu entries for plugin
-* @return array Menu structure
-*/
-function plugin_newbase_getMenuContent(): array
-{
-    return GlpiPlugin\Newbase\Menu::getMenuContent();
 }

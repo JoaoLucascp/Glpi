@@ -253,7 +253,7 @@ class Task extends CommonDBTM
 * Get default columns to display
 * @return array Column IDs
 */
-    public function getDefaultToDisplay()
+    public function getDefaultToDisplay(): array
     {
         return ['id', 'title', 'status', 'date_start', 'date_end', 'mileage'];
     }
@@ -408,7 +408,7 @@ class Task extends CommonDBTM
 /**
 * Prepare input for add
 * @param array $input Input data
-* @return array|false Prepared input or false on error
+* @return array|bool Prepared input or false on error
 */
     public function prepareInputForAdd($input)
     {
@@ -443,7 +443,7 @@ class Task extends CommonDBTM
 /**
 * Prepare input for update
 * @param array $input Input data
-* @return array|false Prepared input or false on error
+* @return array|bool Prepared input or false on error
 */
     public function prepareInputForUpdate($input)
     {
@@ -483,7 +483,7 @@ class Task extends CommonDBTM
 * @param mixed $lng Longitude
 * @return bool Valid coordinates
 */
-    private function validateCoordinates($lat, $lng): bool
+    private function validateCoordinates(mixed $lat, mixed $lng): bool
     {
         if (!is_numeric($lat) || !is_numeric($lng)) {
             return false;
@@ -509,9 +509,9 @@ class Task extends CommonDBTM
 * Get tab name for item
 * @param CommonGLPI $item Item
 * @param int $withtemplate Template mode
-* @return string Tab name
+* @return string|bool Tab name
 */
-    public function getTabNameForItem(CommonGLPI $item, $withtemplate = 0)
+    public function getTabNameForItem($item, $withtemplate = 0)
     {
         if ($item instanceof Entity) {
             if ($_SESSION['glpishow_count_on_tabs']) {
@@ -532,7 +532,7 @@ class Task extends CommonDBTM
 * @param int $withtemplate Template mode
 * @return bool Success
 */
-    public static function displayTabContentForItem(CommonGLPI $item, $tabnum = 1, $withtemplate = 0): bool
+    public static function displayTabContentForItem($item, $tabnum = 1, $withtemplate = 0)
     {
         if ($item instanceof Entity) {
             self::showForEntity($item);

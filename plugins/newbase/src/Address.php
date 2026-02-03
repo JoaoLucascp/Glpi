@@ -349,7 +349,7 @@ class Address extends CommonDBTM
     /**
    * Preparar dados de entrada antes de adicionar ao banco de dados
    * @param array $input Dados de entrada
-   * @return array|false Entrada preparada ou false em caso de erro
+   * @return array|bool Entrada preparada ou false em caso de erro
    */
     public function prepareInputForAdd($input)
     {
@@ -520,7 +520,7 @@ class Address extends CommonDBTM
 * @param string $cep CEP sem formatação (8 dígitos)
 * @return array|false Dados do endereço ou false se não encontrado
 */
-    private function fetchAddressFromCEP(string $cep)
+    private function fetchAddressFromCEP(string $cep): array|false
     {
     // URL da API ViaCEP
     $url = "https://viacep.com.br/ws/{$cep}/json/";
@@ -579,7 +579,7 @@ class Address extends CommonDBTM
    * Ações após adicionar item ao banco de dados
    * @return void
    */
-    public function post_addItem()
+    public function post_addItem(): void
     {
         // Logar ação
         \Toolbox::logInFile(
@@ -598,9 +598,9 @@ class Address extends CommonDBTM
    * Obter nome da aba para o item
    * @param CommonGLPI $item Item
    * @param int $withtemplate Modo template
-   * @return string Nome da aba
+   * @return string|bool Nome da aba
    */
-    public function getTabNameForItem(CommonGLPI $item, $withtemplate = 0)
+    public function getTabNameForItem($item, $withtemplate = 0)
     {
         // Verificar se é uma entidade (empresa) ou CompanyData
         if ($item instanceof Entity || (is_object($item) && get_class($item) === 'GlpiPlugin\\Newbase\\CompanyData')) {

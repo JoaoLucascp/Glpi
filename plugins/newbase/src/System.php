@@ -284,7 +284,7 @@ class System extends CommonDBTM
 /**
 * Prepare input for add
 * @param array $input Input data
-* @return array|false Prepared input or false on error
+* @return array|bool Prepared input or false on error
 */
     public function prepareInputForAdd($input)
     {
@@ -321,7 +321,7 @@ class System extends CommonDBTM
 /**
 * Prepare input for update
 * @param array $input Input data
-* @return array|false Prepared input or false on error
+* @return array|bool Prepared input or false on error
 */
     public function prepareInputForUpdate($input)
     {
@@ -358,9 +358,9 @@ class System extends CommonDBTM
 * Get tab name for item
 * @param CommonGLPI $item Item
 * @param int $withtemplate Template mode
-* @return string Tab name
+* @return string|bool Tab name
 */
-    public function getTabNameForItem(CommonGLPI $item, $withtemplate = 0)
+    public function getTabNameForItem($item, $withtemplate = 0)
     {
         if ($item instanceof Entity) {
             if ($_SESSION['glpishow_count_on_tabs']) {

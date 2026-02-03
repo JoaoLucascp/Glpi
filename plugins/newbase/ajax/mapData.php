@@ -274,11 +274,18 @@ try {
 } catch (Exception $e) {
     // 18 TRATAMENTO DE ERRO
     http_response_code(500);
-    echo json_encode([
+    
+    $response = [
         'success' => false,
         'message' => __('Error loading map data', 'newbase'),
-        'error' => GLPI_DEBUG ? $e->getMessage() : null,
-    ]);
+    ];
+    
+    // Incluir detalhes apenas em debug
+    if (defined('GLPI_DEBUG')) {
+        $response['error'] = $e->getMessage();
+    }
+    
+    echo json_encode($response);
 
     Toolbox::logInFile(
         'newbase_plugin',

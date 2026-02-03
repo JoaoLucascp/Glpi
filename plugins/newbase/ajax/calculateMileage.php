@@ -125,11 +125,18 @@ try {
 } catch (Exception $e) {
     // 17 RESPOSTA DE ERRO
     http_response_code(500); // Internal Server Error
-    echo json_encode([
+
+    $response = [
         'success' => false,
         'message' => __('Error calculating mileage', 'newbase'),
-        'error' => GLPI_DEBUG ? $e->getMessage() : null,  // Mostra erro só em debug
-    ]);
+    ];
+
+    // Incluir detalhes apenas em debug
+    if (defined('GLPI_DEBUG')) {
+        $response['error'] = $e->getMessage();
+    }
+
+    echo json_encode($response);
 
     // 18 LOG DE ERRO
     Toolbox::logInFile(

@@ -374,14 +374,7 @@ class Config extends CommonDBTM
         echo "<tr class='tab_bg_1'>";
         echo "<td>" . __('Default map zoom level', 'newbase') . "</td>";
         echo "<td>";
-        Html::autocompletionTextField(
-            new self(),
-            'default_map_zoom',
-            [
-                'value' => $default_map_zoom,
-                'size' => 5,
-            ]
-        );
+        echo "<input type='number' name='default_map_zoom' value='" . htmlspecialchars($default_map_zoom, ENT_QUOTES, 'UTF-8') . "' min='1' max='20' size='5' class='form-control'>";
         echo " <span class='text-muted'>(1-20)</span>";
         echo "</td>";
         echo "</tr>";

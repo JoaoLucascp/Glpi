@@ -1,13 +1,15 @@
 <?php
 
 /**
-* Common Class - Base class for all Newbase entities
-* @package   Plugin - Newbase
-* @author    João Lucas
-* @copyright 2026 João Lucas
-* @license   GPLv2+
-* @version   2.0.0
-*/
+ * Common Class - Base class for all Newbase entities
+ * @package   GlpiPlugin\Newbase
+ * @author    João Lucas
+ * @copyright 2026 João Lucas
+ * @license   GPLv2+
+ * @version   2.1.0
+ */
+
+declare(strict_types=1);
 
 namespace GlpiPlugin\Newbase;
 
@@ -19,64 +21,68 @@ use CommonDBTM;
 use Plugin;
 
 /**
-* Common - Base class with shared functionality
-*
-* Métodos herdados de CommonDBTM:
-* @method int getID() Obter ID do item
-* @method bool canView() Verificar se usuário pode visualizar
-* @method bool canCreate() Verificar se usuário pode criar
-* @method bool canUpdate() Verificar se usuário pode atualizar
-* @method bool canDelete() Verificar se usuário pode deletar
-* @method bool canPurge() Verificar se usuário pode purgar
-* @method bool canEdit(int $ID) Verificar se usuário pode editar item
-* @method bool check(int $ID, int $right) Verificar permissão
-* @method bool getEmpty() Limpar campos do item
-* @method array getFields() Obter campos do item
-* @method bool post_addItem() Executar após adicionar item
-* @method bool post_updateItem() Executar após atualizar item
-* @method bool post_deleteItem() Executar após deletar item
-*/
+ * Common - Base class with shared functionality for all Newbase entities
+ *
+ * Provides common methods for:
+ * - URL generation (search, form)
+ * - Form display (header, buttons)
+ * - Data validation (CNPJ, phone, CEP)
+ * - External API integration (Brasil API, ReceitaWS)
+ * - Distance calculation for geolocation
+ *
+ * @method int getID() Get item ID
+ * @method bool canView() Check if user can view
+ * @method bool canCreate() Check if user can create
+ * @method bool canUpdate() Check if user can update
+ * @method bool canDelete() Check if user can delete
+ * @method bool canPurge() Check if user can purge
+ */
 abstract class Common extends CommonDBTM
 {
-/**
-* Rights management
-* @var string
-*/
-    public static $rightname = 'plugin_newbase';
+    /**
+     * Rights management
+     * @var string
+     */
+    public static string $rightname = 'plugin_newbase';
 
-/**
-* Enable history tracking
-* @var bool
-*/
-    public $dohistory = true;
+    /**
+     * Enable history tracking
+     * @var bool
+     */
+    public bool $dohistory = true;
 
-/**
-* Get type name
-* @param int $nb Number of items
-* @return string Type name
-*/
+    /**
+     * Get type name for display
+     *
+     * @param int $nb Number of items
+     *
+     * @return string Type name
+     */
     public static function getTypeName($nb = 0): string
     {
         return static::class;
     }
 
-/**
-* Get table name
-* @param string|null $classname Class name
-* @return string Table name
-*/
+    /**
+     * Get database table name for this class
+     *
+     * @param string|null $classname Class name (optional)
+     *
+     * @return string Table name
+     */
     public static function getTable($classname = null): string
     {
         $classname ??= static::class;
         $class = explode('\\', $classname);
         $class = end($class);
-        return 'glpi_plugin_newbase_' . strtolower($class);
+        return 'glpi_plugin_newbase_' . strtolower($class . 's');
     }
 
-/**
-* Get type (class name without namespace)
-* @return string Type name
-*/
+    /**
+     * Get short type name without namespace
+     *
+     * @return string Type name
+     */
     public static function getType(): string
     {
         $class = static::class;
@@ -84,69 +90,79 @@ abstract class Common extends CommonDBTM
         return end($parts);
     }
 
-/**
-* Get search URL
-* @param bool $full Full path
-* @return string Search URL
-*/
+    /**
+     * Get search/list URL for this item type
+     *
+     * @param bool $full Full path or relative
+     *
+     * @return string Search URL
+     */
     public static function getSearchURL($full = true): string
     {
         $dir = Plugin::getWebDir('newbase', $full);
         $item = strtolower(static::getType());
-        return "$dir/front/$item.php";
+        return "{$dir}/front/{$item}.php";
     }
 
-/**
-* Get form URL
-* @param bool $full Full path
-* @return string Form URL
-*/
+    /**
+     * Get form URL for this item type
+     *
+     * @param bool $full Full path or relative
+     *
+     * @return string Form URL
+     */
     public static function getFormURL($full = true): string
     {
         $dir = Plugin::getWebDir('newbase', $full);
         $item = strtolower(static::getType());
-        return "$dir/front/$item.form.php";
+        return "{$dir}/front/{$item}.form.php";
     }
 
-/**
-* Get form URL with ID
-* @param int $id Item ID
-* @param bool $full Full path
-* @return string Form URL with ID
-*/
-    public static function getFormURLWithID($id = 0, $full = true): string
+    /**
+     * Get form URL with item ID
+     *
+     * @param int  $id   Item ID
+     * @param bool $full Full path or relative
+     *
+     * @return string Form URL with ID
+     */
+    public static function getFormURLWithID(int $id = 0, bool $full = true): string
     {
         $link = static::getFormURL($full);
-        $link .= (strpos($link, '?') !== false ? '&' : '?') . 'id=' . $id;
-        return $link;
+        $separator = strpos($link, '?') !== false ? '&' : '?';
+        return "{$link}{$separator}id={$id}";
     }
 
-/**
-* Display form header
-* @param array $options Form options
-* @return void
-*/
-    public function showFormHeader($options = []): void
+    /**
+     * Display form header (opening tag and table start)
+     *
+     * @param array $options Form options
+     *
+     * @return void
+     */
+    public function showFormHeader(array $options = []): void
     {
         $id = $this->fields['id'] ?? 0;
         $target = $this->getFormURL();
 
-        echo "<form name='form' method='post' action='$target'>";
+        echo "<form name='form' method='post' action='{$target}'>";
 
         if ($id > 0) {
-            echo "<input type='hidden' name='id' value='$id'>";
+            echo "<input type='hidden' name='id' value='{$id}'>";
         }
 
         echo "<div class='spaced'>";
         echo "<table class='tab_cadre_fixe'>";
     }
 
-/**
-* Display form buttons
-* @param array $options Form options
-* @return void
-*/
-    public function showFormButtons($options = []): void
+    /**
+     * Display form buttons (save, delete, etc.)
+     *
+     * @param array $options Form options
+     *
+     * @return void
+     */
+    public function showFormButtons(array $options = []): void
     {
         $id = $this->fields['id'] ?? 0;
         $canedit = $this->canEdit($id);
@@ -162,9 +178,9 @@ abstract class Common extends CommonDBTM
 
                 if ($this->canPurge()) {
                     echo "&nbsp;&nbsp;";
-                    echo "<input type='submit' name='purge' value='" . __('Delete permanently') . "'
-                        class='btn btn-danger'
-                        onclick='return confirm(\"" . __('Confirm the final deletion?') . "\");'>";
+                    $confirm_msg = addslashes(__('Confirm the final deletion?'));
+                    echo "<input type='submit' name='purge' value='" . __('Delete permanently')
+                        . "' class='btn btn-danger' onclick='return confirm(\"{$confirm_msg}\");'>";
                 }
             } else {
                 echo "<input type='submit' name='add' value='" . __('Add') . "' class='btn btn-primary'>";
@@ -176,41 +192,48 @@ abstract class Common extends CommonDBTM
         Html::closeForm();
     }
 
-/**
-* Display item
-* @param array $options Display options
-* @return bool Success
-*/
-    public function display($options = []): bool
+    /**
+     * Display item details
+     *
+     * @param array $options Display options
+     *
+     * @return bool Success
+     */
+    public function display(array $options = []): bool
     {
         return $this->showForm($options['id'] ?? 0, $options);
     }
 
-/**
-* Show form (must be implemented by child classes)
-* @param int   $ID      Item ID
-* @param array $options Form options
-* @return bool Success
-*/
+    /**
+     * Show form (must be implemented by child classes)
+     *
+     * @param int   $ID      Item ID
+     * @param array $options Form options
+     *
+     * @return bool Success
+     */
     public function showForm($ID, array $options = []): bool
     {
         return false;
     }
 
-/**
-* Redirect to list
-* @return void
-*/
+    /**
+     * Redirect to list view
+     *
+     * @return void
+     */
     public function redirectToList(): void
     {
         Html::redirect($this->getSearchURL());
     }
 
-/**
-* Validate CNPJ format and checksum
-* @param string|null $cnpj CNPJ without formatting (14 digits)
-* @return bool True if valid, false otherwise
-*/
+    /**
+     * Validate CNPJ format and checksum
+     *
+     * @param string|null $cnpj CNPJ without formatting (14 digits)
+     *
+     * @return bool True if valid, false otherwise
+     */
     public static function validateCNPJ(?string $cnpj): bool
     {
         if ($cnpj === null || $cnpj === '') {
@@ -232,32 +255,34 @@ abstract class Common extends CommonDBTM
 
         // Calculate first check digit
         $firstDigit = self::calculateCNPJCheckDigit(substr($cnpj, 0, 12), 5);
-        if ((int) $cnpj[12] !== $firstDigit) {
+        if ((int)$cnpj[12] !== $firstDigit) {
             return false;
         }
 
         // Calculate second check digit
         $secondDigit = self::calculateCNPJCheckDigit(substr($cnpj, 0, 13), 6);
-        if ((int) $cnpj[13] !== $secondDigit) {
+        if ((int)$cnpj[13] !== $secondDigit) {
             return false;
         }
 
         return true;
     }
 
-/**
-* Calculate CNPJ check digit
-* @param string $base Base string (12 or 13 digits)
-* @param int $multiplierStart Starting multiplier (5 or 6)
-* @return int Check digit
-*/
+    /**
+     * Calculate CNPJ check digit
+     *
+     * @param string $base             Base string (12 or 13 digits)
+     * @param int    $multiplierStart  Starting multiplier (5 or 6)
+     *
+     * @return int Check digit
+     */
     private static function calculateCNPJCheckDigit(string $base, int $multiplierStart): int
     {
         $sum = 0;
         $multiplier = $multiplierStart;
 
         for ($i = 0; $i < strlen($base); $i++) {
-            $sum += (int) $base[$i]* $multiplier;
+            $sum += (int)$base[$i] * $multiplier;
             $multiplier--;
             if ($multiplier < 2) {
                 $multiplier = 9;
@@ -268,11 +293,13 @@ abstract class Common extends CommonDBTM
         return $remainder < 2 ? 0 : 11 - $remainder;
     }
 
-/**
-* Search company data by CNPJ using external API
-* @param string|null $cnpj CNPJ without formatting
-* @return array|false Company data or false if not found
-*/
+    /**
+     * Search company data by CNPJ using external API
+     *
+     * @param string|null $cnpj CNPJ without formatting
+     *
+     * @return array|false Company data or false if not found
+     */
     public static function searchCompanyByCNPJ(?string $cnpj): array|false
     {
         if ($cnpj === null || $cnpj === '') {
@@ -294,7 +321,7 @@ abstract class Common extends CommonDBTM
             $options = [
                 'http' => [
                     'method' => 'GET',
-                    'header' => 'User-Agent: GLPI-Newbase/2.0.0',
+                    'header' => 'User-Agent: GLPI-Newbase/2.1.0',
                     'timeout' => 10,
                 ],
             ];
@@ -314,10 +341,10 @@ abstract class Common extends CommonDBTM
 
             // Return standardized data
             return [
-                'legal_name' => $data['nome'] ?? $data['legal_name'] ?? '',
+                'legal_name'   => $data['nome'] ?? $data['legal_name'] ?? '',
                 'fantasy_name' => $data['fantasia'] ?? $data['fantasy_name'] ?? '',
-                'cnpj' => $data['cnpj'] ?? $cnpj,
-                'status' => $data['situacao'] ?? '',
+                'cnpj'         => $data['cnpj'] ?? $cnpj,
+                'status'       => $data['situacao'] ?? '',
                 'opening_date' => $data['data_abertura'] ?? '',
             ];
         } catch (\Exception $e) {
@@ -329,17 +356,19 @@ abstract class Common extends CommonDBTM
         }
     }
 
-/**
-* Search for additional company data (email and phone) via multiple APIs
-* @param string|null $cnpj CNPJ number
-* @param string $companyName Company name for alternative search
-* @return array Company data with email and phone
-*/
+    /**
+     * Search for additional company data via multiple APIs
+     *
+     * @param string|null $cnpj        CNPJ number
+     * @param string      $companyName Company name for alternative search
+     *
+     * @return array Company data with email and phone
+     */
     public static function searchCompanyAdditionalData(?string $cnpj, string $companyName = ''): array
     {
         $result = [
-            'email' => '',
-            'phone' => '',
+            'email'   => '',
+            'phone'   => '',
             'website' => '',
         ];
 
@@ -350,30 +379,24 @@ abstract class Common extends CommonDBTM
         // Remove formatting
         $cnpj = preg_replace('/[^0-9]/', '', $cnpj);
 
-        // Try ReceitaWS API (alternative to Brasil API with more data)
+        // Try ReceitaWS API
         $result = array_merge($result, self::searchReceitaWSAPI($cnpj));
-
-        // If we have email/phone, return early
-        if (!empty($result['email']) || !empty($result['phone'])) {
-            return $result;
-        }
-
-        // Try alternative data sources
-        $result = array_merge($result, self::searchPublicDataSources($cnpj, $companyName));
 
         return $result;
     }
 
-/**
-* Search for company data via ReceitaWS API
-* @param string $cnpj CNPJ number
-* @return array Company data or empty array
-*/
+    /**
+     * Search for company data via ReceitaWS API
+     *
+     * @param string $cnpj CNPJ number
+     *
+     * @return array Company data or empty array
+     */
     private static function searchReceitaWSAPI(string $cnpj): array
     {
         $result = [
-            'email' => '',
-            'phone' => '',
+            'email'   => '',
+            'phone'   => '',
             'website' => '',
         ];
 
@@ -384,7 +407,7 @@ abstract class Common extends CommonDBTM
             $options = [
                 'http' => [
                     'method' => 'GET',
-                    'header' => 'User-Agent: GLPI-Newbase/2.0.0',
+                    'header' => 'User-Agent: GLPI-Newbase/2.1.0',
                     'timeout' => 8,
                 ],
             ];
@@ -419,67 +442,13 @@ abstract class Common extends CommonDBTM
         return $result;
     }
 
-/**
-* Search for company data in public GLPI database
-* @param string $cnpj CNPJ number
-* @param string $companyName Company name
-* @return array Company data or empty array
-*/
-    private static function searchPublicDataSources(string $cnpj, string $companyName = ''): array
-    {
-        $result = [
-            'email' => '',
-            'phone' => '',
-            'website' => '',
-        ];
-
-        if (empty($companyName)) {
-            return $result;
-        }
-
-        try {
-            // Verificar se classe Company está disponível
-            if (!class_exists('Company')) {
-                Toolbox::logInFile(
-                    'newbase_plugin',
-                    "Classe Company não disponível para busca em GLPI"
-                );
-                return $result;
-            }
-
-            // Search in GLPI's own Company database for additional info
-            $glpiCompany = new \Company();
-            $found = $glpiCompany->find(['name' => $companyName]);
-
-            if (!empty($found)) {
-                foreach ($found as $company) {
-                    if (!empty($company['phonenumber'])) {
-                        $result['phone'] = $company['phonenumber'];
-                    }
-                    if (!empty($company['email'])) {
-                        $result['email'] = $company['email'];
-                    }
-                    if (!empty($company['website'])) {
-                        $result['website'] = $company['website'];
-                    }
-                    break;
-                }
-            }
-        } catch (\Exception $e) {
-            Toolbox::logInFile(
-                'newbase_plugin',
-                "Error searching GLPI database for company data: " . $e->getMessage()
-            );
-        }
-
-        return $result;
-    }
-
-/**
-* Format phone number for Brazilian format
-* @param string|null $phone Phone number
-* @return string Formatted phone number
-*/
+    /**
+     * Format phone number to Brazilian format
+     *
+     * @param string|null $phone Phone number
+     *
+     * @return string Formatted phone number
+     */
     public static function formatPhone(?string $phone = ''): string
     {
         if ($phone === null || $phone === '') {
@@ -492,19 +461,31 @@ abstract class Common extends CommonDBTM
         // Format as (XX) XXXXX-XXXX or (XX) XXXX-XXXX
         if (strlen($phone) === 11) {
             // Cell phone: (XX) XXXXX-XXXX
-            return sprintf('(%s) %s-%s', substr($phone, 0, 2), substr($phone, 2, 5), substr($phone, 7));
+            return sprintf(
+                '(%s) %s-%s',
+                substr($phone, 0, 2),
+                substr($phone, 2, 5),
+                substr($phone, 7)
+            );
         } elseif (strlen($phone) === 10) {
             // Landline: (XX) XXXX-XXXX
-            return sprintf('(%s) %s-%s', substr($phone, 0, 2), substr($phone, 2, 4), substr($phone, 6));
+            return sprintf(
+                '(%s) %s-%s',
+                substr($phone, 0, 2),
+                substr($phone, 2, 4),
+                substr($phone, 6)
+            );
         }
         return $phone;
     }
 
-/**
-* Format CEP (Brazilian ZIP code)
-* @param string|null $cep CEP to format
-* @return string Formatted CEP
-*/
+    /**
+     * Format CEP (Brazilian ZIP code)
+     *
+     * @param string|null $cep CEP to format
+     *
+     * @return string Formatted CEP (XXXXX-XXX)
+     */
     public static function formatCEP(?string $cep): string
     {
         if ($cep === null || $cep === '') {
@@ -520,11 +501,13 @@ abstract class Common extends CommonDBTM
         return $cep;
     }
 
-/**
-* Format CNPJ to Brazilian format
-* @param string|null $cnpj CNPJ to format
-* @return string Formatted CNPJ (XX.XXX.XXX/XXXX-XX)
-*/
+    /**
+     * Format CNPJ to Brazilian format
+     *
+     * @param string|null $cnpj CNPJ to format
+     *
+     * @return string Formatted CNPJ (XX.XXX.XXX/XXXX-XX)
+     */
     public static function formatCNPJ(?string $cnpj): string
     {
         if ($cnpj === null || $cnpj === '') {
@@ -549,14 +532,16 @@ abstract class Common extends CommonDBTM
         return $cnpj;
     }
 
-/**
-* Calculate distance between two coordinates using Haversine formula
-* @param float $lat1 Latitude of first point
-* @param float $lng1 Longitude of first point
-* @param float $lat2 Latitude of second point
-* @param float $lng2 Longitude of second point
-* @return float Distance in kilometers
-*/
+    /**
+     * Calculate distance between two GPS coordinates using Haversine formula
+     *
+     * @param float $lat1 Latitude of first point
+     * @param float $lng1 Longitude of first point
+     * @param float $lat2 Latitude of second point
+     * @param float $lng2 Longitude of second point
+     *
+     * @return float Distance in kilometers
+     */
     public static function calculateDistance(
         float $lat1,
         float $lng1,
@@ -576,12 +561,12 @@ abstract class Common extends CommonDBTM
         $deltaLat = $lat2Rad - $lat1Rad;
         $deltaLng = $lng2Rad - $lng1Rad;
 
-        $a = sin($deltaLat / 2)** 2
-            + cos($lat1Rad)* cos($lat2Rad)* sin($deltaLng / 2)** 2;
+        $a = sin($deltaLat / 2) ** 2
+            + cos($lat1Rad) * cos($lat2Rad) * sin($deltaLng / 2) ** 2;
 
-        $c = 2* atan2(sqrt($a), sqrt(1 - $a));
+        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
 
-        $distance = $earthRadius* $c;
+        $distance = $earthRadius * $c;
 
         // Round to 2 decimal places
         return round($distance, 2);
