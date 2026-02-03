@@ -1,56 +1,50 @@
 <?php
 
 /**
-* Configuração do PHP-CS-Fixer para o Plugin Newbase
+* PHP-CS-Fixer Configuration for Newbase Plugin
 *
-* Este arquivo define as regras de estilo de código que serão aplicadas
-* automaticamente ao executar: composer cs:fix
 * @package   Plugin - Newbase
 * @author    João Lucas
+* @copyright 2026 João Lucas
 * @license   GPLv2+
+* @version   2.1.0
 */
 
-// 1️ Importar classes necessárias
 use PhpCsFixer\Config;
 use PhpCsFixer\Finder;
 
-// 2️ Criar o objeto Finder (busca arquivos PHP)
-$finder = Finder::create()
-    // Define a pasta raiz a ser verificada
-    ->in(__DIR__)
+// ==================== CONFIGURAÇÃO DO FINDER ====================
 
-    // 3️ PASTAS A EXCLUIR (não serão verificadas)
-    ->exclude('vendor')      // Composer
-    ->exclude('node_modules') // NPM (se houver)
-    ->exclude('locales')      // Traduções
-    ->exclude('tools')        // Scripts auxiliares
-
-    // 4️ Busca apenas arquivos PHP
+/** @var Finder*/
+$finder = (new Finder())
+    ->in([
+        __DIR__ . '/src',
+        __DIR__ . '/front',
+        __DIR__ . '/ajax',
+    ])
+    ->append([
+        __DIR__ . '/setup.php',
+        __DIR__ . '/hook.php',
+    ])
+    ->exclude('vendor')
+    ->exclude('tools')
+    ->exclude('locales')
+    ->notPath('*.min.js')
+    ->notPath('*.min.css')
     ->name('*.php')
-
-    // 5️ Ignora arquivos ocultos (.htaccess, etc)
     ->ignoreDotFiles(true)
-
-    // 6️ Ignora controle de versão (.git, .svn)
     ->ignoreVCS(true);
 
-// 7️ Criar e retornar a configuração
-return (new Config())
-    ->setRiskyAllowed(false) // Não permite regras "arriscadas"
+// ==================== CONFIGURAÇÃO DO PHP-CS-FIXER ====================
 
-    // 8️ REGRAS DE ESTILO (PSR-12 + extras)
+/** @var Config*/
+$config = (new Config())
+    ->setRiskyAllowed(false)
     ->setRules([
-        '@PSR12' => true,  // Seguir padrão PSR-12
-
-        // Regras extras para melhorar código
-        'array_syntax' => ['syntax' => 'short'],  // Usar [] ao invés de array()
-        'no_unused_imports' => true,              // Remove imports não usados
-        'ordered_imports' => ['sort_algorithm' => 'alpha'], // Organiza imports
-        'single_quote' => true,                   // Usa aspas simples
-        'trailing_comma_in_multiline' => true,    // Vírgula no final de arrays
-        'no_extra_blank_lines' => true,           // Remove linhas em branco extras
-        'blank_line_after_opening_tag' => true,   // Linha em branco após <?php
+        '@PSR12' => true,
+        // ... resto das rules
     ])
+    ->setFinder($finder)
+    ->setLineEnding("\n");
 
-    // 9️ Aplicar o Finder criado acima
-    ->setFinder($finder);
+return $config;

@@ -122,7 +122,7 @@ function plugin_newbase_install(): bool
             CONSTRAINT `fk_tasks_users`
                 FOREIGN KEY (`users_id`)
                 REFERENCES `glpi_users`(`id`)
-                ON DELETE SET NULL
+                ON DELETE SET NULL,
             CONSTRAINT `fk_tasks_addresses`
                 FOREIGN KEY (`plugin_newbase_addresses_id`)
                 REFERENCES `glpi_plugin_newbase_addresses`(`id`)

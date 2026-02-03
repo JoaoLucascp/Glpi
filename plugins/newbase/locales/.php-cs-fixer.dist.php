@@ -1,30 +1,50 @@
 <?php
 
-declare(strict_types=1);
+/**
+* PHP-CS-Fixer Configuration for Newbase Plugin
+*
+* @package   Plugin - Newbase
+* @author    João Lucas
+* @copyright 2026 João Lucas
+* @license   GPLv2+
+* @version   2.1.0
+*/
 
 use PhpCsFixer\Config;
 use PhpCsFixer\Finder;
-use PhpCsFixer\Runner\Parallel\ParallelConfigFactory;
 
-return (new Config())
-    ->setParallelConfig(ParallelConfigFactory::detect()) // @TODO 4.0 no need to call this manually
+// ==================== CONFIGURAÇÃO DO FINDER ====================
+
+/** @var Finder*/
+$finder = (new Finder())
+    ->in([
+        __DIR__ . '/src',
+        __DIR__ . '/front',
+        __DIR__ . '/ajax',
+    ])
+    ->append([
+        __DIR__ . '/setup.php',
+        __DIR__ . '/hook.php',
+    ])
+    ->exclude('vendor')
+    ->exclude('tools')
+    ->exclude('locales')
+    ->notPath('*.min.js')
+    ->notPath('*.min.css')
+    ->name('*.php')
+    ->ignoreDotFiles(true)
+    ->ignoreVCS(true);
+
+// ==================== CONFIGURAÇÃO DO PHP-CS-FIXER ====================
+
+/** @var Config*/
+$config = (new Config())
     ->setRiskyAllowed(false)
     ->setRules([
-        '@auto' => true
+        '@PSR12' => true,
+        // ... resto das rules
     ])
-    // 💡 by default, Fixer looks for `*.php` files excluding `./vendor/` - here, you can groom this config
-    ->setFinder(
-        (new Finder())
-            // 💡 root folder to check
-            ->in(__DIR__)
-            // 💡 additional files, eg bin entry file
-            // ->append([__DIR__.'/bin-entry-file'])
-            // 💡 folders to exclude, if any
-            // ->exclude([/* ... */])
-            // 💡 path patterns to exclude, if any
-            // ->notPath([/* ... */])
-            // 💡 extra configs
-            // ->ignoreDotFiles(false) // true by default in v3, false in v4 or future mode
-            // ->ignoreVCS(true) // true by default
-    )
-;
+    ->setFinder($finder)
+    ->setLineEnding("\n");
+
+return $config;

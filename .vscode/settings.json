@@ -23,6 +23,7 @@
         "pcre",
         "PDO",
         "pdo_mysql",
+        "pcov",
         "Phar",
         "SimpleXML",
         "sockets",
@@ -32,6 +33,7 @@
         "xml",
         "xmlreader",
         "xmlwriter",
+        "xdebug",
         "zip",
         "zlib",
         "Zend OPcache"
@@ -41,5 +43,6 @@
         "**/node_modules/**",
         "**/.git/**",
         "**/.svn/**"
-    ]
+    ],
+    "intelephense.completion.fullyQualifyGlobalConstantsAndFunctions": false
 }

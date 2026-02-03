@@ -14,7 +14,13 @@ if (!defined('GLPI_ROOT')) {
     die("Sorry. You can't access this file directly");
 }
 
-// CONSTANTES DO PLUGIN
+// PASSO 1: CARREGAR AUTOLOADER PRIMEIRO
+$autoload = __DIR__ . '/vendor/autoload.php';
+if (file_exists($autoload)) {
+    require_once $autoload;
+}
+
+// PASSO 2: CONSTANTES DO PLUGIN
 define('PLUGIN_NEWBASE_VERSION', '2.1.0');
 define('PLUGIN_NEWBASE_NAME', 'Newbase');
 define('PLUGIN_NEWBASE_AUTHOR', 'João Lucas');
@@ -22,22 +28,18 @@ define('PLUGIN_NEWBASE_LICENSE', 'GPLv2+');
 define('PLUGIN_NEWBASE_HOMEPAGE', 'https://github.com/joaolucas/glpi-newbase');
 define('PLUGIN_NEWBASE_MIN_GLPI', '10.0.20');
 define('PLUGIN_NEWBASE_MAX_GLPI', '10.0.99');
+define('PLUGIN_NEWBASE_DESCRIPTION', 'Sistema completo de Gestão de documentação de empresas para GLPI');
 
-// Caminhos do plugin
-define('PLUGIN_NEWBASE_DIR', Plugin::getPhysicalDir('newbase'));
-define('PLUGIN_NEWBASE_WEB_DIR', Plugin::getWebDir('newbase'));
+// CAMINHOS DO PLUGIN
+define('PLUGIN_NEWBASE_DIR', __DIR__);
+define('PLUGIN_NEWBASE_WEB_DIR', '/plugins/newbase');
 
-// CARREGAR AUTOLOADER
-$autoload = __DIR__ . '/vendor/autoload.php';
-if (file_exists($autoload)) {
-    require_once $autoload;
-}
-
-// INICIALIZAÇÃO DO PLUGIN
+// PASSO 3: INICIALIZAÇÃO DO PLUGIN
 
 /**
 * Plugin init function
 * @global array $PLUGIN_HOOKS
+* @return void
 */
 function plugin_init_newbase(): void
 {
@@ -92,10 +94,11 @@ function plugin_init_newbase(): void
     ];
 }
 
-// INFORMAÇÕES DO PLUGIN
+// PASSO 4: INFORMAÇÕES DO PLUGIN
 
 /**
 * Get plugin version and information for GLPI
+* Razão: GLPI espera essa chave na função plugin_version_*
 * @return array Plugin information
 */
 function plugin_version_newbase(): array
@@ -106,6 +109,7 @@ function plugin_version_newbase(): array
         'author' => PLUGIN_NEWBASE_AUTHOR,
         'license' => PLUGIN_NEWBASE_LICENSE,
         'homepage' => PLUGIN_NEWBASE_HOMEPAGE,
+        'description' => PLUGIN_NEWBASE_DESCRIPTION,
         'requirements' => [
             'glpi' => [
                 'min' => PLUGIN_NEWBASE_MIN_GLPI,
@@ -115,10 +119,11 @@ function plugin_version_newbase(): array
                 'min' => '8.1',
             ],
         ],
+        'csrf_compliant' => true,
     ];
 }
 
-// VERIFICAÇÃO DE PRÉ-REQUISITOS
+// PASSO 5: VERIFICAÇÃO DE PRÉ-REQUISITOS
 
 /**
 * Check plugin prerequisites before installation
@@ -193,7 +198,7 @@ function plugin_newbase_check_config(bool $verbose = false): bool
     return true;
 }
 
-// MENU DO PLUGIN
+// PASSO 6: MENU DO PLUGIN
 
 /**
 * Define menu entries for plugin

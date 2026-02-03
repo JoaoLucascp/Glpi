@@ -27,7 +27,7 @@
         "source": "https://github.com/JoaoLucascp/Glpi.git"
     },
     "require": {
-        "php": ">=8.1",
+        "php": ">=8.3",
         "ext-json": "*",
         "ext-mbstring": "*",
         "ext-mysqli": "*",
@@ -47,7 +47,7 @@
         "optimize-autoloader": true,
         "sort-packages": true,
         "platform": {
-            "php": "8.1"
+            "php": "8.3"
         }
     },
     "minimum-stability": "stable",
@@ -60,7 +60,7 @@
     },
     "extra": {
         "glpi": {
-            "version": "2.0.0",
+            "version": "2.1.0",
             "min_glpi": "10.0.20",
             "max_glpi": "10.0.99",
             "directory": "newbase"
