@@ -27,6 +27,9 @@ include '../../../inc/includes.php';
 // SECURITY: Check authentication
 Session::checkLoginUser();
 
+// VERIFICAR TOKEN CSRF
+Session::checkCSRF($_POST);
+
 // Import required classes
 use GlpiPlugin\Newbase\Common;
 use GlpiPlugin\Newbase\CompanyData;

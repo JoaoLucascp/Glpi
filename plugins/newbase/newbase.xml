@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+   <name>Newbase</name>
+   <key>newbase</key>
+   <state>stable</state>
+   <logo>https://raw.githubusercontent.com/JoaoLucascp/Glpi/main/plugins/newbase/newbase.png</logo>
+   <description>
+      <short>
+         <en><![CDATA[Complete Personal Data Management System for GLPI]]></en>
+         <pt_BR><![CDATA[Sistema Completo de Gestão de Dados Pessoais para GLPI]]></pt_BR>
+      </short>
+      <long>
+         <en><![CDATA[Newbase is a comprehensive plugin for GLPI that provides:
+- Company management with automatic CNPJ lookup
+- Address management with ViaCEP integration
+- Phone systems documentation (Asterisk, CloudPBX)
+- Field tasks with GPS and digital signature
+- Automatic mileage calculation
+- Geolocation and interactive maps]]></en>
+         <pt_BR><![CDATA[Newbase é um plugin completo para GLPI que oferece:
+- Gestão de empresas com consulta automática de CNPJ
+- Gerenciamento de endereços com integração ViaCEP
+- Documentação de sistemas telefônicos (Asterisk, CloudPBX)
+- Tarefas de campo com GPS e assinatura digital
+- Cálculo automático de quilometragem
+- Geolocalização e mapas interativos]]></pt_BR>
+      </long>
+   </description>
+   <homepage>https://github.com/JoaoLucascp/Glpi</homepage>
+   <download>https://github.com/JoaoLucascp/Glpi/releases</download>
+   <issues>https://github.com/JoaoLucascp/Glpi/issues</issues>
+   <readme>https://raw.githubusercontent.com/JoaoLucascp/Glpi/main/plugins/newbase/README.md</readme>
+   <authors>
+      <author>João Lucas</author>
+   </authors>
+   <versions>
+      <version>
+         <num>2.1.0</num>
+         <compatibility>
+            <min>10.0.0</min>
+            <max>10.0.99</max>
+         </compatibility>
+         <download_url>https://github.com/JoaoLucascp/Glpi/releases/download/v2.1.0/glpi-newbase-2.1.0.tar.gz</download_url>
+      </version>
+   </versions>
+   <langs>
+      <lang>en_GB</lang>
+      <lang>pt_BR</lang>
+   </langs>
+   <license><![CDATA[GPL v2+]]></license>
+   <tags>
+      <en>
+         <tag>Personal Data</tag>
+         <tag>Company Management</tag>
+         <tag>Geolocation</tag>
+         <tag>Digital Signature</tag>
+         <tag>Phone Systems</tag>
+         <tag>Tasks</tag>
+      </en>
+      <pt_BR>
+         <tag>Dados Pessoais</tag>
+         <tag>Gestão de Empresas</tag>
+         <tag>Geolocalização</tag>
+         <tag>Assinatura Digital</tag>
+         <tag>Sistemas Telefônicos</tag>
+         <tag>Tarefas</tag>
+      </pt_BR>
+   </tags>
+   <screenshots>
+      <screenshot>https://raw.githubusercontent.com/JoaoLucascp/Glpi/main/plugins/newbase/screenshots/dashboard.png</screenshot>
+      <screenshot>https://raw.githubusercontent.com/JoaoLucascp/Glpi/main/plugins/newbase/screenshots/companies.png</screenshot>
+      <screenshot>https://raw.githubusercontent.com/JoaoLucascp/Glpi/main/plugins/newbase/screenshots/map.png</screenshot>
+   </screenshots>
+</root>

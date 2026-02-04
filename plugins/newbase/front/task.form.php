@@ -35,7 +35,7 @@ $task = new Task();
 // 5 AÇÃO: ADICIONAR NOVA TAREFA
 if (isset($_POST['add'])) {
 
-    // 🔒 CSRF: Verificar token de segurança
+    // CSRF: Verificar token de segurança
     Session::checkCSRF($_POST);
 
     // Verificar direitos de criação

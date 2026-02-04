@@ -14,14 +14,14 @@ declare(strict_types=1);
 // SECURITY: Load GLPI core
 include '../../../inc/includes.php';
 
+// Import classes
+use GlpiPlugin\Newbase\Config;
+
 // SECURITY: Check authentication
 Session::checkLoginUser();
 
 // SECURITY: Check rights
 Session::checkRight('config', READ);
-
-// Import classes
-use GlpiPlugin\Newbase\Config;
 
 // Handle configuration update
 if (isset($_POST['update_config'])) {

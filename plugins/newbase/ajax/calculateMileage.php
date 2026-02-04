@@ -20,6 +20,9 @@ include('../../../inc/includes.php');
 // 2 SEGURANÇA: Verificar se usuário está logado
 Session::checkLoginUser();
 
+// VERIFICAR TOKEN CSRF
+Session::checkCSRF($_POST);
+
 // 3 IMPORTAR CLASSES NECESSÁRIAS
 use GlpiPlugin\Newbase\Common;
 use GlpiPlugin\Newbase\Task;

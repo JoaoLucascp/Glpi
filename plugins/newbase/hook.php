@@ -1,47 +1,48 @@
 <?php
-
 /**
- * Installation and Uninstallation Hooks for Newbase Plugin
- * @package   GlpiPlugin\Newbase
- * @author    João Lucas
- * @copyright 2026 João Lucas
- * @license   GPLv2+
- * @version   2.1.0
+ * -------------------------------------------------------------------------
+ * Newbase plugin for GLPI
+ * -------------------------------------------------------------------------
+ *
+ * LICENSE
+ *
+ * This file is part of Newbase.
+ *
+ * Newbase is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * Newbase is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Newbase. If not, see <http://www.gnu.org/licenses/>.
+ * -------------------------------------------------------------------------
+ * @copyright Copyright (C) 2024-2026 by João Lucas
+ * @license   GPLv2 https://www.gnu.org/licenses/gpl-2.0.html
+ * @link      https://github.com/JoaoLucascp/Glpi
+ * -------------------------------------------------------------------------
  */
-
-declare(strict_types=1);
-
-// Prevent direct access
-if (!defined('GLPI_ROOT')) {
-    die('Direct access not allowed');
-}
-
-// Load autoloader
-if (file_exists(__DIR__ . '/vendor/autoload.php')) {
-    require_once __DIR__ . '/vendor/autoload.php';
-}
-
-// Load setup to get constants
-require_once __DIR__ . '/setup.php';
 
 /**
  * Plugin Installation - REQUIRED BY GLPI
+ * Creates all database tables needed by the plugin
  *
- * Creates all necessary database tables for the Newbase plugin
- *
- * @return bool Success
+ * @return bool Success status
  */
 function plugin_newbase_install(): bool
 {
     global $DB;
 
     try {
-        $migration = new Migration(NEWBASE_VERSION);
+        $migration = new \Migration(PLUGIN_NEWBASE_VERSION);
 
-        // TABLE 1: Addresses
+        // TABLE 1: Addresses with geolocation
         if (!$DB->tableExists('glpi_plugin_newbase_addresses')) {
             $migration->displayMessage('Creating addresses table...');
-
             $query = "CREATE TABLE `glpi_plugin_newbase_addresses` (
                 `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
                 `entities_id` INT UNSIGNED NOT NULL DEFAULT 0,
@@ -69,14 +70,12 @@ function plugin_newbase_install(): bool
                     REFERENCES `glpi_entities`(`id`)
                     ON DELETE CASCADE
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
-
             $DB->queryOrDie($query, 'Error creating addresses table');
         }
 
         // TABLE 2: Systems (Asterisk, CloudPBX, etc)
         if (!$DB->tableExists('glpi_plugin_newbase_systems')) {
             $migration->displayMessage('Creating systems table...');
-
             $query = "CREATE TABLE `glpi_plugin_newbase_systems` (
                 `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
                 `entities_id` INT UNSIGNED NOT NULL DEFAULT 0,
@@ -99,14 +98,12 @@ function plugin_newbase_install(): bool
                     REFERENCES `glpi_entities`(`id`)
                     ON DELETE CASCADE
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
-
             $DB->queryOrDie($query, 'Error creating systems table');
         }
 
         // TABLE 3: Tasks with Geolocation
         if (!$DB->tableExists('glpi_plugin_newbase_tasks')) {
             $migration->displayMessage('Creating tasks table...');
-
             $query = "CREATE TABLE `glpi_plugin_newbase_tasks` (
                 `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
                 `entities_id` INT UNSIGNED NOT NULL DEFAULT 0,
@@ -152,14 +149,12 @@ function plugin_newbase_install(): bool
                     REFERENCES `glpi_plugin_newbase_systems`(`id`)
                     ON DELETE SET NULL
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
-
             $DB->queryOrDie($query, 'Error creating tasks table');
         }
 
         // TABLE 4: Task Signatures
         if (!$DB->tableExists('glpi_plugin_newbase_task_signatures')) {
             $migration->displayMessage('Creating task signatures table...');
-
             $query = "CREATE TABLE `glpi_plugin_newbase_task_signatures` (
                 `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
                 `plugin_newbase_tasks_id` INT UNSIGNED NOT NULL,
@@ -183,14 +178,12 @@ function plugin_newbase_install(): bool
                     REFERENCES `glpi_users`(`id`)
                     ON DELETE SET NULL
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
-
             $DB->queryOrDie($query, 'Error creating task signatures table');
         }
 
         // TABLE 5: Company Extras
         if (!$DB->tableExists('glpi_plugin_newbase_company_extras')) {
             $migration->displayMessage('Creating company extras table...');
-
             $query = "CREATE TABLE `glpi_plugin_newbase_company_extras` (
                 `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
                 `entities_id` INT UNSIGNED NOT NULL,
@@ -215,14 +208,12 @@ function plugin_newbase_install(): bool
                     REFERENCES `glpi_entities`(`id`)
                     ON DELETE CASCADE
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
-
             $DB->queryOrDie($query, 'Error creating company extras table');
         }
 
         // TABLE 6: Configuration
         if (!$DB->tableExists('glpi_plugin_newbase_config')) {
             $migration->displayMessage('Creating configuration table...');
-
             $query = "CREATE TABLE `glpi_plugin_newbase_config` (
                 `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
                 `config_key` VARCHAR(255) NOT NULL,
@@ -231,7 +222,6 @@ function plugin_newbase_install(): bool
                 PRIMARY KEY (`id`),
                 UNIQUE KEY `unique_config_key` (`config_key`)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
-
             $DB->queryOrDie($query, 'Error creating configuration table');
 
             // Insert default configurations
@@ -250,7 +240,6 @@ function plugin_newbase_install(): bool
 
         $migration->executeMigration();
         plugin_newbase_log('Plugin installed successfully', 'info');
-
         return true;
     } catch (Exception $e) {
         plugin_newbase_log('Installation error: ' . $e->getMessage(), 'error');
@@ -260,10 +249,9 @@ function plugin_newbase_install(): bool
 
 /**
  * Plugin Uninstallation - REQUIRED BY GLPI
- *
  * Removes all database tables created by the plugin
  *
- * @return bool Success
+ * @return bool Success status
  */
 function plugin_newbase_uninstall(): bool
 {
@@ -272,12 +260,12 @@ function plugin_newbase_uninstall(): bool
     try {
         // CORRECT ORDER: children first, parents last
         $tables = [
-            'glpi_plugin_newbase_task_signatures',  // Child of tasks
-            'glpi_plugin_newbase_tasks',            // Child of addresses, systems
-            'glpi_plugin_newbase_addresses',        // Independent
-            'glpi_plugin_newbase_systems',          // Independent
-            'glpi_plugin_newbase_company_extras',   // Independent
-            'glpi_plugin_newbase_config',           // Independent
+            'glpi_plugin_newbase_task_signatures', // Child of tasks
+            'glpi_plugin_newbase_tasks',           // Child of addresses, systems
+            'glpi_plugin_newbase_addresses',       // Independent
+            'glpi_plugin_newbase_systems',         // Independent
+            'glpi_plugin_newbase_company_extras',  // Independent
+            'glpi_plugin_newbase_config',          // Independent
         ];
 
         foreach ($tables as $table) {
@@ -287,7 +275,6 @@ function plugin_newbase_uninstall(): bool
         }
 
         plugin_newbase_log('Plugin uninstalled successfully', 'info');
-
         return true;
     } catch (Exception $e) {
         plugin_newbase_log('Uninstallation error: ' . $e->getMessage(), 'error');
@@ -295,58 +282,7 @@ function plugin_newbase_uninstall(): bool
     }
 }
 
-/**
- * Plugin Initialization - REQUIRED BY GLPI
- *
- * Initializes plugin hooks and menus
- *
- * @return void
- */
-function plugin_init_newbase(): void
-{
-    global $PLUGIN_HOOKS;
 
-    // Register plugin classes
-    Plugin::registerClasses('GlpiPlugin\\Newbase', [
-        'Address',
-        'AddressHandler',
-        'CompanyData',
-        'Config',
-        'Menu',
-        'System',
-        'Task',
-        'TaskSignature',
-    ]);
-
-    // Menu
-    $PLUGIN_HOOKS['menu_toadd']['newbase'] = [
-        'tools' => 'GlpiPlugin\\Newbase\\Menu'
-    ];
-
-    // Configuration page
-    $PLUGIN_HOOKS['config_page']['newbase'] = 'front/config.php';
-
-    // CSS assets
-    $PLUGIN_HOOKS['add_css']['newbase'] = [
-        'css/newbase.css',
-        'css/forms.css',
-        'css/responsive.css',
-    ];
-
-    // JavaScript assets
-    $PLUGIN_HOOKS['add_javascript']['newbase'] = [
-        'js/newbase.js',
-        'js/forms.js',
-        'js/map.js',
-        'js/signature.js',
-        'js/mileage.js',
-        'js/mobile.js',
-        'js/jquery.mask.min.js',
-    ];
-
-    // CSRF Compliance - GLPI 10.0.20
-    $PLUGIN_HOOKS['csrf_compliant']['newbase'] = true;
-}
 
 /**
  * Log plugin operations to file
@@ -367,7 +303,6 @@ function plugin_newbase_log(string $message, string $level = 'info'): void
     $log_file = $log_dir . '/newbase.log';
     $timestamp = date('Y-m-d H:i:s');
     $log_message = "[{$timestamp}] [{$level}] {$message}\n";
-
     @error_log($log_message, 3, $log_file);
 }
 
@@ -379,8 +314,8 @@ function plugin_newbase_log(string $message, string $level = 'info'): void
 function plugin_newbase_validateSchema(): array
 {
     global $DB;
-    $errors = [];
 
+    $errors = [];
     $required_tables = [
         'glpi_plugin_newbase_addresses',
         'glpi_plugin_newbase_systems',
@@ -416,7 +351,6 @@ function plugin_newbase_checkTableStatus(): array
     ];
 
     $status = [];
-
     foreach ($tables as $table) {
         $status[$table] = $DB->tableExists($table);
     }

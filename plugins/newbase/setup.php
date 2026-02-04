@@ -1,93 +1,156 @@
 <?php
+/**
+ * -------------------------------------------------------------------------
+ * Newbase plugin for GLPI
+ * -------------------------------------------------------------------------
+ *
+ * LICENSE
+ *
+ * This file is part of Newbase.
+ *
+ * Newbase is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * Newbase is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Newbase. If not, see <http://www.gnu.org/licenses/>.
+ * -------------------------------------------------------------------------
+ * @copyright Copyright (C) 2024-2026 by João Lucas
+ * @license   GPLv2 https://www.gnu.org/licenses/gpl-2.0.html
+ * @link      https://github.com/JoaoLucascp/Glpi
+ * -------------------------------------------------------------------------
+ */
+
+// Plugin version
+define('PLUGIN_NEWBASE_VERSION', '2.1.0');
+
+// Minimal GLPI version, inclusive
+define('PLUGIN_NEWBASE_MIN_GLPI_VERSION', '10.0.0');
+// Maximum GLPI version, exclusive
+define('PLUGIN_NEWBASE_MAX_GLPI_VERSION', '11.0.99');
+
+// Minimum PHP version, inclusive
+define('PLUGIN_NEWBASE_MIN_PHP_VERSION', '8.1.0');
 
 /**
-* Setup for Newbase Plugin
-* @package   GlpiPlugin\Newbase
-* @author    João Lucas
-* @copyright 2026 João Lucas
-* @license   GPLv2+
-* @version   2.1.0
-*/
+ * Init hooks of the plugin.
+ * REQUIRED
+ *
+ * @return void
+ */
+function plugin_init_newbase(): void
+{
+    global $PLUGIN_HOOKS;
 
-declare(strict_types=1);
+    $PLUGIN_HOOKS['csrf_compliant']['newbase'] = true;
 
-// Prevent direct access
-if (!defined('GLPI_ROOT')) {
-    die('Direct access not allowed');
+    // Plugin requires login
+    $plugin = new Plugin();
+    if (!$plugin->isInstalled('newbase') || !$plugin->isActivated('newbase')) {
+        return;
+    }
+
+    // Add specific CSS
+    $PLUGIN_HOOKS['add_css']['newbase'][] = 'css/newbase.css';
+
+    // Add specific JavaScript
+    $PLUGIN_HOOKS['add_javascript']['newbase'][] = 'js/newbase.js';
+
+    // Register classes for autoload and rights management
+    Plugin::registerClass('GlpiPlugin\\Newbase\\Address', [
+        'addtabon' => ['Entity']
+    ]);
+    Plugin::registerClass('GlpiPlugin\\Newbase\\CompanyData');
+    Plugin::registerClass('GlpiPlugin\\Newbase\\System');
+    Plugin::registerClass('GlpiPlugin\\Newbase\\Task');
+    Plugin::registerClass('GlpiPlugin\\Newbase\\TaskSignature');
+    Plugin::registerClass('GlpiPlugin\\Newbase\\Config');
+
+    // Menu entries
+    if (Session::haveRight('plugin_newbase', READ)) {
+        $PLUGIN_HOOKS['menu_toadd']['newbase'] = ['tools' => 'GlpiPlugin\\Newbase\\Menu'];
+    }
+
+    // Configuration page
+    if (Session::haveRight('config', UPDATE)) {
+        $PLUGIN_HOOKS['config_page']['newbase'] = 'front/config.php';
+    }
 }
 
 /**
-* Newbase Plugin for GLPI
-* System for complete company documentation management
-*/
-
-define('NEWBASE_VERSION', '2.1.0');
-define('NEWBASE_MIN_GLPI', '10.0.20');
-define('NEWBASE_MAX_GLPI', '10.0.99');
-define('NEWBASE_MIN_PHP', '8.3');
-
-/**
-* Plugin Version Declaration - REQUIRED BY GLPI
-*
-* @return array Plugin information required by GLPI
-*/
+ * Get the name and the version of the plugin
+ * REQUIRED
+ *
+ * @return array{name: string, version: string, author: string, license: string, homepage: string, requirements: array{glpi: array{min: string, max: string, dev: bool}, php: array{min: string}, plugins: array<string>}}
+ */
 function plugin_version_newbase(): array
 {
     return [
-        'name'           => 'Newbase',
-        'version'        => NEWBASE_VERSION,
-        'author'         => 'João Lucas',
-        'license'        => 'GPLv2+',
-        'homepage'       => 'https://github.com/JoaoLucascp/Glpi',
-        'description'    => 'Complete system for managing company documentation in GLPI with support for telephone systems (Asterisk, CloudPBX), field tasks with geolocation, digital signatures and mileage calculation',
-        'requirements'   => [
-            'glpi' => NEWBASE_MIN_GLPI,
-            'php'  => NEWBASE_MIN_PHP
+        'name'         => 'Newbase',
+        'version'      => PLUGIN_NEWBASE_VERSION,
+        'author'       => 'João Lucas',
+        'license'      => 'GPLv2+',
+        'homepage'     => 'https://github.com/JoaoLucascp/Glpi',
+        'requirements' => [
+            'glpi'    => [
+                'min' => PLUGIN_NEWBASE_MIN_GLPI_VERSION,
+                'max' => PLUGIN_NEWBASE_MAX_GLPI_VERSION,
+                'dev' => false
+            ],
+            'php'     => [
+                'min' => PLUGIN_NEWBASE_MIN_PHP_VERSION,
+            ],
+            'plugins' => []
         ]
     ];
 }
 
 /**
-* Check Prerequisites - REQUIRED BY GLPI
-* Called before installation
-*
-* @return bool Whether prerequisites are met
-*/
+ * Check pre-requisites before install
+ * OPTIONAL, but recommended
+ *
+ * @return bool
+ */
 function plugin_newbase_check_prerequisites(): bool
 {
     // Check GLPI version
-    if (version_compare(GLPI_VERSION, NEWBASE_MIN_GLPI, '<')) {
+    if (version_compare(GLPI_VERSION, PLUGIN_NEWBASE_MIN_GLPI_VERSION, '<')) {
         echo sprintf(
             __('This plugin requires GLPI %s or higher', 'newbase'),
-            NEWBASE_MIN_GLPI
+            PLUGIN_NEWBASE_MIN_GLPI_VERSION
         );
         return false;
     }
 
-    // Check GLPI max version (optional but recommended)
-    if (version_compare(GLPI_VERSION, NEWBASE_MAX_GLPI, '>')) {
+    if (version_compare(GLPI_VERSION, PLUGIN_NEWBASE_MAX_GLPI_VERSION, '>=')) {
         echo sprintf(
-            __('This plugin is not tested with GLPI %s', 'newbase'),
+            __('This plugin is not compatible with GLPI %s', 'newbase'),
             GLPI_VERSION
         );
-        // Don't return false here - let it install anyway with warning
+        return false;
     }
 
     // Check PHP version
-    if (version_compare(PHP_VERSION, NEWBASE_MIN_PHP, '<')) {
+    if (version_compare(PHP_VERSION, PLUGIN_NEWBASE_MIN_PHP_VERSION, '<')) {
         echo sprintf(
             __('This plugin requires PHP %s or higher', 'newbase'),
-            NEWBASE_MIN_PHP
+            PLUGIN_NEWBASE_MIN_PHP_VERSION
         );
         return false;
     }
 
     // Check required PHP extensions
-    $required_extensions = ['json', 'curl', 'gd', 'mysqli'];
+    $required_extensions = ['json', 'curl', 'gd', 'mysqli', 'mbstring'];
     foreach ($required_extensions as $ext) {
         if (!extension_loaded($ext)) {
             echo sprintf(
-                __('PHP extension "%s" is required but not installed', 'newbase'),
+                __('PHP extension "%s" is required', 'newbase'),
                 $ext
             );
             return false;
@@ -98,14 +161,13 @@ function plugin_newbase_check_prerequisites(): bool
 }
 
 /**
-* Check Configuration - REQUIRED BY GLPI
-* Called during plugin activation
-*
-* @return bool Whether configuration is valid
-*/
-function plugin_newbase_check_config(): bool
+ * Check configuration process
+ *
+ * @param bool $verbose Whether to display message on failure. Defaults to false
+ *
+ * @return bool
+ */
+function plugin_newbase_check_config(bool $verbose = false): bool
 {
-    // Basic configuration check
-    // More comprehensive checks could be added here
     return true;
 }

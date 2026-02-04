@@ -1,0 +1,35 @@
+# Vendor directory
+/vendor/
+
+# Composer files
+composer.lock
+
+# IDE files
+.vscode/
+.idea/
+*.sublime-*
+
+# OS files
+.DS_Store
+Thumbs.db
+*~
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*.log
+
+# Build files
+/dist/
+/build/
+
+# Cache
+/.php_cs.cache
+/.phpunit.cache
+
+# Node modules (if using npm)
+node_modules/
+
+# Test files
+/tests/_output/

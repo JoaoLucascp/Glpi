@@ -173,6 +173,7 @@ if (isset($_POST['add']) || isset($_POST['update'])) {
 // 6 AÇÃO: DELETAR EMPRESA (soft delete)
 } elseif (isset($_POST['delete'])) {
 
+    // CSRF: Verificar token de segurança
     Session::checkCSRF($_POST);
 
     $entity_id = (int) ($_POST['entities_id'] ?? 0);
@@ -228,6 +229,7 @@ if (isset($_POST['add']) || isset($_POST['update'])) {
 // 7 AÇÃO: PURGAR EMPRESA (hard delete - remove permanentemente)
 } elseif (isset($_POST['purge'])) {
 
+    // CSRF: Verificar token de segurança
     Session::checkCSRF($_POST);
 
     $entity_id = (int) ($_POST['entities_id'] ?? 0);

@@ -1,0 +1,29 @@
+parameters:
+    level: 5
+    paths:
+        - src
+        - front
+        - ajax
+        - setup.php
+        - hook.php
+    
+    excludePaths:
+        - vendor
+        - tests
+        - tools
+    
+    ignoreErrors:
+        # Ignore GLPI global variables
+        - '#Undefined variable: \$DB#'
+        - '#Undefined variable: \$PLUGIN_HOOKS#'
+        - '#Undefined variable: \$CFG_GLPI#'
+        
+        # Ignore GLPI constants
+        - '#Constant GLPI_VERSION not found#'
+        - '#Constant GLPI_ROOT not found#'
+        
+    scanDirectories:
+        - %rootDir%/../../../inc
+    
+    reportUnmatchedIgnoredErrors: false
+    checkMissingIterableValueType: false
