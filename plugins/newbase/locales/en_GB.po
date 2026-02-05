@@ -4,315 +4,315 @@ msgstr ""
 "POT-Creation-Date: 2025-02-05 16:00+0000\n"
 "PO-Revision-Date: 2025-02-05 16:00+0000\n"
 "Last-Translator: João Lucas\n"
-"Language-Team: Portuguese (Brazil)\n"
-"Language: pt_BR\n"
+"Language-Team: English (United Kingdom)\n"
+"Language: en_GB\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 # Menu Principal
 msgid "Newbase - Company Management"
-msgstr "Newbase - Gestão de Empresas"
+msgstr "Newbase - Company Management"
 
 msgid "Company Data"
-msgstr "Dados da Empresa"
+msgstr "Company Data"
 
 msgid "Newbase - Personal Data Management"
-msgstr "Newbase - Gestão de Dados Pessoais"
+msgstr "Newbase - Personal Data Management"
 
 msgid "Management"
-msgstr "Gerenciamento"
+msgstr "Management"
 
 msgid "Companies"
-msgstr "Empresas"
+msgstr "Companies"
 
 msgid "Phone Systems"
-msgstr "Sistemas Telefônicos"
+msgstr "Phone Systems"
 
 msgid "Tasks"
-msgstr "Tarefas"
+msgstr "Tasks"
 
 msgid "Reports"
-msgstr "Relatórios"
+msgstr "Reports"
 
 msgid "Configuration"
-msgstr "Configuração"
+msgstr "Configuration"
 
 # Dashboard
 msgid "Total Companies"
-msgstr "Total de Empresas"
+msgstr "Total Companies"
 
 msgid "Pending Tasks"
-msgstr "Tarefas Pendentes"
+msgstr "Pending Tasks"
 
 msgid "Completed Tasks"
-msgstr "Tarefas Concluídas"
+msgstr "Completed Tasks"
 
 msgid "Recent Tasks"
-msgstr "Tarefas Recentes"
+msgstr "Recent Tasks"
 
 msgid "No recent tasks"
-msgstr "Nenhuma tarefa recente"
+msgstr "No recent tasks"
 
 msgid "Quick Actions"
-msgstr "Ações Rápidas"
+msgstr "Quick Actions"
 
 msgid "New Company"
-msgstr "Nova Empresa"
+msgstr "New Company"
 
 msgid "New System"
-msgstr "Novo Sistema"
+msgstr "New System"
 
 msgid "New Task"
-msgstr "Nova Tarefa"
+msgstr "New Task"
 
 msgid "View all"
-msgstr "Ver todos"
+msgstr "View all"
 
 # Formulários - Campos Gerais
 msgid "Name"
-msgstr "Nome"
+msgstr "Name"
 
 msgid "CNPJ"
-msgstr "CNPJ"
+msgstr "Tax ID (CNPJ)"
 
 msgid "Email"
 msgstr "Email"
 
 msgid "Phone"
-msgstr "Telefone"
+msgstr "Phone"
 
 msgid "Description"
-msgstr "Descrição"
+msgstr "Description"
 
 msgid "Status"
 msgstr "Status"
 
 msgid "Active"
-msgstr "Ativo"
+msgstr "Active"
 
 msgid "Inactive"
-msgstr "Inativo"
+msgstr "Inactive"
 
 msgid "Comments"
-msgstr "Comentários"
+msgstr "Comments"
 
 # Busca e Validação
 msgid "Search"
-msgstr "Buscar"
+msgstr "Search"
 
 msgid "Searching..."
-msgstr "Buscando..."
+msgstr "Searching..."
 
 msgid "Invalid CNPJ"
-msgstr "CNPJ inválido"
+msgstr "Invalid Tax ID"
 
 msgid "Data loaded successfully!"
-msgstr "Dados carregados com sucesso!"
+msgstr "Data loaded successfully!"
 
 msgid "Company not found"
-msgstr "Empresa não encontrada"
+msgstr "Company not found"
 
 msgid "Error searching CNPJ"
-msgstr "Erro ao buscar CNPJ"
+msgstr "Error searching Tax ID"
 
 msgid "Search by CNPJ"
-msgstr "Buscar por CNPJ"
+msgstr "Search by Tax ID"
 
 msgid "Search Address"
-msgstr "Buscar Endereço"
+msgstr "Search Address"
 
 msgid "Search Company"
-msgstr "Buscar Empresa"
+msgstr "Search Company"
 
 # Dados da Empresa
 msgid "Legal Name"
-msgstr "Razão Social"
+msgstr "Legal Name"
 
 msgid "Corporate Name"
-msgstr "Razão Social"
+msgstr "Corporate Name"
 
 msgid "Fantasy Name"
-msgstr "Nome Fantasia"
+msgstr "Trade Name"
 
 msgid "Branch"
-msgstr "Filial"
+msgstr "Branch"
 
 msgid "Main Activity"
-msgstr "Atividade Principal"
+msgstr "Main Activity"
 
 msgid "Legal Nature"
-msgstr "Natureza Jurídica"
+msgstr "Legal Nature"
 
 msgid "Opening Date"
-msgstr "Data de Abertura"
+msgstr "Opening Date"
 
 msgid "Company Size"
-msgstr "Porte da Empresa"
+msgstr "Company Size"
 
 # Endereço
 msgid "ZIP Code"
-msgstr "CEP"
+msgstr "ZIP Code"
 
 msgid "Address"
-msgstr "Endereço"
+msgstr "Address"
 
 msgid "Number"
-msgstr "Número"
+msgstr "Number"
 
 msgid "Complement"
-msgstr "Complemento"
+msgstr "Complement"
 
 msgid "Neighborhood"
-msgstr "Bairro"
+msgstr "Neighborhood"
 
 msgid "City"
-msgstr "Cidade"
+msgstr "City"
 
 msgid "State"
-msgstr "Estado"
+msgstr "State"
 
 msgid "Country"
-msgstr "País"
+msgstr "Country"
 
 # Sistemas Telefônicos
 msgid "System Type"
-msgstr "Tipo de Sistema"
+msgstr "System Type"
 
 msgid "Server Type"
-msgstr "Tipo de Servidor"
+msgstr "Server Type"
 
 msgid "On Premise"
 msgstr "On Premise"
 
 msgid "Cloud"
-msgstr "Nuvem"
+msgstr "Cloud"
 
 msgid "Omnichannel"
 msgstr "Omnichannel"
 
 msgid "Fixed Line"
-msgstr "Linha Fixa"
+msgstr "Fixed Line"
 
 msgid "IP Address"
-msgstr "Endereço IP"
+msgstr "IP Address"
 
 msgid "Port"
-msgstr "Porta"
+msgstr "Port"
 
 msgid "Trunk"
-msgstr "Tronco"
+msgstr "Trunk"
 
 msgid "Extensions"
-msgstr "Ramais"
+msgstr "Extensions"
 
 msgid "Channels"
-msgstr "Canais"
+msgstr "Channels"
 
 msgid "Provider"
-msgstr "Provedor"
+msgstr "Provider"
 
 msgid "API Key"
-msgstr "Chave API"
+msgstr "API Key"
 
 msgid "Integration URL"
-msgstr "URL de Integração"
+msgstr "Integration URL"
 
 msgid "Operator"
-msgstr "Operadora"
+msgstr "Operator"
 
 msgid "Line Number"
-msgstr "Número da Linha"
+msgstr "Line Number"
 
 msgid "Contract Number"
-msgstr "Número do Contrato"
+msgstr "Contract Number"
 
 # Tarefas
 msgid "Task Title"
-msgstr "Título da Tarefa"
+msgstr "Task Title"
 
 msgid "Task Type"
-msgstr "Tipo de Tarefa"
+msgstr "Task Type"
 
 msgid "Installation"
-msgstr "Instalação"
+msgstr "Installation"
 
 msgid "Maintenance"
-msgstr "Manutenção"
+msgstr "Maintenance"
 
 msgid "Support"
-msgstr "Suporte"
+msgstr "Support"
 
 msgid "Training"
-msgstr "Treinamento"
+msgstr "Training"
 
 msgid "Priority"
-msgstr "Prioridade"
+msgstr "Priority"
 
 msgid "Low"
-msgstr "Baixa"
+msgstr "Low"
 
 msgid "Medium"
-msgstr "Média"
+msgstr "Medium"
 
 msgid "High"
-msgstr "Alta"
+msgstr "High"
 
 msgid "Urgent"
-msgstr "Urgente"
+msgstr "Urgent"
 
 msgid "Due Date"
-msgstr "Data de Vencimento"
+msgstr "Due Date"
 
 msgid "Start Date"
-msgstr "Data de Início"
+msgstr "Start Date"
 
 msgid "End Date"
-msgstr "Data de Término"
+msgstr "End Date"
 
 msgid "Assigned To"
-msgstr "Atribuído a"
+msgstr "Assigned To"
 
 msgid "Progress"
-msgstr "Progresso"
+msgstr "Progress"
 
 msgid "Pending"
-msgstr "Pendente"
+msgstr "Pending"
 
 msgid "In Progress"
-msgstr "Em Andamento"
+msgstr "In Progress"
 
 msgid "Completed"
-msgstr "Concluído"
+msgstr "Completed"
 
 msgid "Cancelled"
-msgstr "Cancelado"
+msgstr "Cancelled"
 
 # Geolocalização e Mapa
 msgid "Start Location"
-msgstr "Local de Início"
+msgstr "Start Location"
 
 msgid "End Location"
-msgstr "Local de Término"
+msgstr "End Location"
 
 msgid "Calculate Distance"
-msgstr "Calcular Distância"
+msgstr "Calculate Distance"
 
 msgid "Distance"
-msgstr "Distância"
+msgstr "Distance"
 
 msgid "Mileage"
-msgstr "Quilometragem"
+msgstr "Mileage"
 
 msgid "Show on Map"
-msgstr "Mostrar no Mapa"
+msgstr "Show on Map"
 
 msgid "Location"
-msgstr "Localização"
+msgstr "Location"
 
 msgid "Coordinates"
-msgstr "Coordenadas"
+msgstr "Coordinates"
 
 msgid "Latitude"
 msgstr "Latitude"
@@ -322,245 +322,245 @@ msgstr "Longitude"
 
 # Assinatura Digital
 msgid "Digital Signature"
-msgstr "Assinatura Digital"
+msgstr "Digital Signature"
 
 msgid "Signature"
-msgstr "Assinatura"
+msgstr "Signature"
 
 msgid "Clear Signature"
-msgstr "Limpar Assinatura"
+msgstr "Clear Signature"
 
 msgid "Save Signature"
-msgstr "Salvar Assinatura"
+msgstr "Save Signature"
 
 msgid "Signature saved successfully"
-msgstr "Assinatura salva com sucesso"
+msgstr "Signature saved successfully"
 
 msgid "Error saving signature"
-msgstr "Erro ao salvar assinatura"
+msgstr "Error saving signature"
 
 msgid "Signed By"
-msgstr "Assinado por"
+msgstr "Signed By"
 
 msgid "Signature Date"
-msgstr "Data da Assinatura"
+msgstr "Signature Date"
 
 # Ações CRUD
 msgid "Read"
-msgstr "Ler"
+msgstr "Read"
 
 msgid "Create"
-msgstr "Criar"
+msgstr "Create"
 
 msgid "Update"
-msgstr "Atualizar"
+msgstr "Update"
 
 msgid "Delete"
-msgstr "Deletar"
+msgstr "Delete"
 
 msgid "Purge"
-msgstr "Limpar"
+msgstr "Purge"
 
 msgid "Save"
-msgstr "Salvar"
+msgstr "Save"
 
 msgid "Cancel"
-msgstr "Cancelar"
+msgstr "Cancel"
 
 msgid "Add"
-msgstr "Adicionar"
+msgstr "Add"
 
 msgid "Edit"
-msgstr "Editar"
+msgstr "Edit"
 
 msgid "Remove"
-msgstr "Remover"
+msgstr "Remove"
 
 msgid "Back"
-msgstr "Voltar"
+msgstr "Back"
 
 msgid "Next"
-msgstr "Próximo"
+msgstr "Next"
 
 msgid "Previous"
-msgstr "Anterior"
+msgstr "Previous"
 
 msgid "Submit"
-msgstr "Enviar"
+msgstr "Submit"
 
 msgid "Close"
-msgstr "Fechar"
+msgstr "Close"
 
 # Mensagens de Sistema
 msgid "Required field"
-msgstr "Campo obrigatório"
+msgstr "Required field"
 
 msgid "Invalid format"
-msgstr "Formato inválido"
+msgstr "Invalid format"
 
 msgid "Successfully saved"
-msgstr "Salvo com sucesso"
+msgstr "Successfully saved"
 
 msgid "Error saving data"
-msgstr "Erro ao salvar dados"
+msgstr "Error saving data"
 
 msgid "Successfully deleted"
-msgstr "Deletado com sucesso"
+msgstr "Successfully deleted"
 
 msgid "Error deleting data"
-msgstr "Erro ao deletar dados"
+msgstr "Error deleting data"
 
 msgid "No data found"
-msgstr "Nenhum dado encontrado"
+msgstr "No data found"
 
 msgid "Loading..."
-msgstr "Carregando..."
+msgstr "Loading..."
 
 msgid "Please wait..."
-msgstr "Aguarde..."
+msgstr "Please wait..."
 
 msgid "Are you sure?"
-msgstr "Tem certeza?"
+msgstr "Are you sure?"
 
 msgid "This action cannot be undone"
-msgstr "Esta ação não pode ser desfeita"
+msgstr "This action cannot be undone"
 
 msgid "Confirm"
-msgstr "Confirmar"
+msgstr "Confirm"
 
 # Relatórios
 msgid "Generate Report"
-msgstr "Gerar Relatório"
+msgstr "Generate Report"
 
 msgid "Export"
-msgstr "Exportar"
+msgstr "Export"
 
 msgid "Export to PDF"
-msgstr "Exportar para PDF"
+msgstr "Export to PDF"
 
 msgid "Export to Excel"
-msgstr "Exportar para Excel"
+msgstr "Export to Excel"
 
 msgid "Print"
-msgstr "Imprimir"
+msgstr "Print"
 
 msgid "Date Range"
-msgstr "Período"
+msgstr "Date Range"
 
 msgid "From"
-msgstr "De"
+msgstr "From"
 
 msgid "To"
-msgstr "Até"
+msgstr "To"
 
 msgid "Filter"
-msgstr "Filtrar"
+msgstr "Filter"
 
 msgid "Apply Filter"
-msgstr "Aplicar Filtro"
+msgstr "Apply Filter"
 
 msgid "Clear Filter"
-msgstr "Limpar Filtro"
+msgstr "Clear Filter"
 
 # Configurações
 msgid "General Settings"
-msgstr "Configurações Gerais"
+msgstr "General Settings"
 
 msgid "API Settings"
-msgstr "Configurações de API"
+msgstr "API Settings"
 
 msgid "Enable Geolocation"
-msgstr "Habilitar Geolocalização"
+msgstr "Enable Geolocation"
 
 msgid "Enable Signature"
-msgstr "Habilitar Assinatura"
+msgstr "Enable Signature"
 
 msgid "Map Provider"
-msgstr "Provedor de Mapas"
+msgstr "Map Provider"
 
 msgid "Default Language"
-msgstr "Idioma Padrão"
+msgstr "Default Language"
 
 msgid "Date Format"
-msgstr "Formato de Data"
+msgstr "Date Format"
 
 msgid "Time Format"
-msgstr "Formato de Hora"
+msgstr "Time Format"
 
 msgid "Currency"
-msgstr "Moeda"
+msgstr "Currency"
 
 msgid "Timezone"
-msgstr "Fuso Horário"
+msgstr "Timezone"
 
 # Erros e Avisos
 msgid "Error"
-msgstr "Erro"
+msgstr "Error"
 
 msgid "Warning"
-msgstr "Aviso"
+msgstr "Warning"
 
 msgid "Success"
-msgstr "Sucesso"
+msgstr "Success"
 
 msgid "Info"
-msgstr "Informação"
+msgstr "Info"
 
 msgid "Access Denied"
-msgstr "Acesso Negado"
+msgstr "Access Denied"
 
 msgid "Not Found"
-msgstr "Não Encontrado"
+msgstr "Not Found"
 
 msgid "Invalid Request"
-msgstr "Requisição Inválida"
+msgstr "Invalid Request"
 
 msgid "Connection Error"
-msgstr "Erro de Conexão"
+msgstr "Connection Error"
 
 msgid "Timeout"
-msgstr "Tempo Esgotado"
+msgstr "Timeout"
 
 # Permissões
 msgid "Permissions"
-msgstr "Permissões"
+msgstr "Permissions"
 
 msgid "Read Only"
-msgstr "Somente Leitura"
+msgstr "Read Only"
 
 msgid "Read and Write"
-msgstr "Leitura e Escrita"
+msgstr "Read and Write"
 
 msgid "Full Access"
-msgstr "Acesso Total"
+msgstr "Full Access"
 
 msgid "No Access"
-msgstr "Sem Acesso"
+msgstr "No Access"
 
 # Outros
 msgid "Created At"
-msgstr "Criado em"
+msgstr "Created At"
 
 msgid "Updated At"
-msgstr "Atualizado em"
+msgstr "Updated At"
 
 msgid "Created By"
-msgstr "Criado por"
+msgstr "Created By"
 
 msgid "Updated By"
-msgstr "Atualizado por"
+msgstr "Updated By"
 
 msgid "Version"
-msgstr "Versão"
+msgstr "Version"
 
 msgid "Documentation"
-msgstr "Documentação"
+msgstr "Documentation"
 
 msgid "Help"
-msgstr "Ajuda"
+msgstr "Help"
 
 msgid "About"
-msgstr "Sobre"
+msgstr "About"
 
 msgid "License"
-msgstr "Licença"
+msgstr "License"

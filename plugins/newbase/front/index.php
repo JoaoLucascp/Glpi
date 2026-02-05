@@ -80,7 +80,7 @@ global $DB;
 $recent_tasks_query = "
     SELECT
         t.id,
-        t.name AS title,
+        t.description AS title,
         t.is_completed,
         t.date_creation,
         e.name AS company_name
@@ -257,25 +257,25 @@ if ($recent_tasks_result) {
 
     <div class="quick-actions">
 
-        <a href="<?php echo $CFG_GLPI['root_doc']; ?>/plugins/newbase/front/companydata.form.php" 
+        <a href="<?php echo $CFG_GLPI['root_doc']; ?>/plugins/newbase/front/companydata.form.php"
             class="quick-action-btn">
             <i class="ti ti-building-plus"></i>
             <?php echo __('New Company', 'newbase'); ?>
         </a>
 
-        <a href="<?php echo $CFG_GLPI['root_doc']; ?>/plugins/newbase/front/system.form.php" 
+        <a href="<?php echo $CFG_GLPI['root_doc']; ?>/plugins/newbase/front/system.form.php"
             class="quick-action-btn">
             <i class="ti ti-phone-plus"></i>
             <?php echo __('New System', 'newbase'); ?>
         </a>
 
-        <a href="<?php echo $CFG_GLPI['root_doc']; ?>/plugins/newbase/front/task.form.php" 
+        <a href="<?php echo $CFG_GLPI['root_doc']; ?>/plugins/newbase/front/task.form.php"
             class="quick-action-btn">
             <i class="ti ti-checkbox-plus"></i>
             <?php echo __('New Task', 'newbase'); ?>
         </a>
 
-        <a href="<?php echo $CFG_GLPI['root_doc']; ?>/plugins/newbase/front/report.php" 
+        <a href="<?php echo $CFG_GLPI['root_doc']; ?>/plugins/newbase/front/report.php"
             class="quick-action-btn">
             <i class="ti ti-file-report"></i>
             <?php echo __('Reports', 'newbase'); ?>

@@ -66,20 +66,31 @@ function plugin_init_newbase(): void
     Plugin::registerClass('GlpiPlugin\\Newbase\\Address', [
         'addtabon' => ['Entity']
     ]);
-    Plugin::registerClass('GlpiPlugin\\Newbase\\CompanyData');
+    Plugin::registerClass('GlpiPlugin\\Newbase\\CompanyData', [
+        'addtabon' => ['Entity']
+    ]);
     Plugin::registerClass('GlpiPlugin\\Newbase\\System');
     Plugin::registerClass('GlpiPlugin\\Newbase\\Task');
     Plugin::registerClass('GlpiPlugin\\Newbase\\TaskSignature');
     Plugin::registerClass('GlpiPlugin\\Newbase\\Config');
 
-    // Menu entries
+    // Menu entries - Check if user has rights
     if (Session::haveRight('plugin_newbase', READ)) {
-        $PLUGIN_HOOKS['menu_toadd']['newbase'] = ['tools' => 'GlpiPlugin\\Newbase\\Menu'];
+        // Add to Tools menu using the correct method
+        $PLUGIN_HOOKS['menu_toadd']['newbase'] = [
+            'tools' => 'GlpiPlugin\\Newbase\\Menu'
+        ];
     }
 
     // Configuration page
     if (Session::haveRight('config', UPDATE)) {
         $PLUGIN_HOOKS['config_page']['newbase'] = 'front/config.php';
+    }
+
+    // Add custom stylesheet and javascript only after checks
+    if ($plugin->isInstalled('newbase') && $plugin->isActivated('newbase')) {
+        // CSS already added above
+        // JS already added above
     }
 }
 

@@ -1,38 +1,38 @@
 <?php
 /**
- * -------------------------------------------------------------------------
- * Newbase plugin for GLPI
- * -------------------------------------------------------------------------
- *
- * LICENSE
- *
- * This file is part of Newbase.
- *
- * Newbase is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * Newbase is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Newbase. If not, see <http://www.gnu.org/licenses/>.
- * -------------------------------------------------------------------------
- * @copyright Copyright (C) 2024-2026 by João Lucas
- * @license   GPLv2 https://www.gnu.org/licenses/gpl-2.0.html
- * @link      https://github.com/JoaoLucascp/Glpi
- * -------------------------------------------------------------------------
- */
+* -------------------------------------------------------------------------
+* Newbase plugin for GLPI
+* -------------------------------------------------------------------------
+*
+* LICENSE
+*
+* This file is part of Newbase.
+*
+* Newbase is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2 of the License, or
+* (at your option) any later version.
+*
+* Newbase is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with Newbase. If not, see <http://www.gnu.org/licenses/>.
+* -------------------------------------------------------------------------
+* @copyright Copyright (C) 2024-2026 by João Lucas
+* @license   GPLv2 https://www.gnu.org/licenses/gpl-2.0.html
+* @link      https://github.com/JoaoLucascp/Glpi
+* -------------------------------------------------------------------------
+*/
 
 /**
- * Plugin Installation - REQUIRED BY GLPI
- * Creates all database tables needed by the plugin
- *
- * @return bool Success status
- */
+* Plugin Installation - REQUIRED BY GLPI
+* Creates all database tables needed by the plugin
+*
+* @return bool Success status
+*/
 function plugin_newbase_install(): bool
 {
     global $DB;
@@ -107,12 +107,14 @@ function plugin_newbase_install(): bool
             $query = "CREATE TABLE `glpi_plugin_newbase_tasks` (
                 `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
                 `entities_id` INT UNSIGNED NOT NULL DEFAULT 0,
+                `name` VARCHAR(255) NOT NULL,
                 `users_id` INT UNSIGNED DEFAULT NULL,
                 `plugin_newbase_addresses_id` INT UNSIGNED DEFAULT NULL,
                 `plugin_newbase_systems_id` INT UNSIGNED DEFAULT NULL,
                 `title` VARCHAR(255) NOT NULL,
                 `description` TEXT,
                 `status` VARCHAR(50) NOT NULL DEFAULT 'new',
+                `is_completed` TINYINT NOT NULL DEFAULT 0,
                 `date_start` TIMESTAMP NULL DEFAULT NULL,
                 `date_end` TIMESTAMP NULL DEFAULT NULL,
                 `gps_start_lat` DECIMAL(10, 8) DEFAULT NULL,
@@ -130,6 +132,7 @@ function plugin_newbase_install(): bool
                 KEY `addresses_id` (`plugin_newbase_addresses_id`),
                 KEY `systems_id` (`plugin_newbase_systems_id`),
                 KEY `status` (`status`),
+                KEY `is_completed` (`is_completed`),
                 KEY `is_deleted` (`is_deleted`),
                 KEY `date_mod` (`date_mod`),
                 CONSTRAINT `fk_tasks_entities`
@@ -150,6 +153,20 @@ function plugin_newbase_install(): bool
                     ON DELETE SET NULL
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
             $DB->queryOrDie($query, 'Error creating tasks table');
+        } else {
+            // Migration: Add is_completed column if table exists but column doesn't
+            $migration->displayMessage('Checking tasks table for is_completed column...');
+            if (!$DB->fieldExists('glpi_plugin_newbase_tasks', 'is_completed')) {
+                $migration->displayMessage('Adding is_completed column to tasks table...');
+                $migration->addField(
+                    'glpi_plugin_newbase_tasks',
+                    'is_completed',
+                    'TINYINT NOT NULL DEFAULT 0',
+                    ['after' => 'status']
+                );
+                $migration->addKey('glpi_plugin_newbase_tasks', 'is_completed');
+                plugin_newbase_log('Added is_completed column to tasks table', 'info');
+            }
         }
 
         // TABLE 4: Task Signatures
@@ -248,11 +265,11 @@ function plugin_newbase_install(): bool
 }
 
 /**
- * Plugin Uninstallation - REQUIRED BY GLPI
- * Removes all database tables created by the plugin
- *
- * @return bool Success status
- */
+* Plugin Uninstallation - REQUIRED BY GLPI
+* Removes all database tables created by the plugin
+*
+* @return bool Success status
+*/
 function plugin_newbase_uninstall(): bool
 {
     global $DB;
@@ -285,13 +302,13 @@ function plugin_newbase_uninstall(): bool
 
 
 /**
- * Log plugin operations to file
- *
- * @param string $message Log message
- * @param string $level   Log level (info, warning, error)
- *
- * @return void
- */
+* Log plugin operations to file
+*
+* @param string $message Log message
+* @param string $level   Log level (info, warning, error)
+*
+* @return void
+*/
 function plugin_newbase_log(string $message, string $level = 'info'): void
 {
     $log_dir = defined('GLPI_LOG_DIR') ? GLPI_LOG_DIR : GLPI_ROOT . '/files/_log';
@@ -307,10 +324,10 @@ function plugin_newbase_log(string $message, string $level = 'info'): void
 }
 
 /**
- * Validate plugin tables schema
- *
- * @return array Array with found errors
- */
+* Validate plugin tables schema
+*
+* @return array Array with found errors
+*/
 function plugin_newbase_validateSchema(): array
 {
     global $DB;
@@ -333,10 +350,10 @@ function plugin_newbase_validateSchema(): array
 }
 
 /**
- * Check tables status
- *
- * @return array Array with table status
- */
+* Check tables status
+*
+* @return array Array with table status
+*/
 function plugin_newbase_checkTableStatus(): array
 {
     global $DB;

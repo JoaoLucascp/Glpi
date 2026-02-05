@@ -36,6 +36,15 @@ class CompanyData extends CommonDBTM
     public $dohistory = true;
 
 /**
+* Get table name - Override to use correct table
+* @return string Table name
+*/
+    public static function getTable($classname = null): string
+    {
+        return 'glpi_plugin_newbase_company_extras';
+    }
+
+/**
 * Get type name
 * @param int $nb Number of items
 * @return string Type name

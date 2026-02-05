@@ -1,15 +1,13 @@
 <?php
 
 /**
- * Plugin Configuration Page - Newbase Plugin
- * @package   GlpiPlugin\Newbase
- * @author    João Lucas
- * @copyright 2026 João Lucas
- * @license   GPLv2+
- * @version   2.1.0
- */
-
-declare(strict_types=1);
+* Plugin Configuration Page - Newbase Plugin
+* @package   GlpiPlugin\Newbase
+* @author    João Lucas
+* @copyright 2026 João Lucas
+* @license   GPLv2+
+* @version   2.1.0
+*/
 
 // SECURITY: Load GLPI core
 include '../../../inc/includes.php';
@@ -41,6 +39,8 @@ Html::header(
     $_SERVER['PHP_SELF'],
     'config',
     'plugins'
+);
+
 $config = new Config();
 $config->showConfigForm();
 
