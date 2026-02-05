@@ -145,7 +145,7 @@ abstract class Common extends CommonDBTM
         $id = $this->fields['id'] ?? 0;
         $target = $this->getFormURL();
 
-        echo "<form name='form' method='post' action='{$target}'>";
+        Html::openForm(['action' => $target, 'name' => 'form']);
 
         if ($id > 0) {
             echo "<input type='hidden' name='id' value='{$id}'>";

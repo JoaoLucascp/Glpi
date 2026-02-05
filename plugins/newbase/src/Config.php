@@ -316,8 +316,7 @@ class Config extends CommonDBTM
         $default_map_zoom = self::getConfigValue('default_map_zoom', 13);
 
         // RENDERIZAR FORMULÁRIO
-        echo "<form method='post' action='" . self::getFormURL() . "'>";
-        echo Html::hidden('_glpi_csrf_token', ['value' => Session::getNewCSRFToken()]);
+        Html::openForm(['action' => self::getFormURL()]);
 
         echo "<div class='spaced'>";
         echo "<table class='tab_cadre_fixe'>";

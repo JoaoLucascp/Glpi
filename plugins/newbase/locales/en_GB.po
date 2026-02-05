@@ -564,3 +564,329 @@ msgstr "About"
 
 msgid "License"
 msgstr "License"
+
+# ============================================
+# ADDITIONAL COMPLETE TRANSLATIONS
+# ============================================
+
+# Specific Dashboard
+msgid "Newbase Dashboard"
+msgstr "Newbase Dashboard"
+
+msgid "Dashboard"
+msgstr "Dashboard"
+
+msgid "Company"
+msgstr "Company"
+
+msgid "Title"
+msgstr "Title"
+
+msgid "View"
+msgstr "View"
+
+msgid "Created"
+msgstr "Created"
+
+msgid "All"
+msgstr "All"
+
+# Menu and Navigation
+msgid "Field Tasks"
+msgstr "Field Tasks"
+
+msgid "Systems"
+msgstr "Systems"
+
+msgid "Newbase"
+msgstr "Newbase"
+
+# System Types
+msgid "On-Premise Server"
+msgstr "On-Premise Server"
+
+msgid "Cloud Server"
+msgstr "Cloud Server"
+
+msgid "Omnichannel Chatbot"
+msgstr "Omnichannel Chatbot"
+
+# Technical Fields
+msgid "Server IP"
+msgstr "Server IP"
+
+msgid "Username"
+msgstr "Username"
+
+msgid "Password"
+msgstr "Password"
+
+msgid "API URL"
+msgstr "API URL"
+
+msgid "Webhook URL"
+msgstr "Webhook URL"
+
+msgid "Contract"
+msgstr "Contract"
+
+# Detailed Tasks
+msgid "Task"
+msgstr "Task"
+
+msgid "Task Description"
+msgstr "Task Description"
+
+msgid "Distance (km)"
+msgstr "Distance (km)"
+
+msgid "Mileage Cost"
+msgstr "Mileage Cost"
+
+msgid "Calculate"
+msgstr "Calculate"
+
+msgid "Sign Here"
+msgstr "Sign Here"
+
+# Specific Messages
+msgid "Company not found in database"
+msgstr "Company not found in database"
+
+msgid "Invalid Tax ID format"
+msgstr "Invalid Tax ID format"
+
+msgid "Tax ID already exists"
+msgstr "Tax ID already exists"
+
+msgid "Required fields are missing"
+msgstr "Required fields are missing"
+
+msgid "Database error occurred"
+msgstr "Database error occurred"
+
+msgid "Record saved successfully"
+msgstr "Record saved successfully"
+
+msgid "Record updated successfully"
+msgstr "Record updated successfully"
+
+msgid "Record deleted successfully"
+msgstr "Record deleted successfully"
+
+msgid "Failed to save record"
+msgstr "Failed to save record"
+
+msgid "Failed to update record"
+msgstr "Failed to update record"
+
+msgid "Failed to delete record"
+msgstr "Failed to delete record"
+
+# Search Actions
+msgid "Search by Tax ID"
+msgstr "Search by Tax ID"
+
+msgid "Loading data..."
+msgstr "Loading data..."
+
+msgid "Processing..."
+msgstr "Processing..."
+
+msgid "Saving..."
+msgstr "Saving..."
+
+msgid "Please wait"
+msgstr "Please wait"
+
+# Detailed Validations
+msgid "This field is required"
+msgstr "This field is required"
+
+msgid "Please enter a valid email"
+msgstr "Please enter a valid email"
+
+msgid "Please enter a valid phone number"
+msgstr "Please enter a valid phone number"
+
+msgid "Please enter a valid Tax ID"
+msgstr "Please enter a valid Tax ID"
+
+msgid "Please select a company"
+msgstr "Please select a company"
+
+# Listings
+msgid "No records found"
+msgstr "No records found"
+
+msgid "Showing"
+msgstr "Showing"
+
+msgid "of"
+msgstr "of"
+
+msgid "records"
+msgstr "records"
+
+msgid "Search results"
+msgstr "Search results"
+
+# Detailed Permissions
+msgid "You don't have permission to view this page"
+msgstr "You don't have permission to view this page"
+
+msgid "You don't have permission to create records"
+msgstr "You don't have permission to create records"
+
+msgid "You don't have permission to edit records"
+msgstr "You don't have permission to edit records"
+
+msgid "You don't have permission to delete records"
+msgstr "You don't have permission to delete records"
+
+# Specific Forms
+msgid "Basic Information"
+msgstr "Basic Information"
+
+msgid "Contact Information"
+msgstr "Contact Information"
+
+msgid "Address Information"
+msgstr "Address Information"
+
+msgid "Technical Information"
+msgstr "Technical Information"
+
+msgid "Additional Information"
+msgstr "Additional Information"
+
+msgid "System Configuration"
+msgstr "System Configuration"
+
+msgid "Task Details"
+msgstr "Task Details"
+
+msgid "Geolocation"
+msgstr "Geolocation"
+
+msgid "Digital Signature"
+msgstr "Digital Signature"
+
+# States and Status
+msgid "Draft"
+msgstr "Draft"
+
+msgid "Open"
+msgstr "Open"
+
+msgid "Closed"
+msgstr "Closed"
+
+msgid "Waiting"
+msgstr "Waiting"
+
+msgid "Solved"
+msgstr "Solved"
+
+msgid "Not applicable"
+msgstr "Not applicable"
+
+msgid "Yes"
+msgstr "Yes"
+
+msgid "No"
+msgstr "No"
+
+msgid "Unknown"
+msgstr "Unknown"
+
+# Specific Reports
+msgid "Report Type"
+msgstr "Report Type"
+
+msgid "Companies Report"
+msgstr "Companies Report"
+
+msgid "Systems Report"
+msgstr "Systems Report"
+
+msgid "Tasks Report"
+msgstr "Tasks Report"
+
+msgid "Summary Report"
+msgstr "Summary Report"
+
+msgid "Detailed Report"
+msgstr "Detailed Report"
+
+msgid "Custom Report"
+msgstr "Custom Report"
+
+msgid "Report Period"
+msgstr "Report Period"
+
+msgid "Last 7 days"
+msgstr "Last 7 days"
+
+msgid "Last 30 days"
+msgstr "Last 30 days"
+
+msgid "Last 90 days"
+msgstr "Last 90 days"
+
+msgid "This month"
+msgstr "This month"
+
+msgid "Last month"
+msgstr "Last month"
+
+msgid "This year"
+msgstr "This year"
+
+msgid "Custom period"
+msgstr "Custom period"
+
+# Export
+msgid "Export Options"
+msgstr "Export Options"
+
+msgid "Export to CSV"
+msgstr "Export to CSV"
+
+msgid "Download"
+msgstr "Download"
+
+# Tax ID/Company Fields
+msgid "Tax ID"
+msgstr "Tax ID"
+
+msgid "Trade Name"
+msgstr "Trade Name"
+
+msgid "Main Activity"
+msgstr "Main Activity"
+
+msgid "Legal Nature"
+msgstr "Legal Nature"
+
+msgid "Share Capital"
+msgstr "Share Capital"
+
+msgid "Registration Status"
+msgstr "Registration Status"
+
+# More Status
+msgid "In Analysis"
+msgstr "In Analysis"
+
+msgid "Approved"
+msgstr "Approved"
+
+msgid "Rejected"
+msgstr "Rejected"
+
+msgid "On Hold"
+msgstr "On Hold"
+
+msgid "Archived"
+msgstr "Archived"

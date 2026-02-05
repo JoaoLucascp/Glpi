@@ -564,3 +564,329 @@ msgstr "Sobre"
 
 msgid "License"
 msgstr "Licença"
+
+# ============================================
+# TRADUÇÕES ADICIONAIS COMPLETAS
+# ============================================
+
+# Dashboard Específico
+msgid "Newbase Dashboard"
+msgstr "Painel Newbase"
+
+msgid "Dashboard"
+msgstr "Painel"
+
+msgid "Company"
+msgstr "Empresa"
+
+msgid "Title"
+msgstr "Título"
+
+msgid "View"
+msgstr "Visualizar"
+
+msgid "Created"
+msgstr "Criado"
+
+msgid "All"
+msgstr "Todos"
+
+# Menu e Navegação
+msgid "Field Tasks"
+msgstr "Tarefas de Campo"
+
+msgid "Systems"
+msgstr "Sistemas"
+
+msgid "Newbase"
+msgstr "Newbase"
+
+# Tipos de Sistema
+msgid "On-Premise Server"
+msgstr "Servidor Local"
+
+msgid "Cloud Server"
+msgstr "Servidor em Nuvem"
+
+msgid "Omnichannel Chatbot"
+msgstr "Chatbot Omnichannel"
+
+# Campos Técnicos
+msgid "Server IP"
+msgstr "IP do Servidor"
+
+msgid "Username"
+msgstr "Usuário"
+
+msgid "Password"
+msgstr "Senha"
+
+msgid "API URL"
+msgstr "URL da API"
+
+msgid "Webhook URL"
+msgstr "URL do Webhook"
+
+msgid "Contract"
+msgstr "Contrato"
+
+# Tarefas Detalhadas
+msgid "Task"
+msgstr "Tarefa"
+
+msgid "Task Description"
+msgstr "Descrição da Tarefa"
+
+msgid "Distance (km)"
+msgstr "Distância (km)"
+
+msgid "Mileage Cost"
+msgstr "Custo de Quilometragem"
+
+msgid "Calculate"
+msgstr "Calcular"
+
+msgid "Sign Here"
+msgstr "Assine Aqui"
+
+# Mensagens Específicas
+msgid "Company not found in database"
+msgstr "Empresa não encontrada no banco de dados"
+
+msgid "Invalid Tax ID format"
+msgstr "Formato de CNPJ inválido"
+
+msgid "Tax ID already exists"
+msgstr "CNPJ já cadastrado"
+
+msgid "Required fields are missing"
+msgstr "Campos obrigatórios estão faltando"
+
+msgid "Database error occurred"
+msgstr "Erro no banco de dados"
+
+msgid "Record saved successfully"
+msgstr "Registro salvo com sucesso"
+
+msgid "Record updated successfully"
+msgstr "Registro atualizado com sucesso"
+
+msgid "Record deleted successfully"
+msgstr "Registro deletado com sucesso"
+
+msgid "Failed to save record"
+msgstr "Falha ao salvar registro"
+
+msgid "Failed to update record"
+msgstr "Falha ao atualizar registro"
+
+msgid "Failed to delete record"
+msgstr "Falha ao deletar registro"
+
+# Ações de Busca
+msgid "Search by Tax ID"
+msgstr "Buscar por CNPJ"
+
+msgid "Loading data..."
+msgstr "Carregando dados..."
+
+msgid "Processing..."
+msgstr "Processando..."
+
+msgid "Saving..."
+msgstr "Salvando..."
+
+msgid "Please wait"
+msgstr "Por favor aguarde"
+
+# Validações Detalhadas
+msgid "This field is required"
+msgstr "Este campo é obrigatório"
+
+msgid "Please enter a valid email"
+msgstr "Por favor insira um email válido"
+
+msgid "Please enter a valid phone number"
+msgstr "Por favor insira um telefone válido"
+
+msgid "Please enter a valid Tax ID"
+msgstr "Por favor insira um CNPJ válido"
+
+msgid "Please select a company"
+msgstr "Por favor selecione uma empresa"
+
+# Listagens
+msgid "No records found"
+msgstr "Nenhum registro encontrado"
+
+msgid "Showing"
+msgstr "Mostrando"
+
+msgid "of"
+msgstr "de"
+
+msgid "records"
+msgstr "registros"
+
+msgid "Search results"
+msgstr "Resultados da busca"
+
+# Permissões Detalhadas
+msgid "You don't have permission to view this page"
+msgstr "Você não tem permissão para visualizar esta página"
+
+msgid "You don't have permission to create records"
+msgstr "Você não tem permissão para criar registros"
+
+msgid "You don't have permission to edit records"
+msgstr "Você não tem permissão para editar registros"
+
+msgid "You don't have permission to delete records"
+msgstr "Você não tem permissão para deletar registros"
+
+# Formulários Específicos
+msgid "Basic Information"
+msgstr "Informações Básicas"
+
+msgid "Contact Information"
+msgstr "Informações de Contato"
+
+msgid "Address Information"
+msgstr "Informações de Endereço"
+
+msgid "Technical Information"
+msgstr "Informações Técnicas"
+
+msgid "Additional Information"
+msgstr "Informações Adicionais"
+
+msgid "System Configuration"
+msgstr "Configuração do Sistema"
+
+msgid "Task Details"
+msgstr "Detalhes da Tarefa"
+
+msgid "Geolocation"
+msgstr "Geolocalização"
+
+msgid "Digital Signature"
+msgstr "Assinatura Digital"
+
+# Estados e Status
+msgid "Draft"
+msgstr "Rascunho"
+
+msgid "Open"
+msgstr "Aberto"
+
+msgid "Closed"
+msgstr "Fechado"
+
+msgid "Waiting"
+msgstr "Aguardando"
+
+msgid "Solved"
+msgstr "Resolvido"
+
+msgid "Not applicable"
+msgstr "Não aplicável"
+
+msgid "Yes"
+msgstr "Sim"
+
+msgid "No"
+msgstr "Não"
+
+msgid "Unknown"
+msgstr "Desconhecido"
+
+# Relatórios Específicos
+msgid "Report Type"
+msgstr "Tipo de Relatório"
+
+msgid "Companies Report"
+msgstr "Relatório de Empresas"
+
+msgid "Systems Report"
+msgstr "Relatório de Sistemas"
+
+msgid "Tasks Report"
+msgstr "Relatório de Tarefas"
+
+msgid "Summary Report"
+msgstr "Relatório Resumido"
+
+msgid "Detailed Report"
+msgstr "Relatório Detalhado"
+
+msgid "Custom Report"
+msgstr "Relatório Personalizado"
+
+msgid "Report Period"
+msgstr "Período do Relatório"
+
+msgid "Last 7 days"
+msgstr "Últimos 7 dias"
+
+msgid "Last 30 days"
+msgstr "Últimos 30 dias"
+
+msgid "Last 90 days"
+msgstr "Últimos 90 dias"
+
+msgid "This month"
+msgstr "Este mês"
+
+msgid "Last month"
+msgstr "Mês passado"
+
+msgid "This year"
+msgstr "Este ano"
+
+msgid "Custom period"
+msgstr "Período personalizado"
+
+# Exportação
+msgid "Export Options"
+msgstr "Opções de Exportação"
+
+msgid "Export to CSV"
+msgstr "Exportar para CSV"
+
+msgid "Download"
+msgstr "Baixar"
+
+# Campos CNPJ/Empresa
+msgid "Tax ID"
+msgstr "CNPJ"
+
+msgid "Trade Name"
+msgstr "Nome Fantasia"
+
+msgid "Main Activity"
+msgstr "Atividade Principal"
+
+msgid "Legal Nature"
+msgstr "Natureza Jurídica"
+
+msgid "Share Capital"
+msgstr "Capital Social"
+
+msgid "Registration Status"
+msgstr "Situação Cadastral"
+
+# Mais Status
+msgid "In Analysis"
+msgstr "Em Análise"
+
+msgid "Approved"
+msgstr "Aprovado"
+
+msgid "Rejected"
+msgstr "Rejeitado"
+
+msgid "On Hold"
+msgstr "Em Espera"
+
+msgid "Archived"
+msgstr "Arquivado"

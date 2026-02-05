@@ -163,11 +163,6 @@ class CompanyData extends CommonDBTM
     {
         global $DB;
 
-        // Check if table exists before querying
-        if (!$DB->tableExists('glpi_plugin_newbase_company_extras')) {
-            return null;
-        }
-
         $result = $DB->request([
             'FROM' => 'glpi_plugin_newbase_company_extras',
             'WHERE' => [
@@ -194,15 +189,6 @@ class CompanyData extends CommonDBTM
             return false;
         }
 
-        // Validate if table exists
-        if (!$DB->tableExists('glpi_plugin_newbase_company_extras')) {
-            Toolbox::logInFile(
-                'newbase_plugin',
-                "Table glpi_plugin_newbase_company_extras does not exist\n"
-            );
-            return false;
-        }
-
         // VALIDAR CNPJ SE FORNECIDO
         if (!empty($data['cnpj'])) {
             $data['cnpj'] = preg_replace('/[^0-9]/', '', $data['cnpj']);
@@ -217,51 +203,27 @@ class CompanyData extends CommonDBTM
         }
 
         // Prepare data
+        $companyExtras = new self();
         $data['entities_id'] = $entity_id;
 
         // Check if record already exists
-        $existing = $DB->request([
-            'FROM' => 'glpi_plugin_newbase_company_extras',
-            'WHERE' => ['entities_id' => $entity_id],
-        ])->current();
-
-        if ($existing) {
-            // Update existing record
-            $data['date_mod'] = $_SESSION['glpi_currenttime'] ?? date('Y-m-d H:i:s');
-
-            $result = $DB->update(
-                'glpi_plugin_newbase_company_extras',
-                $data,
-                ['id' => $existing['id']]
-            );
-
-            if ($result === false) {
-                Toolbox::logInFile(
-                    'newbase_plugin',
-                    "Failed to update company extras for entity {$entity_id}\n"
-                );
-                return false;
+        if ($companyExtras->getFromDBByCrit(['entities_id' => $entity_id])) {
+            $data['id'] = $companyExtras->getID();
+            if ($companyExtras->update($data)) {
+                return $companyExtras->getID();
             }
-
-            return $existing['id'];
         } else {
-            // Insert new record
-            $data['date_creation'] = $_SESSION['glpi_currenttime'] ?? date('Y-m-d H:i:s');
-            $data['date_mod'] = $_SESSION['glpi_currenttime'] ?? date('Y-m-d H:i:s');
             $data['is_deleted'] = 0;
-
-            $result = $DB->insert('glpi_plugin_newbase_company_extras', $data);
-
-            if ($result === false) {
-                Toolbox::logInFile(
-                    'newbase_plugin',
-                    "Failed to insert company extras for entity {$entity_id}\n"
-                );
-                return false;
+            if ($newID = $companyExtras->add($data)) {
+                return $newID;
             }
-
-            return $result;
         }
+
+        Toolbox::logInFile(
+            'newbase_plugin',
+            "Failed to save company extras for entity {$entity_id}\n"
+        );
+        return false;
     }
 
 /**
@@ -315,6 +277,232 @@ class CompanyData extends CommonDBTM
 
         // Use native Entity dropdown
         return Entity::dropdown($options);
+    }
+
+/**
+* Display company form
+* @param int $entity_id Entity ID (0 for new company)
+* @param array $options Form options
+* @return bool|void
+*/
+    public function showForm($entity_id = 0, $options = [])
+    {
+        global $CFG_GLPI;
+
+        $is_new = ($entity_id == 0);
+        $entity = new Entity();
+        $company_data = [];
+
+        // Load existing data
+        if (!$is_new) {
+            if (!$entity->getFromDB($entity_id)) {
+                return false;
+            }
+            $company_data = self::getCompanyById($entity_id) ?? [];
+        }
+
+        // Check permissions
+        if ($is_new) {
+            if (!Entity::canCreate()) {
+                return false;
+            }
+        } else {
+            if (!$entity->canView()) {
+                return false;
+            }
+        }
+
+        // Start form
+        $form_action = Plugin::getWebDir('newbase') . '/front/companydata.form.php';
+
+        echo "<div class='center'>";
+        echo "<form name='form_company' id='form_company' method='post' action='" . $form_action . "' enctype='multipart/form-data'>";
+
+        // CSRF Token - CRÍTICO PARA SEGURANÇA
+        echo "<input type='hidden' name='_glpi_csrf_token' value='" . Session::getNewCSRFToken() . "' />";
+
+        if (!$is_new) {
+            echo "<input type='hidden' name='entities_id' value='" . $entity_id . "' />";
+        }
+
+        echo "<div class='spaced'>";
+        echo "<table class='tab_cadre_fixe'>";
+
+        // Header
+        echo "<tr class='tab_bg_1'>";
+        echo "<th colspan='4'>";
+        echo $is_new ? __("New Company", 'newbase') : __("Edit Company", 'newbase');
+        echo "</th>";
+        echo "</tr>";
+
+        // Company Name *
+        echo "<tr class='tab_bg_1'>";
+        echo "<td>" . __('Name') . " <span class='red'>*</span></td>";
+        echo "<td>";
+        echo "<input type='text' name='name' id='name' value='" .
+                htmlspecialchars($company_data['name'] ?? '', ENT_QUOTES, 'UTF-8') .
+                "' size='50' required='required' />";
+        echo "</td>";
+
+        // CNPJ
+        echo "<td>" . __('CNPJ', 'newbase') . "</td>";
+        echo "<td>";
+        echo "<input type='text' name='cnpj' id='cnpj' value='" .
+                htmlspecialchars($company_data['cnpj'] ?? '', ENT_QUOTES, 'UTF-8') .
+                "' size='20' maxlength='18' />";
+        echo "</td>";
+        echo "</tr>";
+
+        // Corporate Name / Fantasy Name
+        echo "<tr class='tab_bg_1'>";
+        echo "<td>" . __('Corporate Name', 'newbase') . "</td>";
+        echo "<td>";
+        echo "<input type='text' name='corporate_name' id='corporate_name' value='" .
+                htmlspecialchars($company_data['corporate_name'] ?? '', ENT_QUOTES, 'UTF-8') .
+                "' size='50' />";
+        echo "</td>";
+
+        echo "<td>" . __('Fantasy Name', 'newbase') . "</td>";
+        echo "<td>";
+        echo "<input type='text' name='fantasy_name' id='fantasy_name' value='" .
+                htmlspecialchars($company_data['fantasy_name'] ?? '', ENT_QUOTES, 'UTF-8') .
+                "' size='50' />";
+        echo "</td>";
+        echo "</tr>";
+
+        // Email / Phone
+        echo "<tr class='tab_bg_1'>";
+        echo "<td>" . __('Email') . "</td>";
+        echo "<td>";
+        echo "<input type='email' name='email' id='email' value='" .
+                htmlspecialchars($company_data['email'] ?? '', ENT_QUOTES, 'UTF-8') .
+                "' size='50' />";
+        echo "</td>";
+
+        echo "<td>" . __('Phone') . "</td>";
+        echo "<td>";
+        echo "<input type='text' name='phone' id='phone' value='" .
+                htmlspecialchars($company_data['phone'] ?? '', ENT_QUOTES, 'UTF-8') .
+                "' size='20' />";
+        echo "</td>";
+        echo "</tr>";
+
+        // Contact Person / Website
+        echo "<tr class='tab_bg_1'>";
+        echo "<td>" . __('Contact Person', 'newbase') . "</td>";
+        echo "<td>";
+        echo "<input type='text' name='contact_person' id='contact_person' value='" .
+                htmlspecialchars($company_data['contact_person'] ?? '', ENT_QUOTES, 'UTF-8') .
+                "' size='50' />";
+        echo "</td>";
+
+        echo "<td>" . __('Website', 'newbase') . "</td>";
+        echo "<td>";
+        echo "<input type='url' name='website' id='website' value='" .
+                htmlspecialchars($company_data['website'] ?? '', ENT_QUOTES, 'UTF-8') .
+                "' size='50' />";
+        echo "</td>";
+        echo "</tr>";
+
+        // Address
+        echo "<tr class='tab_bg_1'>";
+        echo "<td>" . __('Address') . "</td>";
+        echo "<td colspan='3'>";
+        echo "<input type='text' name='address' id='address' value='" .
+                htmlspecialchars($company_data['address'] ?? '', ENT_QUOTES, 'UTF-8') .
+                "' size='100' style='width:95%' />";
+        echo "</td>";
+        echo "</tr>";
+
+        // CEP / City / State
+        echo "<tr class='tab_bg_1'>";
+        echo "<td>" . __('Postal code') . "</td>";
+        echo "<td>";
+        echo "<input type='text' name='cep' id='cep' value='" .
+                htmlspecialchars($company_data['postcode'] ?? '', ENT_QUOTES, 'UTF-8') .
+                "' size='10' />";
+        echo "</td>";
+
+        echo "<td>" . __('City') . "</td>";
+        echo "<td>";
+        echo "<input type='text' name='city' id='city' value='" .
+                htmlspecialchars($company_data['town'] ?? '', ENT_QUOTES, 'UTF-8') .
+                "' size='30' />";
+        echo "</td>";
+        echo "</tr>";
+
+        echo "<tr class='tab_bg_1'>";
+        echo "<td>" . __('State') . "</td>";
+        echo "<td>";
+        echo "<input type='text' name='state' id='state' value='" .
+                htmlspecialchars($company_data['state'] ?? '', ENT_QUOTES, 'UTF-8') .
+                "' size='20' maxlength='2' />";
+        echo "</td>";
+
+        echo "<td>" . __('Country') . "</td>";
+        echo "<td>";
+        echo "<input type='text' name='country' id='country' value='" .
+                htmlspecialchars($company_data['country'] ?? 'BR', ENT_QUOTES, 'UTF-8') .
+                "' size='2' maxlength='2' />";
+        echo "</td>";
+        echo "</tr>";
+
+        // Notes
+        echo "<tr class='tab_bg_1'>";
+        echo "<td>" . __('Comments') . "</td>";
+        echo "<td colspan='3'>";
+        echo "<textarea name='notes' id='notes' rows='4' style='width:95%'>";
+        echo htmlspecialchars($company_data['notes'] ?? $company_data['comment'] ?? '', ENT_QUOTES, 'UTF-8');
+        echo "</textarea>";
+        echo "</td>";
+        echo "</tr>";
+
+        // Action buttons
+        echo "<tr class='tab_bg_2'>";
+        echo "<td colspan='4' class='center'>";
+
+        if ($is_new) {
+            echo "<input type='submit' name='add' value='" . _sx('button', 'Add') . "' class='btn btn-primary' />";
+        } else {
+            echo "<input type='submit' name='update' value='" . _sx('button', 'Save') . "' class='btn btn-primary' />";
+
+            if ($entity->canDelete()) {
+                echo "&nbsp;&nbsp;";
+                echo "<input type='submit' name='delete' value='" . _sx('button', 'Delete') . "'
+                        class='btn btn-danger'
+                        onclick='return confirm(\"" . __('Confirm deletion?') . "\");' />";
+            }
+
+            if ($entity->canPurge()) {
+                echo "&nbsp;&nbsp;";
+                echo "<input type='submit' name='purge' value='" . _sx('button', 'Delete permanently') . "'
+                        class='btn btn-danger'
+                        onclick='return confirm(\"" . __('Confirm permanent deletion? This action cannot be undone!') . "\");' />";
+            }
+        }
+
+        echo "</td>";
+        echo "</tr>";
+
+        echo "</table>";
+        echo "</div>";
+
+        echo "</form>";
+        echo "</div>";
+
+        // Include JavaScript for masks and validations
+        echo "<script type='text/javascript'>\n";
+        echo "$(document).ready(function() {\n";
+        echo "  /* CNPJ Mask */\n";
+        echo "  if (typeof $.fn.mask !== 'undefined') {\n";
+        echo "    $('#cnpj').mask('00.000.000/0000-00');\n";
+        echo "    $('#cep').mask('00000-000');\n";
+        echo "    $('#phone').mask('(00) 00000-0000');\n";
+        echo "  }\n";
+        echo "});\n";
+        echo "</script>\n";
+
+        return true;
     }
 
 /**

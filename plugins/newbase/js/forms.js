@@ -4,21 +4,17 @@
 * @author    João Lucas
 * @copyright Copyright (c) 2026 João Lucas
 * @license   GPLv2+
-* @since     2.0.0
+* @since     2.1.0
 */
 
 (function ($) {
     'use strict';
 
-    // ====================
     // SECURITY: Namespace isolado para evitar poluição global
-    // ====================
     window.Newbase = window.Newbase || {};
     Newbase.Forms = Newbase.Forms || {};
 
-    // ====================
     // CONFIGURATION
-    // ====================
     const CONFIG = {
         AUTO_SAVE_DELAY: 3000,
         AUTO_SAVE_PREFIX: 'newbase_autosave_',
@@ -28,9 +24,7 @@
         STORAGE_QUOTA_CHECK: true
     };
 
-    // ====================
     // SECURITY: Lista de campos sensíveis que NÃO devem ser salvos
-    // ====================
     const SENSITIVE_FIELDS = [
         'password',
         'token',
@@ -41,14 +35,12 @@
         'ssn'
     ];
 
-    // ====================
     // CACHE: Armazenar seletores para melhor performance
-    // ====================
     let $cachedElements = {};
 
     /**
-     * Initialize forms with performance optimization
-     */
+    * Initialize forms with performance optimization
+    */
     Newbase.Forms.init = function () {
         console.log('Newbase Forms initialized');
 
@@ -62,17 +54,19 @@
         // Inicializar componentes
         Newbase.Forms.initFormatting();
         Newbase.Forms.initValidation();
+        Newbase.Forms.initCNPJLookup();
+        Newbase.Forms.initCEPLookup();
         Newbase.Forms.initAutoSave();
-        Newbase.Forms.initCharCounter();
+        Newbase.Forms.initCEPLookup();
 
         // SECURITY: Limpar auto-saves expirados
         Newbase.Forms.cleanExpiredAutoSaves();
     };
 
     /**
-     * Initialize input formatting with event delegation
-     * PERFORMANCE: Usa event delegation para melhor performance
-     */
+    * Initialize input formatting with event delegation
+    * PERFORMANCE: Usa event delegation para melhor performance
+    */
     Newbase.Forms.initFormatting = function () {
         // PERFORMANCE: Event delegation no body para elementos dinâmicos
         $cachedElements.body.on('input', 'input[data-format]', function () {
@@ -127,9 +121,9 @@
     };
 
     /**
-     * Initialize form validation with GLPI integration
-     * SECURITY: Validações completas com feedback ao usuário
-     */
+    * Initialize form validation with GLPI integration
+    * SECURITY: Validações completas com feedback ao usuário
+    */
     Newbase.Forms.initValidation = function () {
         // Validar no submit
         $cachedElements.body.on('submit', 'form[data-validate]', function (e) {
@@ -174,10 +168,10 @@
     };
 
     /**
-     * Validate entire form
-     * @param {jQuery} $form - Form element
-     * @returns {boolean} - Is form valid
-     */
+    * Validate entire form
+    * @param {jQuery} $form - Form element
+    * @returns {boolean} - Is form valid
+    */
     Newbase.Forms.validateForm = function ($form) {
         let isValid = true;
 
@@ -299,9 +293,9 @@
     };
 
     /**
-     * Validate single field
-     * PERFORMANCE: Validação otimizada para campos individuais
-     */
+    * Validate single field
+    * PERFORMANCE: Validação otimizada para campos individuais
+    */
     Newbase.Forms.validateField = function ($field) {
         const value = $.trim($field.val());
         let isValid = true;
@@ -368,9 +362,9 @@
     };
 
     /**
-     * Show field error with accessibility
-     * ACCESSIBILITY: Adiciona aria-invalid para leitores de tela
-     */
+    * Show field error with accessibility
+    * ACCESSIBILITY: Adiciona aria-invalid para leitores de tela
+    */
     Newbase.Forms.showFieldError = function ($field, message) {
         $field.addClass('error').attr('aria-invalid', 'true');
 
@@ -385,8 +379,8 @@
     };
 
     /**
-     * Clear field error
-     */
+    * Clear field error
+    */
     Newbase.Forms.clearFieldError = function ($field) {
         $field.removeClass('error success').removeAttr('aria-invalid');
         $field.siblings('.newbase-form-error').removeClass('show');
@@ -394,8 +388,8 @@
     };
 
     /**
-     * Show field success
-     */
+    * Show field success
+    */
     Newbase.Forms.showFieldSuccess = function ($field) {
         $field.addClass('success').removeAttr('aria-invalid');
 
@@ -409,9 +403,9 @@
     };
 
     /**
-     * Initialize auto-save with security
-     * SECURITY: Não salvar campos sensíveis
-     */
+    * Initialize auto-save with security
+    * SECURITY: Não salvar campos sensíveis
+    */
     Newbase.Forms.initAutoSave = function () {
         const $autoSaveForms = $('form[data-autosave]');
 
@@ -443,9 +437,9 @@
     };
 
     /**
-     * Save form data to localStorage with security
-     * SECURITY: Não salvar campos sensíveis + verificar quota
-     */
+    * Save form data to localStorage with security
+    * SECURITY: Não salvar campos sensíveis + verificar quota
+    */
     Newbase.Forms.saveAutoSave = function (formId, $form) {
         const data = {
             timestamp: Date.now(),
@@ -505,8 +499,8 @@
     };
 
     /**
-     * Load saved form data from localStorage
-     */
+    * Load saved form data from localStorage
+    */
     Newbase.Forms.loadAutoSave = function (formId, $form) {
         try {
             const storageKey = CONFIG.AUTO_SAVE_PREFIX + formId;
@@ -548,8 +542,8 @@
     };
 
     /**
-     * Clear saved form data
-     */
+    * Clear saved form data
+    */
     Newbase.Forms.clearAutoSave = function (formId) {
         try {
             const storageKey = CONFIG.AUTO_SAVE_PREFIX + formId;
@@ -561,9 +555,9 @@
     };
 
     /**
-     * Clean expired auto-saves from localStorage
-     * PERFORMANCE: Limpar dados antigos para liberar espaço
-     */
+    * Clean expired auto-saves from localStorage
+    * PERFORMANCE: Limpar dados antigos para liberar espaço
+    */
     Newbase.Forms.cleanExpiredAutoSaves = function () {
         try {
             const now = Date.now();
@@ -597,9 +591,9 @@
     };
 
     /**
-     * Check if field is sensitive and should not be auto-saved
-     * SECURITY: Prevenir salvamento de dados sensíveis
-     */
+    * Check if field is sensitive and should not be auto-saved
+    * SECURITY: Prevenir salvamento de dados sensíveis
+    */
     Newbase.Forms.isSensitiveField = function (fieldName) {
         const lowerName = fieldName.toLowerCase();
 
@@ -609,8 +603,8 @@
     };
 
     /**
-     * Initialize character counter
-     */
+    * Initialize character counter
+    */
     Newbase.Forms.initCharCounter = function () {
         $('textarea[data-max-chars], input[data-max-chars]').each(function () {
             const $field = $(this);
@@ -649,10 +643,294 @@
         });
     };
 
+
     /**
-     * Destroy form handlers (cleanup)
-     * PERFORMANCE: Prevenir memory leaks
-     */
+    * Initialize CNPJ lookup with auto-fill
+    * BUSCA AUTOMÁTICA: Preenche dados da empresa via CNPJ
+    */
+    Newbase.Forms.initCNPJLookup = function () {
+        // Debounced lookup function
+        const debouncedLookup = Newbase.debounce(function () {
+            const $cnpjField = $(this);
+            const cnpj = $cnpjField.val().replace(/\D/g, '');
+
+            // Validar CNPJ antes de buscar
+            if (cnpj.length === 14 && Newbase.validateCNPJ(cnpj)) {
+                Newbase.Forms.lookupCNPJ(cnpj, $cnpjField);
+            }
+        }, 800); // Espera 800ms após usuário parar de digitar
+
+        // Event listener no campo CNPJ
+        $cachedElements.body.on('blur', '#cnpj, input[name="cnpj"]', debouncedLookup);
+    };
+
+    /**
+    * Lookup CNPJ data from API
+    * @param {string} cnpj - CNPJ sem formatação (14 dígitos)
+    * @param {jQuery} $cnpjField - Campo CNPJ
+    */
+    Newbase.Forms.lookupCNPJ = function (cnpj, $cnpjField) {
+        console.log('Looking up CNPJ:', cnpj);
+
+        // Verificar se já está carregando
+        if ($cnpjField.hasClass('loading-cnpj')) {
+            return;
+        }
+
+        // Adicionar indicador de carregamento
+        $cnpjField.addClass('loading-cnpj');
+        const $form = $cnpjField.closest('form');
+
+        // Obter CSRF token
+        const csrfToken = $form.find('input[name="_glpi_csrf_token"]').val();
+
+        if (!csrfToken) {
+            console.error('CSRF token não encontrado');
+            Newbase.notify('Erro: Token de segurança não encontrado. Recarregue a página.', 'error');
+            $cnpjField.removeClass('loading-cnpj');
+            return;
+        }
+
+        // Determinar a URL do plugin
+        const pluginUrl = window.location.origin + '/plugins/newbase';
+
+        // Fazer requisição AJAX
+        $.ajax({
+            url: pluginUrl + '/ajax/cnpj_proxy.php',
+            method: 'POST',
+            dataType: 'json',
+            data: {
+                cnpj: cnpj,
+                _glpi_csrf_token: csrfToken
+            },
+            timeout: 15000,
+            success: function (response) {
+                console.log('CNPJ lookup response:', response);
+
+                if (response.success && response.data) {
+                    Newbase.Forms.fillCompanyData(response.data, $form);
+                    Newbase.notify('Dados da empresa carregados com sucesso!', 'success');
+                } else {
+                    const errorMsg = response.error || 'CNPJ não encontrado';
+                    Newbase.notify(errorMsg, 'warning');
+                }
+            },
+            error: function (xhr, status, error) {
+                console.error('CNPJ lookup error:', { xhr, status, error });
+
+                let errorMsg = 'Erro ao buscar dados do CNPJ';
+
+                if (xhr.status === 404) {
+                    errorMsg = 'CNPJ não encontrado';
+                } else if (xhr.status === 400) {
+                    errorMsg = 'CNPJ inválido';
+                } else if (xhr.status === 403) {
+                    errorMsg = 'Acesso negado. Recarregue a página e tente novamente.';
+                } else if (status === 'timeout') {
+                    errorMsg = 'Tempo esgotado. Tente novamente.';
+                }
+
+                Newbase.notify(errorMsg, 'error');
+            },
+            complete: function () {
+                $cnpjField.removeClass('loading-cnpj');
+            }
+        });
+    };
+
+    /**
+    * Fill company data from CNPJ API response
+    * @param {Object} data - Dados da empresa
+    * @param {jQuery} $form - Formulário
+    */
+    Newbase.Forms.fillCompanyData = function (data, $form) {
+        // Mapear campos retornados pela API para campos do formulário
+        const fieldMapping = {
+            'razao_social': ['corporate_name', 'name'],
+            'nome_fantasia': 'fantasy_name',
+            'email': 'email',
+            'telefone': 'phone',
+            'cep': 'cep',
+            'municipio': 'city',
+            'uf': 'state',
+            'logradouro': 'address',
+            'numero': 'address_number',
+            'complemento': 'address_complement',
+            'bairro': 'address_district'
+        };
+
+        // Preencher campos
+        Object.keys(fieldMapping).forEach(function (apiField) {
+            const formFields = Array.isArray(fieldMapping[apiField])
+                ? fieldMapping[apiField]
+                : [fieldMapping[apiField]];
+
+            formFields.forEach(function (formField) {
+                const $field = $form.find('#' + formField + ', [name="' + formField + '"]');
+
+                if ($field.length && data[apiField]) {
+                    const currentValue = $field.val();
+
+                    // Só preencher se o campo estiver vazio
+                    if (!currentValue || currentValue.trim() === '') {
+                        $field.val(data[apiField]).trigger('change');
+
+                        // Aplicar formatação se necessário
+                        if ($field.data('format')) {
+                            $field.trigger('input');
+                        }
+
+                        // Feedback visual
+                        $field.addClass('auto-filled');
+                        setTimeout(function () {
+                            $field.removeClass('auto-filled');
+                        }, 2000);
+                    }
+                }
+            });
+        });
+
+        // Montar endereço completo se campos individuais não existirem
+        if (data.logradouro) {
+            const addressParts = [
+                data.logradouro,
+                data.numero,
+                data.complemento,
+                data.bairro
+            ].filter(Boolean);
+
+            const fullAddress = addressParts.join(', ');
+            const $addressField = $form.find('#address, [name="address"]');
+
+            if ($addressField.length && (!$addressField.val() || $addressField.val().trim() === '')) {
+                $addressField.val(fullAddress).trigger('change');
+            }
+        }
+
+        // Se CEP foi preenchido, disparar busca de CEP também
+        if (data.cep) {
+            const $cepField = $form.find('#cep, [name="cep"]');
+            if ($cepField.length) {
+                // Aguardar um pouco para não sobrecarregar
+                setTimeout(function () {
+                    Newbase.Forms.lookupCEP(data.cep.replace(/\D/g, ''), $cepField);
+                }, 500);
+            }
+        }
+    };
+
+    /**
+    * Initialize CEP lookup with auto-fill
+    * BUSCA AUTOMÁTICA: Preenche endereço via CEP
+    */
+    Newbase.Forms.initCEPLookup = function () {
+        // Debounced lookup function
+        const debouncedLookup = Newbase.debounce(function () {
+            const $cepField = $(this);
+            const cep = $cepField.val().replace(/\D/g, '');
+
+            // Validar CEP antes de buscar (8 dígitos)
+            if (cep.length === 8) {
+                Newbase.Forms.lookupCEP(cep, $cepField);
+            }
+        }, 800);
+
+        // Event listener no campo CEP
+        $cachedElements.body.on('blur', '#cep, input[name="cep"]', debouncedLookup);
+    };
+
+    /**
+    * Lookup CEP data from ViaCEP API
+    * @param {string} cep - CEP sem formatação (8 dígitos)
+    * @param {jQuery} $cepField - Campo CEP
+    */
+    Newbase.Forms.lookupCEP = function (cep, $cepField) {
+        console.log('Looking up CEP:', cep);
+
+        // Verificar se já está carregando
+        if ($cepField.hasClass('loading-cep')) {
+            return;
+        }
+
+        // Adicionar indicador de carregamento
+        $cepField.addClass('loading-cep');
+        const $form = $cepField.closest('form');
+
+        // Fazer requisição diretamente para ViaCEP (não precisa passar pelo backend)
+        $.ajax({
+            url: 'https://viacep.com.br/ws/' + cep + '/json/',
+            method: 'GET',
+            dataType: 'json',
+            timeout: 10000,
+            success: function (response) {
+                console.log('CEP lookup response:', response);
+
+                if (response && !response.erro) {
+                    Newbase.Forms.fillAddressData(response, $form);
+                    Newbase.notify('Endereço encontrado!', 'success');
+                } else {
+                    Newbase.notify('CEP não encontrado', 'warning');
+                }
+            },
+            error: function (xhr, status, error) {
+                console.error('CEP lookup error:', { xhr, status, error });
+
+                let errorMsg = 'Erro ao buscar CEP';
+
+                if (status === 'timeout') {
+                    errorMsg = 'Tempo esgotado ao buscar CEP. Tente novamente.';
+                } else if (xhr.status === 400) {
+                    errorMsg = 'CEP inválido';
+                }
+
+                Newbase.notify(errorMsg, 'error');
+            },
+            complete: function () {
+                $cepField.removeClass('loading-cep');
+            }
+        });
+    };
+
+    /**
+    * Fill address data from CEP API response
+    * @param {Object} data - Dados do endereço
+    * @param {jQuery} $form - Formulário
+    */
+    Newbase.Forms.fillAddressData = function (data, $form) {
+        // Mapear campos retornados pela API ViaCEP
+        const fieldMapping = {
+            'logradouro': 'address',
+            'complemento': 'address_complement',
+            'bairro': 'address_district',
+            'localidade': 'city',
+            'uf': 'state'
+        };
+
+        // Preencher campos
+        Object.keys(fieldMapping).forEach(function (apiField) {
+            const formField = fieldMapping[apiField];
+            const $field = $form.find('#' + formField + ', [name="' + formField + '"]');
+
+            if ($field.length && data[apiField]) {
+                const currentValue = $field.val();
+
+                // Só preencher se o campo estiver vazio
+                if (!currentValue || currentValue.trim() === '') {
+                    $field.val(data[apiField]).trigger('change');
+
+                    // Feedback visual
+                    $field.addClass('auto-filled');
+                    setTimeout(function () {
+                        $field.removeClass('auto-filled');
+                    }, 2000);
+                }
+            }
+        });
+    };
+    /**
+    * Destroy form handlers (cleanup)
+    * PERFORMANCE: Prevenir memory leaks
+    */
     Newbase.Forms.destroy = function () {
         $cachedElements.body.off('input', 'input[data-format]');
         $cachedElements.body.off('paste', 'input[data-format="numbers"]');
@@ -663,9 +941,7 @@
         console.log('Newbase Forms destroyed');
     };
 
-    // ====================
     // INITIALIZE
-    // ====================
     $(document).ready(function () {
         Newbase.Forms.init();
     });
