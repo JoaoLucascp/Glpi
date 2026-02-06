@@ -12,6 +12,7 @@
 * @license   GPLv2+
 */
 
+
 // 1 SEGURANÇA: Carregar o núcleo do GLPI
 include('../../../inc/includes.php');
 
@@ -297,12 +298,14 @@ if ($entity_id === false || $entity_id === null) {
 $entity_id = max(0, $entity_id);
 
 // 9 RENDERIZAR CABEÇALHO DO GLPI
-Html::header(
-    CompanyData::getTypeName(1),
-    $_SERVER['PHP_SELF'],
-    'management',
-    CompanyData::class
-);
+Html::header('Newbase', $_SERVER['PHP_SELF'], "plugins", "newbase", "menu_slug");
+
+// GLPI 10.0.20: Injetar variáveis JavaScript (incluindo CSRF token)
+echo Html::getCoreVariablesForJavascript();
+
+// CRÍTICO: Adicionar meta tag CSRF para o JavaScript
+echo "<meta name='glpi:csrf_token' content='" . Session::getNewCSRFToken() . "'>\n";
+
 
 // 10 CARREGAR DADOS DA EMPRESA (se estiver editando)
 if ($entity_id > 0) {

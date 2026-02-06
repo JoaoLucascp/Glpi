@@ -19,8 +19,6 @@
  * @version   2.1.0
  */
 
-declare(strict_types=1);
-
 // SECURITY: Load GLPI core
 include '../../../inc/includes.php';
 

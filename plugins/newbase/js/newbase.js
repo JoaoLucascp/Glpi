@@ -36,6 +36,28 @@
         eventListeners: []
     };
 
+    // AJAX SETUP: Configuração Global CSRF (GLPI 10.0.20+)
+    $(function() {
+        // Captura o token CSRF gerado pelo core do GLPI
+        var glpi_csrf_token = $('meta[name="glpi:csrf_token"]').attr('content');
+        
+        if (!glpi_csrf_token) {
+            console.warn('Newbase: CSRF token not found in meta tags');
+            return;
+        }
+        
+        // Configura o jQuery para enviar esse token em TODOS os AJAX requests
+        $.ajaxSetup({
+            headers: {
+                'X-Glpi-Csrf-Token': glpi_csrf_token
+            },
+            data: {
+                '_glpi_csrf_token': glpi_csrf_token
+            }
+        });
+        console.log('Newbase: CSRF Token configurado globalmente.');
+    });
+
     /**
     * Initialize plugin with performance tracking
     * PERFORMANCE: Lazy loading de componentes
@@ -54,11 +76,17 @@
         $cache.document = $(document);
         $cache.window = $(window);
 
+        // INTERFACE: Correção para Select2 e Passive Listeners
+        if ($.fn.select2) {
+            $.fn.select2.defaults.set("scrollAfterSelect", false);
+        }
+
         // Inicializar componentes
         Newbase.initTooltips();
         Newbase.initAlerts();
         Newbase.initModals();
         Newbase.initTables();
+        Newbase.initSearchButtons();
 
         state.initialized = true;
 
@@ -282,6 +310,111 @@
     };
 
     /**
+    * Helper to get AJAX URL with correct protocol and path
+    */
+    Newbase.getAjaxUrl = function (endpoint) {
+        // Use GLPI global configuration for root path
+        // CFG_GLPI.root_doc is injected by Html::header()
+        const root = (typeof CFG_GLPI !== 'undefined' && CFG_GLPI.root_doc) ? CFG_GLPI.root_doc : '';
+
+        return root + '/plugins/newbase/ajax/' + endpoint;
+    };
+
+    /**
+    * Initialize search buttons (CNPJ/CEP)
+    */
+    Newbase.initSearchButtons = function () {
+        // CNPJ Search
+        $cache.body.on('click', '#btn-cnpj', function (e) {
+            e.preventDefault();
+            const cnpj = $('#cnpj').val();
+
+            if (!cnpj) {
+                Newbase.notify('Por favor, insira um CNPJ', 'warning');
+                return;
+            }
+
+            // Capturar token CSRF da meta tag
+            const csrfToken = $('meta[name="glpi:csrf_token"]').attr('content');
+            
+            if (!csrfToken) {
+                console.error('CSRF token não encontrado!');
+                Newbase.notify('Erro de segurança. Recarregue a página.', 'error');
+                return;
+            }
+
+            Newbase.ajax({
+                url: Newbase.getAjaxUrl('searchCompany.php'),
+                data: { 
+                    cnpj: cnpj,
+                    _glpi_csrf_token: csrfToken
+                },
+                loadingTarget: $(this).closest('td'),
+                success: function (response) {
+                    if (response.success) {
+                        const data = response.data;
+                        $('#name').val(data.corporate_name || '');
+                        $('#corporate_name').val(data.corporate_name || '');
+                        $('#fantasy_name').val(data.fantasy_name || '');
+                        $('#email').val(data.email || '');
+                        $('#phone').val(data.phone || '');
+                        $('#address').val(data.address || '');
+                        $('#city').val(data.city || '');
+                        $('#state').val(data.state || '');
+                        $('#cep').val(data.postcode || '');
+                        $('#country').val('BR');
+
+                        Newbase.notify(response.message, 'success');
+                    } else {
+                        Newbase.notify(response.message || 'Erro ao buscar CNPJ', 'error');
+                    }
+                }
+            });
+        });
+
+        // CEP Search
+        $cache.body.on('click', '#btn-cep', function (e) {
+            e.preventDefault();
+            const cep = $('#cep').val();
+
+            if (!cep) {
+                Newbase.notify('Por favor, insira um CEP', 'warning');
+                return;
+            }
+
+            // Capturar token CSRF da meta tag
+            const csrfToken = $('meta[name="glpi:csrf_token"]').attr('content');
+            
+            if (!csrfToken) {
+                console.error('CSRF token não encontrado!');
+                Newbase.notify('Erro de segurança. Recarregue a página.', 'error');
+                return;
+            }
+
+            Newbase.ajax({
+                url: Newbase.getAjaxUrl('searchAddress.php'),
+                data: { 
+                    cep: cep,
+                    _glpi_csrf_token: csrfToken
+                },
+                loadingTarget: $(this).closest('td'),
+                success: function (response) {
+                    if (response.success) {
+                        const data = response.data;
+                        $('#address').val(data.logradouro || '');
+                        $('#city').val(data.localidade || '');
+                        $('#state').val(data.uf || '');
+
+                        Newbase.notify(response.message, 'success');
+                    } else {
+                        Newbase.notify(response.message || 'Erro ao buscar CEP', 'error');
+                    }
+                }
+            });
+        });
+    };
+
+    /**
     * Show loading indicator
     */
     Newbase.showLoading = function (target) {
@@ -384,26 +517,12 @@
     * SECURITY: Incluir token CSRF automaticamente
     */
     Newbase.ajax = function (options) {
-        // SECURITY: Obter token CSRF do GLPI
-        const csrfToken = $('meta[name="glpi-csrf-token"]').attr('content') ||
-            $('input[name="_glpi_csrf_token"]').first().val() ||
-            '';
-
-        if (!csrfToken) {
-            console.warn('CSRF token not found. Request may fail.');
-        }
-
         const defaults = {
             type: 'POST',
             dataType: 'json',
             timeout: CONFIG.AJAX_TIMEOUT,
             data: {},
             beforeSend: function (xhr) {
-                // SECURITY: Adicionar CSRF token no header
-                if (csrfToken) {
-                    xhr.setRequestHeader('X-Glpi-Csrf-Token', csrfToken);
-                }
-
                 if (options.loadingTarget) {
                     Newbase.showLoading(options.loadingTarget);
                 }
@@ -451,17 +570,6 @@
                 }
             }
         };
-
-        // SECURITY: Adicionar CSRF token aos dados POST
-        if (csrfToken && (options.type === 'POST' || options.type === 'PUT' || options.type === 'DELETE')) {
-            if (!options.data) {
-                options.data = {};
-            }
-
-            if (typeof options.data === 'object') {
-                options.data._glpi_csrf_token = csrfToken;
-            }
-        }
 
         return $.ajax($.extend(true, {}, defaults, options));
     };
@@ -885,7 +993,7 @@
 
     // INITIALIZE
     $(document).ready(function () {
-        Newbase.init();
+        // Initialization logic moved to Newbase.init()
     });
 
     // PERFORMANCE: Cleanup antes de sair da página

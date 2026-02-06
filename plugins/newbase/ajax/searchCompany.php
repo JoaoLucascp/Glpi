@@ -156,7 +156,39 @@ try {
     // ESTRATÉGIA 2: CONSULTAR API EXTERNA
 
     // 13 BUSCAR NA API DA RECEITA FEDERAL
-    $companyData = Common::searchCompanyByCNPJ($cnpj);
+    // $companyData = Common::searchCompanyByCNPJ($cnpj);
+
+    // FIX: Inline cURL with SSL disabled for localhost
+    $url = "https://brasilapi.com.br/api/cnpj/v1/{$cnpj}";
+    $ch = curl_init();
+    curl_setopt_array($ch, [
+        CURLOPT_URL => $url,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => 10,
+        CURLOPT_SSL_VERIFYPEER => false, // Localhost fix
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_USERAGENT => 'GLPI-Newbase/2.1.0',
+    ]);
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    $companyData = false;
+    if ($httpCode === 200 && $response) {
+        $data = json_decode($response, true);
+        if (isset($data['cnpj'])) {
+            $companyData = [
+                'legal_name' => $data['razao_social'] ?? '',
+                'fantasy_name' => $data['nome_fantasia'] ?? '',
+                'address' => trim(($data['descricao_tipo_logradouro'] ?? '') . ' ' . ($data['logradouro'] ?? '') . ', ' . ($data['numero'] ?? '')),
+                'city' => $data['municipio'] ?? '',
+                'state' => $data['uf'] ?? '',
+                'postcode' => $data['cep'] ?? '',
+                'email' => $data['email'] ?? '',
+                'phone' => $data['ddd_telefone_1'] ?? ''
+            ];
+        }
+    }
 
     if ($companyData === false) {
         echo json_encode([
@@ -174,10 +206,11 @@ try {
 
     // 14 BUSCAR DADOS COMPLEMENTARES (telefone, email)
     // APIs públicas geralmente não retornam esses dados
-    $additionalData = Common::searchCompanyAdditionalData(
-        $cnpj,
-        $companyData['legal_name'] ?? ''
-    );
+    // BrasilAPI already returns email and phone, so we use them directly
+    $additionalData = [
+        'email' => $companyData['email'] ?? '',
+        'phone' => $companyData['phone'] ?? ''
+    ];
 
     // 15 RESPOSTA DE SUCESSO COM DADOS DA API
     echo json_encode([
@@ -186,8 +219,8 @@ try {
         'data' => [
             'corporate_name' => $companyData['legal_name'] ?? '',
             'fantasy_name' => $companyData['fantasy_name'] ?? '',
-            'email' => $additionalData['email'] ?? '',
-            'phone' => Common::formatPhone($additionalData['phone'] ?? ''),
+            'email' => $companyData['email'] ?? '',
+            'phone' => Common::formatPhone($companyData['phone'] ?? ''),
             'address' => $companyData['address'] ?? '',
             'city' => $companyData['city'] ?? '',
             'state' => $companyData['state'] ?? '',
@@ -204,17 +237,17 @@ try {
 } catch (Exception $e) {
     // 16 RESPOSTA DE ERRO
     http_response_code(500);
-    
+
     $response = [
         'success' => false,
         'message' => __('Error searching company data', 'newbase'),
     ];
-    
+
     // Incluir detalhes apenas em debug
     if (defined('GLPI_DEBUG')) {
         $response['error'] = $e->getMessage();
     }
-    
+
     echo json_encode($response);
 
     Toolbox::logInFile(

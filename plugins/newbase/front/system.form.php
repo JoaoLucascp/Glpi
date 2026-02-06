@@ -163,6 +163,9 @@ Html::header(
     'system'
 );
 
+// GLPI 10.0.20: Injetar variáveis JavaScript (incluindo CSRF token)
+echo Html::getCoreVariablesForJavascript();
+
 // 11 CARREGAR DADOS DO SISTEMA (se estiver editando)
 if ($id > 0) {
     // Modo edição: carregar dados existentes

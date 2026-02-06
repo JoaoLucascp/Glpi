@@ -123,7 +123,7 @@ try {
         CURLOPT_URL => $url,
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_TIMEOUT => 10,
-        CURLOPT_SSL_VERIFYPEER => true,
+        CURLOPT_SSL_VERIFYPEER => false, // Localhost fix
         CURLOPT_FOLLOWLOCATION => true,
         CURLOPT_USERAGENT => 'GLPI Newbase Plugin/2.0',
     ]);
@@ -221,17 +221,17 @@ try {
 } catch (Exception $e) {
     // 18 TRATAMENTO DE ERRO
     http_response_code(500);
-    
+
     $response = [
         'success' => false,
         'message' => __('Error searching address', 'newbase'),
     ];
-    
+
     // Incluir detalhes apenas em debug
     if (defined('GLPI_DEBUG')) {
         $response['error'] = $e->getMessage();
     }
-    
+
     echo json_encode($response);
 
     Toolbox::logInFile(

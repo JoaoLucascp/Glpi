@@ -201,6 +201,9 @@ Html::header(
     'task'
 );
 
+// GLPI 10.0.20: Injetar variáveis JavaScript (incluindo CSRF token)
+echo Html::getCoreVariablesForJavascript();
+
 // 11 CARREGAR DADOS DA TAREFA (se estiver editando)
 if ($id > 0) {
     // Modo edição: usar método padrão do GLPI

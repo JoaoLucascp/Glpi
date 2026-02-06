@@ -21,7 +21,7 @@ include('../../../inc/includes.php');
 Session::checkLoginUser();
 
 // VERIFICAR TOKEN CSRF
-Session::checkCSRF($_POST);
+Session::checkCSRF();
 
 // 3 IMPORTAR CLASSES NECESSÁRIAS
 use GlpiPlugin\Newbase\Common;
@@ -47,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 // 7 VERIFICAR TOKEN CSRF
-Session::checkCSRF($_POST);
+Session::checkCSRF();
 
 // 8 VERIFICAR PERMISSÕES
 if (!Task::canView()) {

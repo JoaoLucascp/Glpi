@@ -347,9 +347,12 @@ class CompanyData extends CommonDBTM
         // CNPJ
         echo "<td>" . __('CNPJ', 'newbase') . "</td>";
         echo "<td>";
+        echo "<div style='display:flex; align-items:center; gap:5px;'>";
         echo "<input type='text' name='cnpj' id='cnpj' value='" .
                 htmlspecialchars($company_data['cnpj'] ?? '', ENT_QUOTES, 'UTF-8') .
                 "' size='20' maxlength='18' />";
+        echo "<a href='#' id='btn-cnpj' class='btn btn-sm btn-icon btn-ghost-secondary' title='" . __('Search CNPJ', 'newbase') . "'><i class='ti ti-search'></i></a>";
+        echo "</div>";
         echo "</td>";
         echo "</tr>";
 
@@ -418,9 +421,12 @@ class CompanyData extends CommonDBTM
         echo "<tr class='tab_bg_1'>";
         echo "<td>" . __('Postal code') . "</td>";
         echo "<td>";
+        echo "<div style='display:flex; align-items:center; gap:5px;'>";
         echo "<input type='text' name='cep' id='cep' value='" .
                 htmlspecialchars($company_data['postcode'] ?? '', ENT_QUOTES, 'UTF-8') .
                 "' size='10' />";
+        echo "<a href='#' id='btn-cep' class='btn btn-sm btn-icon btn-ghost-secondary' title='" . __('Search CEP', 'newbase') . "'><i class='ti ti-search'></i></a>";
+        echo "</div>";
         echo "</td>";
 
         echo "<td>" . __('City') . "</td>";
