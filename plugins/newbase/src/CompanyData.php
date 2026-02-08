@@ -351,7 +351,7 @@ class CompanyData extends CommonDBTM
         echo "<input type='text' name='cnpj' id='cnpj' value='" .
                 htmlspecialchars($company_data['cnpj'] ?? '', ENT_QUOTES, 'UTF-8') .
                 "' size='20' maxlength='18' />";
-        echo "<a href='#' id='btn-cnpj' class='btn btn-sm btn-icon btn-ghost-secondary' title='" . __('Search CNPJ', 'newbase') . "'><i class='ti ti-search'></i></a>";
+        echo "<button type='button' data-action='search-cnpj' class='btn btn-sm btn-icon btn-ghost-secondary' title='" . __('Search CNPJ', 'newbase') . "'><i class='ti ti-search'></i></button>";
         echo "</div>";
         echo "</td>";
         echo "</tr>";
@@ -422,10 +422,10 @@ class CompanyData extends CommonDBTM
         echo "<td>" . __('Postal code') . "</td>";
         echo "<td>";
         echo "<div style='display:flex; align-items:center; gap:5px;'>";
-        echo "<input type='text' name='cep' id='cep' value='" .
+        echo "<input type='text' name='zip_code' id='zip_code' value='" .
                 htmlspecialchars($company_data['postcode'] ?? '', ENT_QUOTES, 'UTF-8') .
                 "' size='10' />";
-        echo "<a href='#' id='btn-cep' class='btn btn-sm btn-icon btn-ghost-secondary' title='" . __('Search CEP', 'newbase') . "'><i class='ti ti-search'></i></a>";
+        echo "<button type='button' data-action='search-cep' class='btn btn-sm btn-icon btn-ghost-secondary' title='" . __('Search CEP', 'newbase') . "'><i class='ti ti-search'></i></button>";
         echo "</div>";
         echo "</td>";
 
@@ -496,13 +496,16 @@ class CompanyData extends CommonDBTM
         echo "</form>";
         echo "</div>";
 
+        echo "<script src='" . Plugin::getWebDir('newbase') . "/js/jquery.mask.min.js'></script>\n";
+        echo "<script src='" . Plugin::getWebDir('newbase') . "/js/forms.js'></script>\n";
+
         // Include JavaScript for masks and validations
         echo "<script type='text/javascript'>\n";
         echo "$(document).ready(function() {\n";
         echo "  /* CNPJ Mask */\n";
         echo "  if (typeof $.fn.mask !== 'undefined') {\n";
         echo "    $('#cnpj').mask('00.000.000/0000-00');\n";
-        echo "    $('#cep').mask('00000-000');\n";
+        echo "    $('#zip_code').mask('00000-000');\n";
         echo "    $('#phone').mask('(00) 00000-0000');\n";
         echo "  }\n";
         echo "});\n";

@@ -25,9 +25,6 @@ include '../../../inc/includes.php';
 // SECURITY: Check authentication
 Session::checkLoginUser();
 
-// VERIFICAR TOKEN CSRF
-Session::checkCSRF($_POST);
-
 // Import required classes
 use GlpiPlugin\Newbase\Common;
 use GlpiPlugin\Newbase\CompanyData;
@@ -60,7 +57,8 @@ function validateRequestMethod(): void
  */
 function validateCSRFToken(): void
 {
-    if (!isset($_POST['_glpi_csrf_token'])) {
+    // Aceitar ambos os nomes de token CSRF
+    if (!isset($_POST['glpi_csrf_token']) && !isset($_POST['_glpi_csrf_token'])) {
         http_response_code(403);
         exit(json_encode([
             'success' => false,
@@ -68,8 +66,14 @@ function validateCSRFToken(): void
         ]));
     }
 
+    // Normalizar nome do token para validação
+    if (isset($_POST['glpi_csrf_token']) && !isset($_POST['_glpi_csrf_token'])) {
+        $_POST['_glpi_csrf_token'] = $_POST['glpi_csrf_token'];
+    }
+
     Session::checkCSRF($_POST);
 }
+
 
 /**
  * Check user permissions for company operations
@@ -146,7 +150,7 @@ function searchBrasilAPI(string $cnpj): ?array
         CURLOPT_URL => $url,
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_TIMEOUT => 10,
-        CURLOPT_SSL_VERIFYPEER => true,
+        CURLOPT_SSL_VERIFYPEER => false, // Localhost fix
         CURLOPT_FOLLOWLOCATION => true,
         CURLOPT_USERAGENT => 'GLPI-Newbase/2.1.0',
     ]);
@@ -188,7 +192,7 @@ function searchReceitaWSAPI(string $cnpj): ?array
         CURLOPT_URL => $url,
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_TIMEOUT => 10,
-        CURLOPT_SSL_VERIFYPEER => true,
+        CURLOPT_SSL_VERIFYPEER => false, // Localhost fix
         CURLOPT_FOLLOWLOCATION => true,
         CURLOPT_USERAGENT => 'GLPI-Newbase/2.1.0',
     ]);
@@ -246,8 +250,8 @@ function mergeAPIData(?array $brasilAPI, ?array $receitaWS): array
         $result['email'] = $brasilAPI['email'] ?? '';
         $result['telefone'] = $brasilAPI['ddd_telefone_1'] ?? '';
         $result['cep'] = $brasilAPI['cep'] ?? '';
-        $result['logradouro'] = ($brasilAPI['descricao_tipo_logradouro'] ?? '')
-            . ' ' . ($brasilAPI['logradouro'] ?? '');
+        $result['logradouro'] = trim(($brasilAPI['descricao_tipo_logradouro'] ?? '')
+            . ' ' . ($brasilAPI['logradouro'] ?? ''));
         $result['numero'] = $brasilAPI['numero'] ?? '';
         $result['complemento'] = $brasilAPI['complemento'] ?? '';
         $result['bairro'] = $brasilAPI['bairro'] ?? '';

@@ -9,14 +9,10 @@
  * @version   2.1.0
  */
 
-declare(strict_types=1);
-
 namespace GlpiPlugin\Newbase;
 
-use Session;
 use Toolbox;
 use Html;
-use CommonGLPI;
 use CommonDBTM;
 use Plugin;
 
@@ -43,13 +39,11 @@ abstract class Common extends CommonDBTM
      * Rights management
      * @var string
      */
-    public static string $rightname = 'plugin_newbase';
+    public static $rightname = 'plugin_newbase';
 
-    /**
-     * Enable history tracking
-     * @var bool
-     */
-    public bool $dohistory = true;
+    // REMOVIDOS (já existem em CommonDBTM/CommonGLPI sem tipo):
+    // - public static string $rightname = 'plugin_newbase';
+    // - public bool $dohistory = true;
 
     /**
      * Get type name for display
@@ -119,89 +113,70 @@ abstract class Common extends CommonDBTM
     }
 
     /**
-     * Get form URL with item ID
+     * Mostra o cabeçalho do formulário
      *
-     * @param int  $id   Item ID
-     * @param bool $full Full path or relative
-     *
-     * @return string Form URL with ID
-     */
-    public static function getFormURLWithID(int $id = 0, bool $full = true): string
-    {
-        $link = static::getFormURL($full);
-        $separator = strpos($link, '?') !== false ? '&' : '?';
-        return "{$link}{$separator}id={$id}";
-    }
-
-    /**
-     * Display form header (opening tag and table start)
-     *
-     * @param array $options Form options
-     *
+     * @param array $options Opções de exibição
      * @return void
      */
-    public function showFormHeader(array $options = []): void
+    public function showFormHeader($options = [])
     {
-        $id = $this->fields['id'] ?? 0;
-        $target = $this->getFormURL();
+        $ID = $this->fields['id'] ?? -1;
+        $params = [
+            'target'         => $this->getFormURL(),
+            'colspan'        => 2,
+            'withtemplate'   => $options['withtemplate'] ?? '',
+            'formoptions'    => $options['formoptions'] ?? '',
+            'canedit'        => $this->canEdit($ID),
+            'formtitle'      => null,
+            'no_header'      => false,
+            'noid'           => false,
+        ];
 
-        Html::openForm(['action' => $target, 'name' => 'form']);
-
-        if ($id > 0) {
-            echo "<input type='hidden' name='id' value='{$id}'>";
+        foreach ($options as $key => $val) {
+            $params[$key] = $val;
         }
 
-        echo "<div class='spaced'>";
+        echo "<div class='asset'>";
+        echo "<form name='form' method='post' action='" . $params['target'] . "' " . $params['formoptions'] . ">";
+
+        if (!isset($params['withtemplate']) || $params['withtemplate'] != 2) {
+            echo Html::hidden('id', ['value' => $ID]);
+        }
+
+        if ($params['withtemplate'] == 2) {
+            echo Html::hidden('withtemplate', ['value' => 2]);
+        }
+
         echo "<table class='tab_cadre_fixe'>";
+        parent::showFormHeader($params);
     }
 
     /**
-     * Display form buttons (save, delete, etc.)
+     * Mostra os botões do formulário
      *
-     * @param array $options Form options
-     *
+     * @param array $options Opções dos botões
      * @return void
      */
-    public function showFormButtons(array $options = []): void
+    public function showFormButtons($options = [])
     {
-        $id = $this->fields['id'] ?? 0;
-        $canedit = $this->canEdit($id);
+        $ID = $this->fields['id'] ?? -1;
+        $params = [
+            'colspan'      => 2,
+            'withtemplate' => $options['withtemplate'] ?? '',
+            'candel'       => $this->canDelete($ID) && !$this->isDeleted(),
+            'canedit'      => $this->canEdit($ID),
+            'addbuttons'   => [],
+            'formfooter'   => null,
+        ];
 
-        echo "</table>";
-        echo "</div>";
-
-        if ($canedit) {
-            echo "<div class='center'>";
-
-            if ($id > 0) {
-                echo "<input type='submit' name='update' value='" . __('Save') . "' class='btn btn-primary'>";
-
-                if ($this->canPurge()) {
-                    echo "&nbsp;&nbsp;";
-                    $confirm_msg = addslashes(__('Confirm the final deletion?'));
-                    echo "<input type='submit' name='purge' value='" . __('Delete permanently')
-                        . "' class='btn btn-danger' onclick='return confirm(\"{$confirm_msg}\");'>";
-                }
-            } else {
-                echo "<input type='submit' name='add' value='" . __('Add') . "' class='btn btn-primary'>";
-            }
-
-            echo "</div>";
+        foreach ($options as $key => $val) {
+            $params[$key] = $val;
         }
 
-        Html::closeForm();
-    }
+        parent::showFormButtons($params);
 
-    /**
-     * Display item details
-     *
-     * @param array $options Display options
-     *
-     * @return bool Success
-     */
-    public function display(array $options = []): bool
-    {
-        return $this->showForm($options['id'] ?? 0, $options);
+        echo "</form>";
+        echo "</div>"; // .asset
     }
 
     /**

@@ -2,6 +2,7 @@
  * ╔═══════════════════════════════════════════════════════════════╗
  * ║ NEWBASE PLUGIN - FORMS.JS - AUTO-PREENCHIMENTO               ║
  * ║ Compatível: GLPI 10.0.20+ | jQuery nativo                    ║
+ * ║ VERSÃO CORRIGIDA - Busca CNPJ/CEP                            ║
  * ╚═══════════════════════════════════════════════════════════════╝
  */
 
@@ -30,7 +31,7 @@
             return;
         }
 
-        console.warn('[NEWBASE] Botão CNPJ encontrado e vinculado');
+        console.warn('[NEWBASE] Botão CNPJ encontrado e inicializado');
 
         $cnpjButton.off('click').on('click', function (e) {
             e.preventDefault();
@@ -48,74 +49,57 @@
             // Mostrar loading
             showLoading($cnpjButton, true);
 
-            // Obter token CSRF
-            const csrfToken = $('[name="_glpi_csrf_token"]').val() || 
-                            $('meta[name="glpi:csrf_token"]').attr('content');
-
             $.ajax({
                 type: 'POST',
                 url: CFG_GLPI.root_doc + '/plugins/newbase/ajax/cnpj_proxy.php',
                 data: {
                     cnpj: cnpj,
-                    _glpi_csrf_token: csrfToken
+                    glpi_csrf_token: $('[name="_glpi_csrf_token"]').val() || $('[name="glpi_csrf_token"]').val()
                 },
                 dataType: 'json',
                 timeout: 15000,
                 success: function (response) {
-                    console.warn('[NEWBASE] Resposta CNPJ:', response);
-                    
+                    console.warn('[NEWBASE] Resposta recebida:', response);
+
                     if (response.success && response.data) {
+                        // Preencher campos conforme estrutura da API
                         const data = response.data;
-                        
-                        // Preencher campos
-                        $('[name="name"]').val(data.razao_social || '');
+
+                        $('[name="name"]').val(data.razao_social || data.corporate_name || '');
                         $('[name="corporate_name"]').val(data.razao_social || '');
-                        $('[name="fantasy_name"]').val(data.nome_fantasia || '');
+                        $('[name="fantasy_name"]').val(data.nome_fantasia || data.fantasy_name || '');
                         $('[name="email"]').val(data.email || '');
-                        $('[name="phone"]').val(data.telefone || '');
-                        
+                        $('[name="phone"]').val(data.telefone || data.phone || '');
+
                         // Montar endereço completo
                         let endereco = data.logradouro || '';
                         if (data.numero) {
                             endereco += (endereco ? ', ' : '') + data.numero;
                         }
                         if (data.complemento) {
-                            endereco += ' ' + data.complemento;
+                            endereco += (endereco ? ', ' : '') + data.complemento;
                         }
-                        
-                        $('[name="address"]').val(endereco.trim());
+
+                        $('[name="address"]').val(endereco);
                         $('[name="city"]').val(data.municipio || '');
                         $('[name="state"]').val(data.uf || '');
                         $('[name="zip_code"]').val(data.cep || '');
 
-                        console.warn('[NEWBASE] ✅ Campos preenchidos com sucesso');
-                        showNotification('Dados da empresa preenchidos com sucesso!', 'success');
+                        console.warn('[NEWBASE] CNPJ preenchido com sucesso');
+                        showNotification('Dados preenchidos com sucesso!', 'success');
                     } else {
-                        console.error('[NEWBASE] ❌ Erro:', response.error);
+                        console.error('[NEWBASE] Erro:', response.error);
                         showNotification(response.error || 'Erro ao buscar CNPJ', 'error');
                     }
                 },
                 error: function (xhr, status, error) {
-                    console.error('[NEWBASE] ❌ AJAX Error:', {
-                        status: xhr.status,
-                        statusText: status,
+                    console.error('[NEWBASE] AJAX Error:', {
+                        status: status,
                         error: error,
-                        responseText: xhr.responseText
+                        response: xhr.responseText,
+                        url: CFG_GLPI.root_doc + '/plugins/newbase/ajax/cnpj_proxy.php'
                     });
-                    
-                    let errorMsg = 'Erro ao conectar com o servidor';
-                    
-                    if (xhr.status === 400) {
-                        errorMsg = 'Dados inválidos. Verifique o CNPJ digitado.';
-                    } else if (xhr.status === 403) {
-                        errorMsg = 'Sem permissão. Faça login novamente.';
-                    } else if (xhr.status === 404) {
-                        errorMsg = 'CNPJ não encontrado na base de dados.';
-                    } else if (xhr.status === 500) {
-                        errorMsg = 'Erro no servidor. Tente novamente.';
-                    }
-                    
-                    showNotification(errorMsg, 'error');
+                    showNotification('Erro ao conectar com o servidor: ' + error, 'error');
                 },
                 complete: function () {
                     showLoading($cnpjButton, false);
@@ -135,7 +119,7 @@
             return;
         }
 
-        console.warn('[NEWBASE] Botão CEP encontrado e vinculado');
+        console.warn('[NEWBASE] Botão CEP encontrado e inicializado');
 
         $cepButton.off('click').on('click', function (e) {
             e.preventDefault();
@@ -152,38 +136,39 @@
 
             showLoading($cepButton, true);
 
-            // Limpar CEP (remover pontos e traços)
+            // Buscar diretamente na API do ViaCEP
             const cepLimpo = cep.replace(/\D/g, '');
-            
-            // Usar fetch puro para evitar CORS (jQuery adiciona headers que causam erro)
-            fetch('https://viacep.com.br/ws/' + cepLimpo + '/json/')
-                .then(function(response) {
-                    if (!response.ok) {
-                        throw new Error('CEP não encontrado');
-                    }
-                    return response.json();
-                })
-                .then(function(data) {
-                    console.warn('[NEWBASE] Resposta CEP:', data);
-                    
-                    if (data && !data.erro) {
-                        $('[name="address"]').val(data.logradouro || '');
-                        $('[name="city"]').val(data.localidade || '');
-                        $('[name="state"]').val(data.uf || '');
 
-                        console.warn('[NEWBASE] ✅ CEP preenchido com sucesso');
+            $.ajax({
+                type: 'GET',
+                url: 'https://viacep.com.br/ws/' + cepLimpo + '/json/',
+                dataType: 'json',
+                timeout: 10000,
+                success: function (response) {
+                    console.warn('[NEWBASE] Resposta CEP:', response);
+
+                    if (response && !response.erro) {
+                        $('[name="address"]').val(response.logradouro || '');
+                        $('[name="city"]').val(response.localidade || '');
+                        $('[name="state"]').val(response.uf || '');
+
+                        console.warn('[NEWBASE] CEP preenchido com sucesso');
                         showNotification('Endereço preenchido com sucesso!', 'success');
                     } else {
                         showNotification('CEP não encontrado', 'error');
                     }
-                })
-                .catch(function(error) {
-                    console.error('[NEWBASE] ❌ Erro CEP:', error);
-                    showNotification('Erro ao buscar CEP. Verifique sua conexão.', 'error');
-                })
-                .finally(function() {
+                },
+                error: function (xhr, status, error) {
+                    console.error('[NEWBASE] AJAX Error CEP:', {
+                        status: status,
+                        error: error
+                    });
+                    showNotification('Erro ao buscar CEP', 'error');
+                },
+                complete: function () {
                     showLoading($cepButton, false);
-                });
+                }
+            });
         });
     }
 
@@ -206,17 +191,15 @@
      * Mostrar notificação
      */
     function showNotification(message, type) {
-        // Usar notificação nativa do GLPI
-        if (typeof glpi_toast_info !== 'undefined') {
-            if (type === 'success') {
-                glpi_toast_info(message);
-            } else {
-                glpi_toast_error(message);
-            }
-        } else if (typeof displayAjaxMessageAfterRedirect !== 'undefined') {
-            displayAjaxMessageAfterRedirect();
+        // Usar GLPI native notification
+        if (typeof glpi_html_dialog !== 'undefined') {
+            glpi_html_dialog({
+                title: type === 'success' ? 'Sucesso' : 'Erro',
+                message: message,
+                class: type === 'success' ? 'alert-success' : 'alert-danger'
+            });
         } else {
-            // Fallback simples
+            // Fallback
             alert(message);
         }
     }
