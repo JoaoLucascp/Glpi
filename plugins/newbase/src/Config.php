@@ -336,10 +336,16 @@ class Config
             }
         }
 
-        // USAR HTML NATIVO AO INVÉS DE Html::openForm()
+        // usar a API do GLPI em vez de string crua
         echo "<form method='POST' action=''>";
-        echo Session::getToken();
-        echo "<input type='hidden' name='update_config' value='1'>";
+
+        echo Html::hidden('_glpi_csrf_token', [
+            'value' => Session::getNewCSRFToken(),
+        ]);
+
+        echo Html::hidden('update_config', [
+            'value' => 1,
+        ]);
 
         // Cria tabela com os campos
         echo "<table class='tab_cadre_fixe'>";
