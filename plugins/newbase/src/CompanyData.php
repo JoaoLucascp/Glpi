@@ -1,6 +1,34 @@
 <?php
 
 /**
+* -------------------------------------------------------------------------
+* Newbase plugin for GLPI
+* -------------------------------------------------------------------------
+*
+* LICENSE
+*
+* This file is part of Newbase.
+*
+* Newbase is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2 of the License, or
+* (at your option) any later version.
+*
+* Newbase is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with Newbase. If not, see <http://www.gnu.org/licenses/>.
+* -------------------------------------------------------------------------
+* @copyright Copyright (C) 2024-2026 by João Lucas
+* @license   GPLv2 https://www.gnu.org/licenses/gpl-2.0.html
+* @link      https://github.com/JoaoLucascp/Glpi
+* -------------------------------------------------------------------------
+*/
+
+/**
 * CompanyData Class - Company data management for Newbase plugin
 * @package   Plugin - Newbase
 * @author    João Lucas
@@ -9,13 +37,15 @@
 * @version   2.1.0
 */
 
+declare(strict_types=1);
+
 namespace GlpiPlugin\Newbase;
 
 use CommonDBTM;
 use Entity;
-use Session;
 use Toolbox;
 use Plugin;
+use Session;
 
 /**
 * CompanyData - Manages company data with integration between
@@ -61,6 +91,41 @@ class CompanyData extends CommonDBTM
     public static function getIcon(): string
     {
         return 'ti ti-building';
+    }
+
+/**
+* Get menu content for this item type
+* @return array Menu content
+*/
+    public static function getMenuContent(): array
+    {
+        $menu = [];
+
+        // Check user rights
+        if (!Session::haveRight(self::$rightname, READ)) {
+            return $menu;
+        }
+
+        // Get plugin URL
+        $plugin = new Plugin();
+        $baseUrl = Plugin::getWebDir('newbase');
+
+        // Menu configuration
+        $menu['title'] = self::getTypeName(2);
+        $menu['page']  = self::getSearchURL(false);
+        $menu['icon']  = self::getIcon();
+
+        // Add links
+        $menu['links'] = [
+            'search' => self::getSearchURL(false),
+        ];
+
+        // Add form link if user can create
+        if (self::canCreate()) {
+            $menu['links']['add'] = self::getFormURL(false);
+        }
+
+        return $menu;
     }
 
 /**
@@ -319,7 +384,10 @@ class CompanyData extends CommonDBTM
         echo "<form name='form_company' id='form_company' method='post' action='" . $form_action . "' enctype='multipart/form-data'>";
 
         // CSRF Token - CRÍTICO PARA SEGURANÇA
-        echo "<input type='hidden' name='_glpi_csrf_token' value='" . Session::getNewCSRFToken() . "' />";
+        // Usar token diretamente da sessão (método garantido para GLPI 10.0.20)
+        if (isset($_SESSION['_glpi_csrf_token'])) {
+            echo "<input type='hidden' name='_glpi_csrf_token' value='" . $_SESSION['_glpi_csrf_token'] . "' />";
+        }
 
         if (!$is_new) {
             echo "<input type='hidden' name='entities_id' value='" . $entity_id . "' />";
@@ -422,7 +490,7 @@ class CompanyData extends CommonDBTM
         echo "<td>" . __('Postal code') . "</td>";
         echo "<td>";
         echo "<div style='display:flex; align-items:center; gap:5px;'>";
-        echo "<input type='text' name='zip_code' id='zip_code' value='" .
+        echo "<input type='text' name='cep' id='cep' value='" .
                 htmlspecialchars($company_data['postcode'] ?? '', ENT_QUOTES, 'UTF-8') .
                 "' size='10' />";
         echo "<button type='button' data-action='search-cep' class='btn btn-sm btn-icon btn-ghost-secondary' title='" . __('Search CEP', 'newbase') . "'><i class='ti ti-search'></i></button>";
@@ -505,7 +573,7 @@ class CompanyData extends CommonDBTM
         echo "  /* CNPJ Mask */\n";
         echo "  if (typeof $.fn.mask !== 'undefined') {\n";
         echo "    $('#cnpj').mask('00.000.000/0000-00');\n";
-        echo "    $('#zip_code').mask('00000-000');\n";
+        echo "    $('#cep').mask('00000-000');\n";
         echo "    $('#phone').mask('(00) 00000-0000');\n";
         echo "  }\n";
         echo "});\n";

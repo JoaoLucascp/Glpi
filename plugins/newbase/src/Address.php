@@ -1,6 +1,34 @@
 <?php
 
 /**
+* -------------------------------------------------------------------------
+* Newbase plugin for GLPI
+* -------------------------------------------------------------------------
+*
+* LICENSE
+*
+* This file is part of Newbase.
+*
+* Newbase is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2 of the License, or
+* (at your option) any later version.
+*
+* Newbase is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with Newbase. If not, see <http://www.gnu.org/licenses/>.
+* -------------------------------------------------------------------------
+* @copyright Copyright (C) 2024-2026 by João Lucas
+* @license   GPLv2 https://www.gnu.org/licenses/gpl-2.0.html
+* @link      https://github.com/JoaoLucascp/Glpi
+* -------------------------------------------------------------------------
+*/
+
+/**
 * Classe Address - Gerenciamento de Endereços para o Plugin Newbase
 * @package   PluginNewbase
 * @author    João Lucas
@@ -8,6 +36,7 @@
 * @license   GPLv2+
 * @version   2.1.0
 */
+declare(strict_types=1);
 
 namespace GlpiPlugin\Newbase;
 
@@ -356,141 +385,62 @@ class Address extends CommonDBTM
 
     // VALIDAÇÃO DE CEP
 
-    if (!empty($input['cep'])) {
-        // Remover formatação (01310-100 → 01310100)
-        $cep = preg_replace('/[^0-9]/', '', $input['cep']);
+        if (!empty($input['cep'])) {
+            // Remover formatação (01310-100 → 01310100)
+            $cep = preg_replace('/[^0-9]/', '', $input['cep']);
 
-        // Validar tamanho (deve ter 8 dígitos)
-        if (strlen($cep) !== 8) {
-            Session::addMessageAfterRedirect(
-                __('Invalid ZIP Code: must have 8 digits', 'newbase'),
-                false,
-                ERROR
-            );
-            return false;
-        }
-
-        // Validar se não é todos zeros
-        if (preg_match('/^0+$/', $cep)) {
-            Session::addMessageAfterRedirect(
-                __('Invalid ZIP Code: cannot be all zeros', 'newbase'),
-                false,
-                ERROR
-            );
-            return false;
-        }
-
-        // Salvar CEP limpo
-        $input['cep'] = $cep;
-
-        // BUSCAR DADOS AUTOMÁTICOS DO CEP (ViaCEP)
-
-        // Se campos de endereço estão vazios, buscar automaticamente
-        if (empty($input['street']) || empty($input['city'])) {
-            $addressData = $this->fetchAddressFromCEP($cep);
-
-            if ($addressData) {
-                // Preencher campos automaticamente
-                $input['street'] = $input['street'] ?? $addressData['logradouro'];
-                $input['neighborhood'] = $input['neighborhood'] ?? $addressData['bairro'];
-                $input['city'] = $input['city'] ?? $addressData['localidade'];
-                $input['state'] = $input['state'] ?? $addressData['uf'];
-
+            // Validar tamanho (deve ter 8 dígitos)
+            if (strlen($cep) !== 8) {
                 Session::addMessageAfterRedirect(
-                    __('Address data loaded from ZIP Code', 'newbase'),
+                    __('Invalid ZIP Code: must have 8 digits', 'newbase'),
                     false,
-                    INFO
+                    ERROR
                 );
+                return false;
+            }
+
+            // Validar se não é todos zeros
+            if (preg_match('/^0+$/', $cep)) {
+                Session::addMessageAfterRedirect(
+                    __('Invalid ZIP Code: cannot be all zeros', 'newbase'),
+                    false,
+                    ERROR
+                );
+                return false;
+            }
+
+            // Salvar CEP limpo
+            $input['cep'] = $cep;
+
+            // BUSCAR DADOS AUTOMÁTICOS DO CEP (ViaCEP)
+
+            // Se campos de endereço estão vazios, buscar automaticamente
+            if (empty($input['street']) || empty($input['city'])) {
+                $addressData = $this->fetchAddressFromCEP($cep);
+
+                if ($addressData) {
+                    // Preencher campos automaticamente
+                    $input['street'] = $input['street'] ?? $addressData['logradouro'];
+                    $input['neighborhood'] = $input['neighborhood'] ?? $addressData['bairro'];
+                    $input['city'] = $input['city'] ?? $addressData['localidade'];
+                    $input['state'] = $input['state'] ?? $addressData['uf'];
+
+                    Session::addMessageAfterRedirect(
+                        __('Address data loaded from ZIP Code', 'newbase'),
+                        false,
+                        INFO
+                    );
+                }
             }
         }
-    }
 
     // VALIDAR COORDENADAS GPS (se fornecidas)
 
-    if (!empty($input['latitude']) && !empty($input['longitude'])) {
-        $lat = (float) $input['latitude'];
-        $lng = (float) $input['longitude'];
-
-        // Validar range de latitude (-90 a 90)
-        if ($lat < -90 || $lat > 90) {
-            Session::addMessageAfterRedirect(
-                __('Invalid latitude: must be between -90 and 90', 'newbase'),
-                false,
-                ERROR
-            );
-            return false;
-        }
-
-        // Validar range de longitude (-180 a 180)
-        if ($lng < -180 || $lng > 180) {
-            Session::addMessageAfterRedirect(
-                __('Invalid longitude: must be between -180 and 180', 'newbase'),
-                false,
-                ERROR
-            );
-            return false;
-        }
-    }
-
-    return parent::prepareInputForAdd($input);
-}
-
-    public function prepareInputForUpdate($input)
-    {
-
-    // VALIDAÇÃO DE NOME
-
-    if (isset($input['name']) && empty(trim($input['name']))) {
-        Session::addMessageAfterRedirect(
-            __('Name cannot be empty', 'newbase'),
-            false,
-            ERROR
-        );
-        return false;
-    }
-
-    // VALIDAÇÃO DE CEP (mesma lógica do prepareInputForAdd)
-
-    if (isset($input['cep']) && !empty($input['cep'])) {
-        // Remover formatação
-        $cep = preg_replace('/[^0-9]/', '', $input['cep']);
-
-        // Validar tamanho
-        if (strlen($cep) !== 8) {
-            Session::addMessageAfterRedirect(
-                __('Invalid ZIP Code: must have 8 digits', 'newbase'),
-                false,
-                ERROR
-            );
-            return false;
-        }
-
-        // Validar se não é todos zeros
-        if (preg_match('/^0+$/', $cep)) {
-            Session::addMessageAfterRedirect(
-                __('Invalid ZIP Code: cannot be all zeros', 'newbase'),
-                false,
-                ERROR
-            );
-            return false;
-        }
-
-        $input['cep'] = $cep;
-    }
-
-    // VALIDAÇÃO DE ESTADO
-
-    if (isset($input['state']) && !empty($input['state'])) {
-        $input['state'] = strtoupper(substr($input['state'], 0, 2));
-    }
-
-    // VALIDAÇÃO DE COORDENADAS GPS (se alteradas)
-
-    if (isset($input['latitude']) && isset($input['longitude'])) {
         if (!empty($input['latitude']) && !empty($input['longitude'])) {
             $lat = (float) $input['latitude'];
             $lng = (float) $input['longitude'];
 
+            // Validar range de latitude (-90 a 90)
             if ($lat < -90 || $lat > 90) {
                 Session::addMessageAfterRedirect(
                     __('Invalid latitude: must be between -90 and 90', 'newbase'),
@@ -500,6 +450,7 @@ class Address extends CommonDBTM
                 return false;
             }
 
+            // Validar range de longitude (-180 a 180)
             if ($lng < -180 || $lng > 180) {
                 Session::addMessageAfterRedirect(
                     __('Invalid longitude: must be between -180 and 180', 'newbase'),
@@ -509,10 +460,88 @@ class Address extends CommonDBTM
                 return false;
             }
         }
+
+        return parent::prepareInputForAdd($input);
     }
 
-    return $input;
-}
+    public function prepareInputForUpdate($input)
+    {
+
+    // VALIDAÇÃO DE NOME
+
+        if (isset($input['name']) && empty(trim($input['name']))) {
+            Session::addMessageAfterRedirect(
+                __('Name cannot be empty', 'newbase'),
+                false,
+                ERROR
+            );
+            return false;
+        }
+
+    // VALIDAÇÃO DE CEP (mesma lógica do prepareInputForAdd)
+
+        if (isset($input['cep']) && !empty($input['cep'])) {
+            // Remover formatação
+            $cep = preg_replace('/[^0-9]/', '', $input['cep']);
+
+            // Validar tamanho
+            if (strlen($cep) !== 8) {
+                Session::addMessageAfterRedirect(
+                    __('Invalid ZIP Code: must have 8 digits', 'newbase'),
+                    false,
+                    ERROR
+                );
+                return false;
+            }
+
+            // Validar se não é todos zeros
+            if (preg_match('/^0+$/', $cep)) {
+                Session::addMessageAfterRedirect(
+                    __('Invalid ZIP Code: cannot be all zeros', 'newbase'),
+                    false,
+                    ERROR
+                );
+                return false;
+            }
+
+            $input['cep'] = $cep;
+        }
+
+    // VALIDAÇÃO DE ESTADO
+
+        if (isset($input['state']) && !empty($input['state'])) {
+            $input['state'] = strtoupper(substr($input['state'], 0, 2));
+        }
+
+    // VALIDAÇÃO DE COORDENADAS GPS (se alteradas)
+
+        if (isset($input['latitude']) && isset($input['longitude'])) {
+            if (!empty($input['latitude']) && !empty($input['longitude'])) {
+                $lat = (float) $input['latitude'];
+                $lng = (float) $input['longitude'];
+
+                if ($lat < -90 || $lat > 90) {
+                    Session::addMessageAfterRedirect(
+                        __('Invalid latitude: must be between -90 and 90', 'newbase'),
+                        false,
+                        ERROR
+                    );
+                    return false;
+                }
+
+                if ($lng < -180 || $lng > 180) {
+                    Session::addMessageAfterRedirect(
+                        __('Invalid longitude: must be between -180 and 180', 'newbase'),
+                        false,
+                        ERROR
+                    );
+                    return false;
+                }
+            }
+        }
+
+        return $input;
+    }
 
 /**
 * Buscar dados de endereço pela API ViaCEP
@@ -523,61 +552,63 @@ class Address extends CommonDBTM
     private function fetchAddressFromCEP(string $cep): array|false
     {
     // URL da API ViaCEP
-    $url = "https://viacep.com.br/ws/{$cep}/json/";
+        $url = "https://viacep.com.br/ws/{$cep}/json/";
 
-    try {
-        // Fazer requisição HTTP
-        $ch = curl_init();
-        curl_setopt_array($ch, [
+        try {
+            // Fazer requisição HTTP
+            $ch = curl_init();
+            curl_setopt_array($ch, [
             CURLOPT_URL => $url,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_TIMEOUT => 10,
             CURLOPT_SSL_VERIFYPEER => true,
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_USERAGENT => 'GLPI Newbase Plugin/2.0',
-        ]);
+            ]);
 
-        $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
 
-        // Verificar se obteve resposta
-        if ($httpCode !== 200 || !$response) {
-            \Toolbox::logInFile(
-                'newbase_plugin',
-                "ViaCEP API error for CEP {$cep}: HTTP {$httpCode}\n"
-            );
-            return false;
-        }
+            // Verificar se obteve resposta
+            if ($httpCode !== 200 || !$response) {
+                \Toolbox::logInFile(
+                    'newbase_plugin',
+                    "ViaCEP API error for CEP {$cep}: HTTP {$httpCode}\n"
+                );
+                return false;
+            }
 
-        // Decodificar JSON
-        $data = json_decode($response, true);
+            // Decodificar JSON
+            $data = json_decode($response, true);
 
-        // Verificar se CEP foi encontrado
-        if (isset($data['erro']) && $data['erro'] === true) {
+            // Verificar se CEP foi encontrado
+            if (isset($data['erro']) && $data['erro'] === true) {
+                Toolbox::logInFile(
+                    'newbase_plugin',
+                    "CEP not found: {$cep}\n"
+                );
+                return false;
+            }
+
+            // Retornar dados
+            return $data;
+        } catch (\Exception $e) {
             Toolbox::logInFile(
                 'newbase_plugin',
-                "CEP not found: {$cep}\n"
+                "Error fetching CEP {$cep}: " . $e->getMessage() . "\n"
             );
             return false;
         }
-
-        // Retornar dados
-        return $data;
-
-    } catch (\Exception $e) {
-        Toolbox::logInFile(
-            'newbase_plugin',
-            "Error fetching CEP {$cep}: " . $e->getMessage() . "\n"
-        );
-        return false;
     }
-}
 
     // ===== AÇÕES PÓS CRUD =====
+
     /**
    * Ações após adicionar item ao banco de dados
    * @return void
+   *
+   * @phpcsSuppress PSR1.Methods.CamelCapsMethodName.NotCamelCaps
    */
     public function post_addItem(): void
     {

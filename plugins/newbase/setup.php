@@ -174,11 +174,55 @@ function plugin_newbase_check_prerequisites(): bool
 /**
  * Check configuration process
  *
- * @param bool $verbose Whether to display message on failure. Defaults to false
- *
+ * @param bool $verbose Whether to display message on failure
  * @return bool
  */
 function plugin_newbase_check_config(bool $verbose = false): bool
 {
+    global $DB;
+
+    // Check if required tables exist
+    $required_tables = [
+        'glpi_plugin_newbase_addresses',
+        'glpi_plugin_newbase_systems',
+        'glpi_plugin_newbase_tasks',
+        'glpi_plugin_newbase_task_signatures',
+        'glpi_plugin_newbase_company_extras',
+        'glpi_plugin_newbase_config'
+    ];
+
+    foreach ($required_tables as $table) {
+        if (!$DB->tableExists($table)) {
+            if ($verbose) {
+                echo sprintf(
+                    __('Required table "%s" does not exist', 'newbase'),
+                    $table
+                );
+            }
+            return false;
+        }
+    }
+
+    // Check if configuration table has required keys
+    $required_configs = [
+        'enable_signature',
+        'require_signature',
+        'enable_gps',
+        'calculate_mileage',
+        'default_map_zoom'
+    ];
+
+    $result = $DB->request([
+        'FROM' => 'glpi_plugin_newbase_config',
+        'WHERE' => ['config_key' => $required_configs]
+    ]);
+
+    if (count($result) < count($required_configs)) {
+        if ($verbose) {
+            echo __('Configuration table is missing required keys', 'newbase');
+        }
+        return false;
+    }
+
     return true;
 }

@@ -34,9 +34,13 @@ $task = new Task();
 
 // 5 AÇÃO: ADICIONAR NOVA TAREFA
 if (isset($_POST['add'])) {
-
     // CSRF: Verificar token de segurança
     Session::checkCSRF($_POST);
+
+    $entity_id = filter_input(INPUT_POST, 'entities_id', FILTER_VALIDATE_INT);
+    if ($entity_id === false || $entity_id === null || $entity_id < 0) {
+        $entity_id = 0;
+    }
 
     // Verificar direitos de criação
     $task->check(-1, CREATE, $_POST);
@@ -45,11 +49,11 @@ if (isset($_POST['add'])) {
 
     // Verificar se cálculo automático está habilitado na config
     if (Config::getConfigValue('autocalculatemileage', 1) == 1) {
-
         // Verificar se todas as coordenadas foram fornecidas
-        if (!empty($_POST['latitude_start']) && !empty($_POST['longitude_start'])
-            && !empty($_POST['latitude_end']) && !empty($_POST['longitude_end'])) {
-
+        if (
+            !empty($_POST['latitude_start']) && !empty($_POST['longitude_start'])
+            && !empty($_POST['latitude_end']) && !empty($_POST['longitude_end'])
+        ) {
             // Calcular distância usando fórmula de Haversine
             $_POST['mileage'] = Common::calculateDistance(
                 (float) $_POST['latitude_start'],
@@ -88,8 +92,12 @@ if (isset($_POST['add'])) {
 
 // 6 AÇÃO: ATUALIZAR TAREFA EXISTENTE
 } elseif (isset($_POST['update'])) {
-
     Session::checkCSRF($_POST);
+
+    $entity_id = filter_input(INPUT_POST, 'entities_id', FILTER_VALIDATE_INT);
+    if ($entity_id === false || $entity_id === null || $entity_id < 0) {
+        $entity_id = 0;
+    }
 
     // Verificar direitos de atualização
     $task->check($_POST['id'], UPDATE);
@@ -99,10 +107,10 @@ if (isset($_POST['add'])) {
 
 
     if (Config::getConfigValue('autocalculatemileage', 1) == 1) {
-
-        if (!empty($_POST['latitude_start']) && !empty($_POST['longitude_start'])
-            && !empty($_POST['latitude_end']) && !empty($_POST['longitude_end'])) {
-
+        if (
+            !empty($_POST['latitude_start']) && !empty($_POST['longitude_start'])
+            && !empty($_POST['latitude_end']) && !empty($_POST['longitude_end'])
+        ) {
             $_POST['mileage'] = Common::calculateDistance(
                 (float) $_POST['latitude_start'],
                 (float) $_POST['longitude_start'],
@@ -130,8 +138,12 @@ if (isset($_POST['add'])) {
 
 // 7 AÇÃO: DELETAR TAREFA (soft delete - vai para lixeira)
 } elseif (isset($_POST['delete'])) {
-
     Session::checkCSRF($_POST);
+
+    $entity_id = filter_input(INPUT_POST, 'entities_id', FILTER_VALIDATE_INT);
+    if ($entity_id === false || $entity_id === null || $entity_id < 0) {
+        $entity_id = 0;
+    }
 
     // Verificar direitos de deleção
     $task->check($_POST['id'], DELETE);
@@ -154,8 +166,12 @@ if (isset($_POST['add'])) {
 
 // 8 AÇÃO: PURGAR TAREFA (hard delete - remove permanentemente)
 } elseif (isset($_POST['purge'])) {
-
     Session::checkCSRF($_POST);
+
+    $entity_id = filter_input(INPUT_POST, 'entities_id', FILTER_VALIDATE_INT);
+    if ($entity_id === false || $entity_id === null || $entity_id < 0) {
+        $entity_id = 0;
+    }
 
     // Verificar direitos de purga
     $task->check($_POST['id'], PURGE);

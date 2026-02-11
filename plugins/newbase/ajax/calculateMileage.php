@@ -33,8 +33,10 @@ header('Content-Type: application/json; charset=utf-8');
 // 5 BLOQUEAR CACHE (importante para AJAX)
 header('Cache-Control: no-cache, must-revalidate');
 header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
-
-// VALIDAÇÕES DE SEGURANÇ
+header('X-Content-Type-Options: nosniff');
+header('X-Frame-Options: DENY');
+header('X-XSS-Protection: 1; mode=block');
+header('Referrer-Policy: strict-origin-when-cross-origin');
 
 // 6 VERIFICAR SE É REQUISIÇÃO POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -124,7 +126,6 @@ try {
             $lng2
         )
     );
-
 } catch (Exception $e) {
     // 17 RESPOSTA DE ERRO
     http_response_code(500); // Internal Server Error

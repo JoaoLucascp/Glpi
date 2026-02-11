@@ -68,6 +68,10 @@ use GlpiPlugin\Newbase\Config;
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-cache, must-revalidate');
 header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
+header('X-Content-Type-Options: nosniff');
+header('X-Frame-Options: DENY');
+header('X-XSS-Protection: 1; mode=block');
+header('Referrer-Policy: strict-origin-when-cross-origin');
 
 // VALIDAÇÕES DE SEGURANÇA
 
@@ -140,7 +144,6 @@ try {
 
     // 11 SWITCH DE AÇÕES
     switch ($action) {
-
         // AÇÃO: INICIAR TAREFA
 
         case 'start':
@@ -313,7 +316,6 @@ try {
                 $update_data['status']
             )
         );
-
     } else {
         http_response_code(500);
         echo json_encode([
@@ -326,21 +328,20 @@ try {
             "ERROR: Failed to execute action '$action' on task $task_id\n"
         );
     }
-
 } catch (Exception $e) {
     // 14 TRATAMENTO DE ERRO
     http_response_code(500);
-    
+
     $response = [
         'success' => false,
         'message' => __('Error processing task action', 'newbase'),
     ];
-    
+
     // Incluir detalhes apenas em debug
     if (defined('GLPI_DEBUG')) {
         $response['error'] = $e->getMessage();
     }
-    
+
     echo json_encode($response);
 
     Toolbox::logInFile(

@@ -1,32 +1,43 @@
 <?php
 
 /**
- * -------------------------------------------------------------------------
- * Newbase plugin for GLPI
- * -------------------------------------------------------------------------
- *
- * LICENSE
- *
- * This file is part of Newbase.
- *
- * Newbase is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * Newbase is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Newbase. If not, see <http://www.gnu.org/licenses/>.
- * -------------------------------------------------------------------------
- * @copyright Copyright (C) 2024-2026 by João Lucas
- * @license   GPLv2 https://www.gnu.org/licenses/gpl-2.0.html
- * @link      https://github.com/JoaoLucascp/Glpi
- * -------------------------------------------------------------------------
- */
+* -------------------------------------------------------------------------
+* Newbase plugin for GLPI
+* -------------------------------------------------------------------------
+*
+* LICENSE
+*
+* This file is part of Newbase.
+*
+* Newbase is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2 of the License, or
+* (at your option) any later version.
+*
+* Newbase is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with Newbase. If not, see <http://www.gnu.org/licenses/>.
+* -------------------------------------------------------------------------
+* @copyright Copyright (C) 2024-2026 by João Lucas
+* @license   GPLv2 https://www.gnu.org/licenses/gpl-2.0.html
+* @link      https://github.com/JoaoLucascp/Glpi
+* -------------------------------------------------------------------------
+*/
+
+/**
+* Menu Class - Handles plugin menu entries
+*
+* @package   GlpiPlugin\Newbase
+* @author    João Lucas
+* @license   GPLv2+
+* @version   2.1.0
+*/
+
+declare(strict_types=1);
 
 namespace GlpiPlugin\Newbase;
 
@@ -34,43 +45,35 @@ use CommonGLPI;
 use Session;
 use Plugin;
 
-/**
- * Menu Class - Handles plugin menu entries
- *
- * @package   GlpiPlugin\Newbase
- * @author    João Lucas
- * @license   GPLv2+
- * @version   2.1.0
- */
 class Menu extends CommonGLPI
 {
     /**
-     * Get type name
-     *
-     * @param int $nb Number of items
-     *
-     * @return string
-     */
+    * Get type name
+    *
+    * @param int $nb Number of items
+    *
+    * @return string
+    */
     public static function getTypeName($nb = 0): string
     {
         return __('Newbase', 'newbase');
     }
 
     /**
-     * Get icon for menu
-     *
-     * @return string
-     */
+    * Get icon for menu
+    *
+    * @return string
+    */
     public static function getIcon(): string
     {
         return 'ti ti-building';
     }
 
     /**
-     * Get menu content
-     *
-     * @return array{title: string, page: string, icon: string, links: array}|array
-     */
+    * Get menu content
+    *
+    * @return array{title: string, page: string, icon: string, links: array}|array
+    */
     public static function getMenuContent(): array
     {
         $menu = [];
@@ -150,10 +153,10 @@ class Menu extends CommonGLPI
     }
 
     /**
-     * Show menu
-     *
-     * @return void
-     */
+    * Show menu
+    *
+    * @return void
+    */
     public static function displayMenu(): void
     {
         $menu = self::getMenuContent();

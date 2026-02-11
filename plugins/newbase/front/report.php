@@ -273,7 +273,7 @@ Html::header(
         <?php echo __('Tasks by Company', 'newbase'); ?>
     </h2>
 
-    <?php if (count($company_data) > 0): ?>
+    <?php if (count($company_data) > 0) : ?>
         <table class="table table-striped">
             <thead>
                 <tr>
@@ -282,7 +282,7 @@ Html::header(
                 </tr>
             </thead>
             <tbody>
-                <?php foreach ($company_data as $row): ?>
+                <?php foreach ($company_data as $row) : ?>
                     <tr>
                         <td><?php echo htmlspecialchars($row['company_name']); ?></td>
                         <td><?php echo $row['task_count']; ?></td>
@@ -290,7 +290,7 @@ Html::header(
                 <?php endforeach; ?>
             </tbody>
         </table>
-    <?php else: ?>
+    <?php else : ?>
         <p class="alert alert-info"><?php echo __('No data available', 'newbase'); ?></p>
     <?php endif; ?>
 </div>
@@ -302,7 +302,7 @@ Html::header(
         <?php echo __('Tasks by User', 'newbase'); ?>
     </h2>
 
-    <?php if (count($user_data) > 0): ?>
+    <?php if (count($user_data) > 0) : ?>
         <table class="table table-striped">
             <thead>
                 <tr>
@@ -311,7 +311,7 @@ Html::header(
                 </tr>
             </thead>
             <tbody>
-                <?php foreach ($user_data as $row): ?>
+                <?php foreach ($user_data as $row) : ?>
                     <tr>
                         <td><?php echo htmlspecialchars($row['user_name']); ?></td>
                         <td><?php echo $row['task_count']; ?></td>
@@ -319,7 +319,7 @@ Html::header(
                 <?php endforeach; ?>
             </tbody>
         </table>
-    <?php else: ?>
+    <?php else : ?>
         <p class="alert alert-info"><?php echo __('No data available', 'newbase'); ?></p>
     <?php endif; ?>
 </div>

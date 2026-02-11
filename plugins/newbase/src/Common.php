@@ -1,13 +1,43 @@
 <?php
 
 /**
- * Common Class - Base class for all Newbase entities
- * @package   GlpiPlugin\Newbase
- * @author    João Lucas
- * @copyright 2026 João Lucas
- * @license   GPLv2+
- * @version   2.1.0
- */
+* -------------------------------------------------------------------------
+* Newbase plugin for GLPI
+* -------------------------------------------------------------------------
+*
+* LICENSE
+*
+* This file is part of Newbase.
+*
+* Newbase is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2 of the License, or
+* (at your option) any later version.
+*
+* Newbase is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with Newbase. If not, see <http://www.gnu.org/licenses/>.
+* -------------------------------------------------------------------------
+* @copyright Copyright (C) 2024-2026 by João Lucas
+* @license   GPLv2 https://www.gnu.org/licenses/gpl-2.0.html
+* @link      https://github.com/JoaoLucascp/Glpi
+* -------------------------------------------------------------------------
+*/
+
+/**
+* Common Class - Base class for all Newbase entities
+* @package   GlpiPlugin\Newbase
+* @author    João Lucas
+* @copyright 2026 João Lucas
+* @license   GPLv2+
+* @version   2.1.0
+*/
+
+declare(strict_types=1);
 
 namespace GlpiPlugin\Newbase;
 
@@ -17,28 +47,28 @@ use CommonDBTM;
 use Plugin;
 
 /**
- * Common - Base class with shared functionality for all Newbase entities
- *
- * Provides common methods for:
- * - URL generation (search, form)
- * - Form display (header, buttons)
- * - Data validation (CNPJ, phone, CEP)
- * - External API integration (Brasil API, ReceitaWS)
- * - Distance calculation for geolocation
- *
- * @method int getID() Get item ID
- * @method bool canView() Check if user can view
- * @method bool canCreate() Check if user can create
- * @method bool canUpdate() Check if user can update
- * @method bool canDelete() Check if user can delete
- * @method bool canPurge() Check if user can purge
- */
+* Common - Base class with shared functionality for all Newbase entities
+*
+* Provides common methods for:
+* - URL generation (search, form)
+* - Form display (header, buttons)
+* - Data validation (CNPJ, phone, CEP)
+* - External API integration (Brasil API, ReceitaWS)
+* - Distance calculation for geolocation
+*
+* @method int getID() Get item ID
+* @method bool canView() Check if user can view
+* @method bool canCreate() Check if user can create
+* @method bool canUpdate() Check if user can update
+* @method bool canDelete() Check if user can delete
+* @method bool canPurge() Check if user can purge
+*/
 abstract class Common extends CommonDBTM
 {
     /**
-     * Rights management
-     * @var string
-     */
+    * Rights management
+    * @var string
+    */
     public static $rightname = 'plugin_newbase';
 
     // REMOVIDOS (já existem em CommonDBTM/CommonGLPI sem tipo):
@@ -46,24 +76,24 @@ abstract class Common extends CommonDBTM
     // - public bool $dohistory = true;
 
     /**
-     * Get type name for display
-     *
-     * @param int $nb Number of items
-     *
-     * @return string Type name
-     */
+    * Get type name for display
+    *
+    * @param int $nb Number of items
+    *
+    * @return string Type name
+    */
     public static function getTypeName($nb = 0): string
     {
         return static::class;
     }
 
     /**
-     * Get database table name for this class
-     *
-     * @param string|null $classname Class name (optional)
-     *
-     * @return string Table name
-     */
+    * Get database table name for this class
+    *
+    * @param string|null $classname Class name (optional)
+    *
+    * @return string Table name
+    */
     public static function getTable($classname = null): string
     {
         $classname ??= static::class;
@@ -73,10 +103,10 @@ abstract class Common extends CommonDBTM
     }
 
     /**
-     * Get short type name without namespace
-     *
-     * @return string Type name
-     */
+    * Get short type name without namespace
+    *
+    * @return string Type name
+    */
     public static function getType(): string
     {
         $class = static::class;
@@ -85,12 +115,12 @@ abstract class Common extends CommonDBTM
     }
 
     /**
-     * Get search/list URL for this item type
-     *
-     * @param bool $full Full path or relative
-     *
-     * @return string Search URL
-     */
+    * Get search/list URL for this item type
+    *
+    * @param bool $full Full path or relative
+    *
+    * @return string Search URL
+    */
     public static function getSearchURL($full = true): string
     {
         $dir = Plugin::getWebDir('newbase', $full);
@@ -99,12 +129,12 @@ abstract class Common extends CommonDBTM
     }
 
     /**
-     * Get form URL for this item type
-     *
-     * @param bool $full Full path or relative
-     *
-     * @return string Form URL
-     */
+    * Get form URL for this item type
+    *
+    * @param bool $full Full path or relative
+    *
+    * @return string Form URL
+    */
     public static function getFormURL($full = true): string
     {
         $dir = Plugin::getWebDir('newbase', $full);
@@ -113,11 +143,11 @@ abstract class Common extends CommonDBTM
     }
 
     /**
-     * Mostra o cabeçalho do formulário
-     *
-     * @param array $options Opções de exibição
-     * @return void
-     */
+    * Mostra o cabeçalho do formulário
+    *
+    * @param array $options Opções de exibição
+    * @return void
+    */
     public function showFormHeader($options = [])
     {
         $ID = $this->fields['id'] ?? -1;
@@ -152,11 +182,11 @@ abstract class Common extends CommonDBTM
     }
 
     /**
-     * Mostra os botões do formulário
-     *
-     * @param array $options Opções dos botões
-     * @return void
-     */
+    * Mostra os botões do formulário
+    *
+    * @param array $options Opções dos botões
+    * @return void
+    */
     public function showFormButtons($options = [])
     {
         $ID = $this->fields['id'] ?? -1;
@@ -180,35 +210,35 @@ abstract class Common extends CommonDBTM
     }
 
     /**
-     * Show form (must be implemented by child classes)
-     *
-     * @param int   $ID      Item ID
-     * @param array $options Form options
-     *
-     * @return bool Success
-     */
+    * Show form (must be implemented by child classes)
+    *
+    * @param int   $ID      Item ID
+    * @param array $options Form options
+    *
+    * @return bool Success
+    */
     public function showForm($ID, array $options = []): bool
     {
         return false;
     }
 
     /**
-     * Redirect to list view
-     *
-     * @return void
-     */
+    * Redirect to list view
+    *
+    * @return void
+    */
     public function redirectToList(): void
     {
         Html::redirect($this->getSearchURL());
     }
 
     /**
-     * Validate CNPJ format and checksum
-     *
-     * @param string|null $cnpj CNPJ without formatting (14 digits)
-     *
-     * @return bool True if valid, false otherwise
-     */
+    * Validate CNPJ format and checksum
+    *
+    * @param string|null $cnpj CNPJ without formatting (14 digits)
+    *
+    * @return bool True if valid, false otherwise
+    */
     public static function validateCNPJ(?string $cnpj): bool
     {
         if ($cnpj === null || $cnpj === '') {
@@ -244,13 +274,13 @@ abstract class Common extends CommonDBTM
     }
 
     /**
-     * Calculate CNPJ check digit
-     *
-     * @param string $base             Base string (12 or 13 digits)
-     * @param int    $multiplierStart  Starting multiplier (5 or 6)
-     *
-     * @return int Check digit
-     */
+    * Calculate CNPJ check digit
+    *
+    * @param string $base             Base string (12 or 13 digits)
+    * @param int    $multiplierStart  Starting multiplier (5 or 6)
+    *
+    * @return int Check digit
+    */
     private static function calculateCNPJCheckDigit(string $base, int $multiplierStart): int
     {
         $sum = 0;
@@ -269,12 +299,12 @@ abstract class Common extends CommonDBTM
     }
 
     /**
-     * Search company data by CNPJ using external API
-     *
-     * @param string|null $cnpj CNPJ without formatting
-     *
-     * @return array|false Company data or false if not found
-     */
+    * Search company data by CNPJ using external API
+    *
+    * @param string|null $cnpj CNPJ without formatting
+    *
+    * @return array|false Company data or false if not found
+    */
     public static function searchCompanyByCNPJ(?string $cnpj): array|false
     {
         if ($cnpj === null || $cnpj === '') {
@@ -332,13 +362,13 @@ abstract class Common extends CommonDBTM
     }
 
     /**
-     * Search for additional company data via multiple APIs
-     *
-     * @param string|null $cnpj        CNPJ number
-     * @param string      $companyName Company name for alternative search
-     *
-     * @return array Company data with email and phone
-     */
+    * Search for additional company data via multiple APIs
+    *
+    * @param string|null $cnpj        CNPJ number
+    * @param string      $companyName Company name for alternative search
+    *
+    * @return array Company data with email and phone
+    */
     public static function searchCompanyAdditionalData(?string $cnpj, string $companyName = ''): array
     {
         $result = [
@@ -361,12 +391,12 @@ abstract class Common extends CommonDBTM
     }
 
     /**
-     * Search for company data via ReceitaWS API
-     *
-     * @param string $cnpj CNPJ number
-     *
-     * @return array Company data or empty array
-     */
+    * Search for company data via ReceitaWS API
+    *
+    * @param string $cnpj CNPJ number
+    *
+    * @return array Company data or empty array
+    */
     private static function searchReceitaWSAPI(string $cnpj): array
     {
         $result = [
@@ -418,12 +448,12 @@ abstract class Common extends CommonDBTM
     }
 
     /**
-     * Format phone number to Brazilian format
-     *
-     * @param string|null $phone Phone number
-     *
-     * @return string Formatted phone number
-     */
+    * Format phone number to Brazilian format
+    *
+    * @param string|null $phone Phone number
+    *
+    * @return string Formatted phone number
+    */
     public static function formatPhone(?string $phone = ''): string
     {
         if ($phone === null || $phone === '') {
@@ -455,12 +485,12 @@ abstract class Common extends CommonDBTM
     }
 
     /**
-     * Format CEP (Brazilian ZIP code)
-     *
-     * @param string|null $cep CEP to format
-     *
-     * @return string Formatted CEP (XXXXX-XXX)
-     */
+    * Format CEP (Brazilian ZIP code)
+    *
+    * @param string|null $cep CEP to format
+    *
+    * @return string Formatted CEP (XXXXX-XXX)
+    */
     public static function formatCEP(?string $cep): string
     {
         if ($cep === null || $cep === '') {
@@ -477,12 +507,12 @@ abstract class Common extends CommonDBTM
     }
 
     /**
-     * Format CNPJ to Brazilian format
-     *
-     * @param string|null $cnpj CNPJ to format
-     *
-     * @return string Formatted CNPJ (XX.XXX.XXX/XXXX-XX)
-     */
+    * Format CNPJ to Brazilian format
+    *
+    * @param string|null $cnpj CNPJ to format
+    *
+    * @return string Formatted CNPJ (XX.XXX.XXX/XXXX-XX)
+    */
     public static function formatCNPJ(?string $cnpj): string
     {
         if ($cnpj === null || $cnpj === '') {
@@ -508,15 +538,15 @@ abstract class Common extends CommonDBTM
     }
 
     /**
-     * Calculate distance between two GPS coordinates using Haversine formula
-     *
-     * @param float $lat1 Latitude of first point
-     * @param float $lng1 Longitude of first point
-     * @param float $lat2 Latitude of second point
-     * @param float $lng2 Longitude of second point
-     *
-     * @return float Distance in kilometers
-     */
+    * Calculate distance between two GPS coordinates using Haversine formula
+    *
+    * @param float $lat1 Latitude of first point
+    * @param float $lng1 Longitude of first point
+    * @param float $lat2 Latitude of second point
+    * @param float $lng2 Longitude of second point
+    *
+    * @return float Distance in kilometers
+    */
     public static function calculateDistance(
         float $lat1,
         float $lng1,

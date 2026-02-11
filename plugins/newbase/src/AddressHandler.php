@@ -1,6 +1,34 @@
 <?php
 
 /**
+* -------------------------------------------------------------------------
+* Newbase plugin for GLPI
+* -------------------------------------------------------------------------
+*
+* LICENSE
+*
+* This file is part of Newbase.
+*
+* Newbase is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2 of the License, or
+* (at your option) any later version.
+*
+* Newbase is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with Newbase. If not, see <http://www.gnu.org/licenses/>.
+* -------------------------------------------------------------------------
+* @copyright Copyright (C) 2024-2026 by João Lucas
+* @license   GPLv2 https://www.gnu.org/licenses/gpl-2.0.html
+* @link      https://github.com/JoaoLucascp/Glpi
+* -------------------------------------------------------------------------
+*/
+
+/**
 * AddressHandler Class - CEP search handler
 * @package   PluginNewbase
 * @author    João Lucas
@@ -8,6 +36,8 @@
 * @license   GPLv2+
 * @version   2.1.0
 */
+
+declare(strict_types=1);
 
 namespace GlpiPlugin\Newbase;
 
@@ -19,7 +49,6 @@ use Toolbox;
 */
 class AddressHandler
 {
-
 /**
 * Search address by CEP (Brazilian ZIP code)
 * @param string|null $cep CEP with or without formatting
@@ -105,7 +134,6 @@ class AddressHandler
         $url = "https://viacep.com.br/ws/{$cep}/json/";
 
         try {
-
             // FAZER REQUISIÇÃO HTTP
             $ch = curl_init();
             curl_setopt_array($ch, [
@@ -164,7 +192,6 @@ class AddressHandler
             }
 
             return $data;
-
         } catch (\Exception $e) {
             Toolbox::logInFile(
                 'newbase_plugin',

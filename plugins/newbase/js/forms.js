@@ -86,7 +86,7 @@
                         $('[name="address"]').val(endereco.trim());
                         $('[name="city"]').val(data.municipio || '');
                         $('[name="state"]').val(data.uf || '');
-                        $('[name="zip_code"]').val(data.cep || '');
+                        $('[name="cep"]').val(data.cep || '');
 
                         console.warn('[NEWBASE] ✅ Campos preenchidos com sucesso');
                         showNotification('Dados da empresa preenchidos com sucesso!', 'success');
@@ -140,7 +140,7 @@
         $cepButton.off('click').on('click', function (e) {
             e.preventDefault();
 
-            const $input = $('[name="zip_code"]');
+            const $input = $('[name="cep"]');
             const cep = $input.val();
 
             if (!cep) {

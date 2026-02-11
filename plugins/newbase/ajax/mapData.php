@@ -61,6 +61,10 @@ use GlpiPlugin\Newbase\Config;
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-cache, must-revalidate');
 header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
+header('X-Content-Type-Options: nosniff');
+header('X-Frame-Options: DENY');
+header('X-XSS-Protection: 1; mode=block');
+header('Referrer-Policy: strict-origin-when-cross-origin');
 
 // VALIDAÇÕES DE SEGURANÇA
 
@@ -273,21 +277,20 @@ try {
             $status ?: 'all'
         )
     );
-
 } catch (Exception $e) {
     // 18 TRATAMENTO DE ERRO
     http_response_code(500);
-    
+
     $response = [
         'success' => false,
         'message' => __('Error loading map data', 'newbase'),
     ];
-    
+
     // Incluir detalhes apenas em debug
     if (defined('GLPI_DEBUG')) {
         $response['error'] = $e->getMessage();
     }
-    
+
     echo json_encode($response);
 
     Toolbox::logInFile(

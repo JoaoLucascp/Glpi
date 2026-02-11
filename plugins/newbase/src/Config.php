@@ -1,6 +1,34 @@
 <?php
 
 /**
+* -------------------------------------------------------------------------
+* Newbase plugin for GLPI
+* -------------------------------------------------------------------------
+*
+* LICENSE
+*
+* This file is part of Newbase.
+*
+* Newbase is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2 of the License, or
+* (at your option) any later version.
+*
+* Newbase is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with Newbase. If not, see <http://www.gnu.org/licenses/>.
+* -------------------------------------------------------------------------
+* @copyright Copyright (C) 2024-2026 by João Lucas
+* @license   GPLv2 https://www.gnu.org/licenses/gpl-2.0.html
+* @link      https://github.com/JoaoLucascp/Glpi
+* -------------------------------------------------------------------------
+*/
+
+/**
 * Config Class - Plugin configuration management
 * @package   Plugin - Newbase
 * @author    João Lucas
@@ -9,72 +37,64 @@
 * @version   2.1.0
 */
 
+declare(strict_types=1);
+
 namespace GlpiPlugin\Newbase;
 
-use CommonDBTM;
 use Session;
 use Toolbox;
 use Html;
-use Plugin;
 
-/**
-* Config - Manages plugin configuration options
-* Stores key-value pairs in glpi_plugin_newbase_config table
-*/
-class Config extends CommonDBTM
+class Config
 {
-/**
-* Rights management
-* @var string
-*/
-    public static $rightname = 'config';
-
-/**
-* Enable history tracking
-* @var bool
-*/
-    public $dohistory = true;
-
-/**
-* Get type name
-* @param int $nb Number of items
-* @return string Type name
-*/
-    public static function getTypeName($nb = 0): string
+    /**
+     * Get configuration table name
+     * @return string
+     */
+    public static function getTable(): string
     {
-        return __('Configuration', 'newbase');
+        return 'glpi_plugin_newbase_configs';
     }
 
-/**
-* Get table name
-* @param string|null $classname Class name
-* @return string Table name
-*/
-    public static function getTable($classname = null): string
+    /**
+     * Initialize the configuration table
+     * @return void
+     */
+    public static function initConfigTable(): void
     {
-        return 'glpi_plugin_newbase_config';
+        global $DB;
+
+        $table = self::getTable();
+
+        // Check if table exists
+        if ($DB->tableExists($table)) {
+            return;
+        }
+
+        // Create table if it doesn't exist
+        $query = "CREATE TABLE IF NOT EXISTS `$table` (
+            `id` INT(11) NOT NULL AUTO_INCREMENT,
+            `config_key` VARCHAR(255) NOT NULL UNIQUE,
+            `config_value` LONGTEXT,
+            `date_mod` DATETIME,
+            `date_creation` DATETIME DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (`id`),
+            KEY `config_key` (`config_key`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
+
+        $DB->query($query);
     }
 
-/**
-* Get icon for menus
-* @return string Icon class
-*/
-    public static function getIcon(): string
-    {
-        return 'ti ti-settings';
-    }
-
-/**
-* Get a configuration value
-* @param string $key Configuration key
-* @param mixed $default Default value if key not found
-* @return mixed Configuration value or default
-*/
+    /**
+     * Get a configuration value
+     * @param string $key Configuration key
+     * @param mixed $default Default value if key not found
+     * @return mixed Configuration value or default
+     */
     public static function getConfigValue(string $key, $default = null)
     {
         global $DB;
 
-        // Validate key
         if (empty($key)) {
             return $default;
         }
@@ -97,12 +117,9 @@ class Config extends CommonDBTM
                         return $decoded;
                     }
                 }
-
                 return $value;
             }
-
             return $default;
-
         } catch (\Exception $e) {
             Toolbox::logInFile(
                 'newbase_plugin',
@@ -112,18 +129,17 @@ class Config extends CommonDBTM
         }
     }
 
-/**
-* Set a configuration value
-* @param string $key Configuration key
-* @param mixed $value Configuration value
-* @return bool Success
-*/
+    /**
+     * Set a configuration value
+     * @param string $key Configuration key
+     * @param mixed $value Configuration value
+     * @return bool Success
+     */
     public static function setConfigValue(string $key, $value): bool
     {
         global $DB;
 
         // VALIDAÇÕES
-
         // Validate key
         if (empty($key)) {
             return false;
@@ -139,7 +155,6 @@ class Config extends CommonDBTM
         }
 
         // PREPARAR DADOS
-
         // Sanitize key (GLPI 10.0.20 compatible)
         $key = $DB->escape($key);
 
@@ -153,7 +168,6 @@ class Config extends CommonDBTM
         }
 
         try {
-
             // VERIFICAR SE JÁ EXISTE
             $iterator = $DB->request([
                 'FROM' => self::getTable(),
@@ -164,7 +178,6 @@ class Config extends CommonDBTM
             $timestamp = $_SESSION['glpi_currenttime'] ?? date('Y-m-d H:i:s');
 
             if (count($iterator)) {
-
                 // ATUALIZAR EXISTENTE
                 $result = $DB->update(
                     self::getTable(),
@@ -182,11 +195,8 @@ class Config extends CommonDBTM
                     );
                     return false;
                 }
-
                 return true;
-
             } else {
-
                 // INSERIR NOVO
                 $result = $DB->insert(
                     self::getTable(),
@@ -204,10 +214,8 @@ class Config extends CommonDBTM
                     );
                     return false;
                 }
-
                 return true;
             }
-
         } catch (\Exception $e) {
             Toolbox::logInFile(
                 'newbase_plugin',
@@ -217,11 +225,11 @@ class Config extends CommonDBTM
         }
     }
 
-/**
-* Delete a configuration value
-* @param string $key Configuration key
-* @return bool Success
-*/
+    /**
+     * Delete a configuration value
+     * @param string $key Configuration key
+     * @return bool Success
+     */
     public static function deleteConfig(string $key): bool
     {
         global $DB;
@@ -243,9 +251,7 @@ class Config extends CommonDBTM
                 );
                 return false;
             }
-
             return true;
-
         } catch (\Exception $e) {
             Toolbox::logInFile(
                 'newbase_plugin',
@@ -255,10 +261,10 @@ class Config extends CommonDBTM
         }
     }
 
-/**
-* Get all configuration values
-* @return array Associative array [key => value]
-*/
+    /**
+     * Get all configuration values
+     * @return array Associative array [key => value]
+     */
     public static function getAllConfig(): array
     {
         global $DB;
@@ -282,7 +288,6 @@ class Config extends CommonDBTM
                     $configs[$row['config_key']] = $value;
                 }
             }
-
         } catch (\Exception $e) {
             Toolbox::logInFile(
                 'newbase_plugin',
@@ -293,161 +298,125 @@ class Config extends CommonDBTM
         return $configs;
     }
 
-/**
-* Display configuration form
-* @return void
-*/
+    /**
+     * Display configuration form (GLPI 10.0+ compatible)
+     * NÃO USA Html::openForm() - usa HTML e JavaScript nativos
+     * @return void
+     */
     public static function showConfigForm(): void
     {
-
         // VERIFICAR PERMISSÕES
         if (!Session::haveRight('config', UPDATE)) {
-            echo "<div class='center'>";
-            echo "<p class='red'>" . __('Access denied') . "</p>";
-            echo "</div>";
+            echo "\n\n" . __('Access denied') . "";
+            echo "\n\n|";
             return;
         }
 
-        // OBTER CONFIGURAÇÕES ATUAIS
-        $enable_signature = self::getConfigValue('enable_signature', 1);
-        $require_signature = self::getConfigValue('require_signature', 0);
-        $enable_gps = self::getConfigValue('enable_gps', 1);
-        $calculate_mileage = self::getConfigValue('calculate_mileage', 1);
-        $default_map_zoom = self::getConfigValue('default_map_zoom', 13);
+        // Carrega valores da configuração
+        $enable_signature = (int) self::getConfigValue('enable_signature', 0);
+        $require_signature = (int) self::getConfigValue('require_signature', 0);
+        $enable_gps = (int) self::getConfigValue('enable_gps', 0);
+        $calculate_mileage = (int) self::getConfigValue('calculate_mileage', 0);
+        $default_zoom = (int) self::getConfigValue('default_zoom', 10);
 
-        // RENDERIZAR FORMULÁRIO
-        Html::openForm(['action' => self::getFormURL()]);
+        // Processar POST se enviado
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_config'])) {
+            if (Session::validateToken()) {
+                self::setConfigValue('enable_signature', $_POST['enable_signature'] ?? 0);
+                self::setConfigValue('require_signature', $_POST['require_signature'] ?? 0);
+                self::setConfigValue('enable_gps', $_POST['enable_gps'] ?? 0);
+                self::setConfigValue('calculate_mileage', $_POST['calculate_mileage'] ?? 0);
+                self::setConfigValue('default_zoom', (int) ($_POST['default_zoom'] ?? 10));
 
-        echo "<div class='spaced'>";
+                Session::addMessageAfterRedirect(
+                    __('Settings saved successfully', 'newbase'),
+                    true,
+                    INFO
+                );
+            }
+        }
+
+        // USAR HTML NATIVO AO INVÉS DE Html::openForm()
+        echo "<form method='POST' action=''>";
+        echo Session::getToken();
+        echo "<input type='hidden' name='update_config' value='1'>";
+
+        // Cria tabela com os campos
         echo "<table class='tab_cadre_fixe'>";
-
-        echo "<tr class='tab_bg_1'>";
-        echo "<th colspan='2'>";
-        echo "<h2>" . __('Plugin Configuration', 'newbase') . "</h2>";
-        echo "</th>";
+        echo "<thead>";
+        echo "<tr>";
+        echo "<th colspan='2'>" . __('Plugin Configuration', 'newbase') . "</th>";
         echo "</tr>";
+        echo "</thead>";
+        echo "<tbody>";
 
-        // ASSINATURA DIGITAL
-        echo "<tr class='tab_bg_1'>";
+        // Campo 1: Enable digital signature
+        echo "<tr>";
         echo "<td>" . __('Enable digital signature', 'newbase') . "</td>";
         echo "<td>";
         Html::showCheckbox([
             'name' => 'enable_signature',
+            'value' => 1,
             'checked' => $enable_signature == 1,
         ]);
         echo "</td>";
         echo "</tr>";
 
-        echo "<tr class='tab_bg_1'>";
+        // Campo 2: Require signature to complete tasks
+        echo "<tr>";
         echo "<td>" . __('Require signature to complete tasks', 'newbase') . "</td>";
         echo "<td>";
         Html::showCheckbox([
             'name' => 'require_signature',
+            'value' => 1,
             'checked' => $require_signature == 1,
         ]);
         echo "</td>";
         echo "</tr>";
 
-        // GEOLOCALIZAÇÃO
-        echo "<tr class='tab_bg_1'>";
+        // Campo 3: Enable GPS tracking
+        echo "<tr>";
         echo "<td>" . __('Enable GPS tracking', 'newbase') . "</td>";
         echo "<td>";
         Html::showCheckbox([
             'name' => 'enable_gps',
+            'value' => 1,
             'checked' => $enable_gps == 1,
         ]);
         echo "</td>";
         echo "</tr>";
 
-        echo "<tr class='tab_bg_1'>";
+        // Campo 4: Calculate mileage automatically
+        echo "<tr>";
         echo "<td>" . __('Calculate mileage automatically', 'newbase') . "</td>";
         echo "<td>";
         Html::showCheckbox([
             'name' => 'calculate_mileage',
+            'value' => 1,
             'checked' => $calculate_mileage == 1,
         ]);
         echo "</td>";
         echo "</tr>";
 
-        // MAPA
-        echo "<tr class='tab_bg_1'>";
+        // Campo 5: Default map zoom level
+        echo "<tr>";
         echo "<td>" . __('Default map zoom level', 'newbase') . "</td>";
         echo "<td>";
-        echo "<input type='number' name='default_map_zoom' value='" . htmlspecialchars($default_map_zoom, ENT_QUOTES, 'UTF-8') . "' min='1' max='20' size='5' class='form-control'>";
-        echo " <span class='text-muted'>(1-20)</span>";
+        echo "<input type='number' name='default_zoom' value='" . $default_zoom . "' min='1' max='20' step='1'>";
+        echo " (1-20)";
         echo "</td>";
         echo "</tr>";
 
-        // BOTÃO SALVAR
-        echo "<tr class='tab_bg_1'>";
+        // Botão de submissão
+        echo "<tr>";
         echo "<td colspan='2' class='center'>";
-        echo "<input type='submit' name='update_config' value='" . __('Save') . "' class='btn btn-primary'>";
+        echo "<button type='submit' class='btn btn-primary'>" . __('Update') . "</button>";
         echo "</td>";
         echo "</tr>";
 
+        echo "</tbody>";
         echo "</table>";
-        echo "</div>";
 
-        Html::closeForm();
-    }
-
-/**
-* Process configuration form submission
-* @param array $input Form input data
-* @return bool Success
-*/
-    public static function saveConfigForm(array $input): bool
-    {
-        if (!Session::haveRight('config', UPDATE)) {
-            Session::addMessageAfterRedirect(
-                __('Access denied'),
-                false,
-                ERROR
-            );
-            return false;
-        }
-
-        $success = true;
-
-        // Save each configuration value
-        $configs = [
-            'enable_signature' => isset($input['enable_signature']) ? 1 : 0,
-            'require_signature' => isset($input['require_signature']) ? 1 : 0,
-            'enable_gps' => isset($input['enable_gps']) ? 1 : 0,
-            'calculate_mileage' => isset($input['calculate_mileage']) ? 1 : 0,
-            'default_map_zoom' => (int) ($input['default_map_zoom'] ?? 13),
-        ];
-
-        foreach ($configs as $key => $value) {
-            if (!self::setConfigValue($key, $value)) {
-                $success = false;
-            }
-        }
-
-        if ($success) {
-            Session::addMessageAfterRedirect(
-                __('Configuration saved successfully', 'newbase'),
-                false,
-                INFO
-            );
-        } else {
-            Session::addMessageAfterRedirect(
-                __('Error saving configuration', 'newbase'),
-                false,
-                ERROR
-            );
-        }
-
-        return $success;
-    }
-
-/**
-* Get form URL
-* @param bool $full Full path
-* @return string Form URL
-*/
-    public static function getFormURL($full = true): string
-    {
-        return Plugin::getWebDir('newbase', $full) . '/front/config.php';
+        echo "</form>";
     }
 }

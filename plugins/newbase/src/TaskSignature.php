@@ -1,6 +1,34 @@
 <?php
 
 /**
+* -------------------------------------------------------------------------
+* Newbase plugin for GLPI
+* -------------------------------------------------------------------------
+*
+* LICENSE
+*
+* This file is part of Newbase.
+*
+* Newbase is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2 of the License, or
+* (at your option) any later version.
+*
+* Newbase is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with Newbase. If not, see <http://www.gnu.org/licenses/>.
+* -------------------------------------------------------------------------
+* @copyright Copyright (C) 2024-2026 by João Lucas
+* @license   GPLv2 https://www.gnu.org/licenses/gpl-2.0.html
+* @link      https://github.com/JoaoLucascp/Glpi
+* -------------------------------------------------------------------------
+*/
+
+/**
 * TaskSignature Class - Digital signature management for tasks
 * @package   Plugin - Newbase
 * @author    João Lucas
@@ -8,6 +36,8 @@
 * @license   GPLv2+
 * @version   2.1.0
 */
+
+declare(strict_types=1);
 
 namespace GlpiPlugin\Newbase;
 
@@ -136,7 +166,8 @@ class TaskSignature extends CommonDBTM
         $size = strlen($signature_data);
         if ($size > self::MAX_SIGNATURE_SIZE) {
             Session::addMessageAfterRedirect(
-                sprintf(__('Signature too large: %s KB (max: %s KB)', 'newbase'), 
+                sprintf(
+                    __('Signature too large: %s KB (max: %s KB)', 'newbase'),
                     round($size / 1024, 2),
                     round(self::MAX_SIGNATURE_SIZE / 1024, 2)
                 ),
@@ -173,7 +204,6 @@ class TaskSignature extends CommonDBTM
 
             Toolbox::logInFile('newbase_plugin', "Signature updated for task {$task_id}\n");
             return $existing['id'];
-
         } else {
             // Insert new signature
             $data['date_creation'] = $timestamp;
@@ -271,7 +301,6 @@ class TaskSignature extends CommonDBTM
         echo "<div class='signature-container' style='margin-top: 20px;'>";
 
         if ($signature) {
-
             // SHOW EXISTING SIGNATURE
             echo "<div class='signature-display'>";
             echo "<h3>" . __('Digital Signature', 'newbase') . "</h3>";
@@ -305,9 +334,7 @@ class TaskSignature extends CommonDBTM
             }
 
             echo "</div>";
-
         } else {
-
             // SHOW SIGNATURE CANVAS (UPLOAD)
             if ($canedit) {
                 echo "<div class='signature-upload'>";

@@ -170,7 +170,7 @@ if ($recent_tasks_result) {
             <span class="progress-bar">
                 <?php
                 $completion_rate = $total_tasks > 0
-                    ? round(($completed_tasks / $total_tasks)* 100)
+                    ? round(($completed_tasks / $total_tasks) * 100)
                     : 0;
                 echo $completion_rate . '%';
                 ?>
@@ -187,8 +187,7 @@ if ($recent_tasks_result) {
         <?php echo __('Recent Tasks', 'newbase'); ?>
     </h2>
 
-    <?php if (count($recent_tasks) > 0): ?>
-
+    <?php if (count($recent_tasks) > 0) : ?>
         <table class="table table-hover">
             <thead>
                 <tr>
@@ -200,7 +199,7 @@ if ($recent_tasks_result) {
                 </tr>
             </thead>
             <tbody>
-                <?php foreach ($recent_tasks as $task): ?>
+                <?php foreach ($recent_tasks as $task) : ?>
                     <tr>
                         <td>
                             <a href="<?php echo $CFG_GLPI['root_doc']; ?>/plugins/newbase/front/task.form.php?id=<?php echo $task['id']; ?>">
@@ -211,12 +210,12 @@ if ($recent_tasks_result) {
                             <?php echo htmlspecialchars($task['company_name'] ?? '-'); ?>
                         </td>
                         <td>
-                            <?php if ($task['is_completed']): ?>
+                            <?php if ($task['is_completed']) : ?>
                                 <span class="badge badge-success">
                                     <i class="ti ti-check"></i>
                                     <?php echo __('Completed', 'newbase'); ?>
                                 </span>
-                            <?php else: ?>
+                            <?php else : ?>
                                 <span class="badge badge-warning">
                                     <i class="ti ti-clock"></i>
                                     <?php echo __('Pending', 'newbase'); ?>
@@ -237,8 +236,7 @@ if ($recent_tasks_result) {
             </tbody>
         </table>
 
-    <?php else: ?>
-
+    <?php else : ?>
         <div class="alert alert-info">
             <i class="ti ti-info-circle"></i>
             <?php echo __('No recent tasks', 'newbase'); ?>

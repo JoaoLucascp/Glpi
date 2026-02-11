@@ -12,7 +12,6 @@
 * @license   GPLv2+
 */
 
-
 // 1 SEGURANÇA: Carregar o núcleo do GLPI
 include('../../../inc/includes.php');
 
@@ -29,13 +28,15 @@ $companydata = new CompanyData();
 
 // 5 AÇÃO: SALVAR EMPRESA (criar ou atualizar)
 if (isset($_POST['add']) || isset($_POST['update'])) {
-
     // CSRF: Verificar token de segurança
     Session::checkCSRF($_POST);
 
     // Determinar se é criação ou atualização
     $is_new = isset($_POST['add']);
-    $entity_id = (int) ($_POST['entities_id'] ?? 0);
+    $entity_id = filter_input(INPUT_POST, 'entities_id', FILTER_VALIDATE_INT);
+    if ($entity_id === false || $entity_id === null || $entity_id < 0) {
+        $entity_id = 0;
+    }
 
     // ETAPA 1: GERENCIAR ENTIDADE DO GLPI
 
@@ -90,7 +91,6 @@ if (isset($_POST['add']) || isset($_POST['update'])) {
             );
             Html::back();
         }
-
     } else {
         // ATUALIZAR ENTIDADE EXISTENTE
 
@@ -151,7 +151,7 @@ if (isset($_POST['add']) || isset($_POST['update'])) {
     ];
 
     // Salvar apenas campos preenchidos
-    $extras = array_filter($extras, function($value) {
+    $extras = array_filter($extras, function ($value) {
         return !empty($value);
     });
 
@@ -173,11 +173,13 @@ if (isset($_POST['add']) || isset($_POST['update'])) {
 
 // 6 AÇÃO: DELETAR EMPRESA (soft delete)
 } elseif (isset($_POST['delete'])) {
-
     // CSRF: Verificar token de segurança
     Session::checkCSRF($_POST);
 
-    $entity_id = (int) ($_POST['entities_id'] ?? 0);
+    $entity_id = filter_input(INPUT_POST, 'entities_id', FILTER_VALIDATE_INT);
+    if ($entity_id === false || $entity_id === null || $entity_id < 0) {
+        $entity_id = 0;
+    }
 
     if ($entity_id <= 0) {
         Session::addMessageAfterRedirect(
@@ -229,11 +231,13 @@ if (isset($_POST['add']) || isset($_POST['update'])) {
 
 // 7 AÇÃO: PURGAR EMPRESA (hard delete - remove permanentemente)
 } elseif (isset($_POST['purge'])) {
-
     // CSRF: Verificar token de segurança
     Session::checkCSRF($_POST);
 
-    $entity_id = (int) ($_POST['entities_id'] ?? 0);
+    $entity_id = filter_input(INPUT_POST, 'entities_id', FILTER_VALIDATE_INT);
+    if ($entity_id === false || $entity_id === null || $entity_id < 0) {
+        $entity_id = 0;
+    }
 
     if ($entity_id <= 0) {
         Session::addMessageAfterRedirect(
@@ -302,9 +306,6 @@ Html::header('Newbase', $_SERVER['PHP_SELF'], "plugins", "newbase", "menu_slug")
 
 // GLPI 10.0.20: Injetar variáveis JavaScript (incluindo CSRF token)
 echo Html::getCoreVariablesForJavascript();
-
-// CRÍTICO: Adicionar meta tag CSRF para o JavaScript
-echo "<meta name='glpi:csrf_token' content='" . Session::getNewCSRFToken() . "'>\n";
 
 
 // 10 CARREGAR DADOS DA EMPRESA (se estiver editando)

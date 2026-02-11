@@ -1,0 +1,191 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR Tasklists Development Team
+# This file is distributed under the same license as the GLPI - Tasklists plugin package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: GLPI - Tasklists plugin\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-12-30 13:19+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+#: setup.php:95 inc/dashboard.class.php:60 inc/dashboard.class.php:178
+#: inc/dashboard.class.php:183 inc/menu.class.php:44
+#: inc/preference.class.php:46 inc/profile.class.php:52
+msgid "Tasks list"
+msgstr ""
+
+#: ajax/addOptions.php:30
+msgid "Not archived"
+msgstr ""
+
+#: ajax/addOptions.php:31 inc/task.class.php:194 inc/task.class.php:666
+msgid "Archived"
+msgstr ""
+
+#: inc/dashboard.class.php:59
+msgid "Tables"
+msgstr ""
+
+#: inc/dashboard.class.php:102 inc/task.class.php:93 inc/task.class.php:467
+#: inc/taskstate.class.php:137 inc/taskstate.class.php:189
+#: inc/tasktype.class.php:52
+msgid "Context"
+msgid_plural "Contexts"
+msgstr[0] ""
+msgstr[1] ""
+
+#: inc/dashboard.class.php:108 inc/notificationtargettask.class.php:213
+#: inc/notificationtargettask.class.php:259 inc/task.class.php:131
+#: inc/task.class.php:544 inc/tasktype.class.php:230
+msgid "Due date"
+msgstr ""
+
+#: inc/dashboard.class.php:163 inc/dashboard.class.php:164
+#: inc/dashboard.class.php:169 inc/ticket.class.php:154
+msgid "Add task"
+msgstr ""
+
+#: inc/kanban.class.php:71
+msgid "Kanban"
+msgstr ""
+
+#: inc/kanban.class.php:131
+msgid "You don't have the right to see any context"
+msgstr ""
+
+#: inc/kanban.class.php:167
+msgid "There is no accessible context"
+msgstr ""
+
+#: inc/notificationtargettask.class.php:51
+msgid "A task has been added"
+msgstr ""
+
+#: inc/notificationtargettask.class.php:52
+msgid "A task has been updated"
+msgstr ""
+
+#: inc/notificationtargettask.class.php:53
+msgid "A task has been removed"
+msgstr ""
+
+#: inc/notificationtargettask.class.php:217
+#: inc/notificationtargettask.class.php:263 inc/task.class.php:202
+#: inc/task.class.php:535
+msgid "Other client"
+msgstr ""
+
+#: inc/notificationtargettask.class.php:271
+msgid "At creation, update, removal of a task"
+msgstr ""
+
+#: inc/preference.class.php:88
+msgid "Context by default"
+msgstr ""
+
+#: inc/preference.class.php:96
+msgid "Automatic refreshing of tasklist"
+msgstr ""
+
+#: inc/preference.class.php:102
+msgid "Refresh every "
+msgstr ""
+
+#: inc/preference.class.php:106
+msgid "minute(s)"
+msgstr ""
+
+#: inc/profile.class.php:164 inc/profile.class.php:208
+msgid "See and update all tasks"
+msgstr ""
+
+#: inc/profile.class.php:173 inc/profile.class.php:211
+msgid "Configure contexts and statuses"
+msgstr ""
+
+#: inc/stateorder.class.php:96
+msgid "States ordering"
+msgstr ""
+
+#: inc/stateorder.class.php:156
+msgid "Add states from linked Kanban"
+msgstr ""
+
+#: inc/task.class.php:251
+msgctxt "quantity"
+msgid "Number of comments"
+msgstr ""
+
+#: inc/task.class.php:387
+msgid "You cannot archive a task with this state"
+msgstr ""
+
+#: inc/task.class.php:506
+msgid "Existing client"
+msgstr ""
+
+#: inc/task.class.php:689 inc/task.class.php:776 inc/task.class.php:1052
+#: inc/tasktype.class.php:166 inc/tasktype.class.php:527
+msgid "Backlog"
+msgstr ""
+
+#: inc/task.class.php:1112
+msgctxt "visibility"
+msgid "This user"
+msgstr ""
+
+#: inc/task.class.php:1115
+msgctxt "visibility"
+msgid "This user and this group"
+msgstr ""
+
+#: inc/task.class.php:1118
+msgctxt "visibility"
+msgid "All"
+msgstr ""
+
+#: inc/task.class.php:1160
+msgid "Affect entity for create task"
+msgstr ""
+
+#: inc/taskstate.class.php:84
+msgid "Status"
+msgid_plural "Statuses"
+msgstr[0] ""
+msgstr[1] ""
+
+#: inc/ticket.class.php:74 inc/ticket.class.php:184
+msgid "Linked task"
+msgid_plural "Linked tasks"
+msgstr[0] ""
+msgstr[1] ""
+
+#: inc/ticket.class.php:228
+msgid "No task linked to this ticket yet"
+msgstr ""
+
+#: inc/ticket.class.php:259
+msgid "Link a existant ticket"
+msgstr ""
+
+#: inc/ticket.class.php:285
+msgid "Linked tickets"
+msgstr ""
+
+#: inc/typevisibility.class.php:138
+msgid "Add a group"
+msgstr ""
+
+#: inc/typevisibility.class.php:179
+msgid "Groups allowed to use context"
+msgstr ""

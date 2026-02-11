@@ -60,6 +60,10 @@ use GlpiPlugin\Newbase\CompanyData;
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-cache, must-revalidate');
 header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
+header('X-Content-Type-Options: nosniff');
+header('X-Frame-Options: DENY');
+header('X-XSS-Protection: 1; mode=block');
+header('Referrer-Policy: strict-origin-when-cross-origin');
 
 // VALIDAÇÕES DE SEGURANÇA
 
@@ -233,7 +237,6 @@ try {
         'newbase_plugin',
         "API search successful for CNPJ: $cnpj\n"
     );
-
 } catch (Exception $e) {
     // 16 RESPOSTA DE ERRO
     http_response_code(500);

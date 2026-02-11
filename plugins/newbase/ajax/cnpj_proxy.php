@@ -33,6 +33,10 @@ use GlpiPlugin\Newbase\CompanyData;
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-cache, must-revalidate');
 header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
+header('X-Content-Type-Options: nosniff');
+header('X-Frame-Options: DENY');
+header('X-XSS-Protection: 1; mode=block');
+header('Referrer-Policy: strict-origin-when-cross-origin');
 
 /**
  * Validate HTTP method and exit with error if not POST
@@ -83,8 +87,10 @@ function validateCSRFToken(): void
 function checkPermissions(): void
 {
     // Check if user has permission to create or update companies
-    if (!Session::haveRight('plugin_newbase', CREATE)
-        && !Session::haveRight('plugin_newbase', UPDATE)) {
+    if (
+        !Session::haveRight('plugin_newbase', CREATE)
+        && !Session::haveRight('plugin_newbase', UPDATE)
+    ) {
         http_response_code(403);
         exit(json_encode([
             'success' => false,
@@ -347,7 +353,6 @@ try {
         'data' => $result,
         'message' => __('Company data loaded successfully', 'newbase'),
     ]);
-
 } catch (Exception $e) {
     // Error handling
     http_response_code(500);

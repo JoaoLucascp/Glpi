@@ -33,9 +33,13 @@ $system = new System();
 
 // 5 AÇÃO: ADICIONAR NOVO SISTEMA
 if (isset($_POST['add'])) {
-
     // CSRF: Verificar token de segurança
     Session::checkCSRF($_POST);
+
+    $entity_id = filter_input(INPUT_POST, 'entities_id', FILTER_VALIDATE_INT);
+    if ($entity_id === false || $entity_id === null || $entity_id < 0) {
+        $entity_id = 0;
+    }
 
     // Verificar direitos de criação
     $system->check(-1, CREATE, $_POST);
@@ -68,8 +72,12 @@ if (isset($_POST['add'])) {
 
 // 6 AÇÃO: ATUALIZAR SISTEMA EXISTENTE
 } elseif (isset($_POST['update'])) {
-
     Session::checkCSRF($_POST);
+
+    $entity_id = filter_input(INPUT_POST, 'entities_id', FILTER_VALIDATE_INT);
+    if ($entity_id === false || $entity_id === null || $entity_id < 0) {
+        $entity_id = 0;
+    }
 
     // Verificar direitos de atualização
     $system->check($_POST['id'], UPDATE);
@@ -92,8 +100,12 @@ if (isset($_POST['add'])) {
 
 // 7 AÇÃO: DELETAR SISTEMA (soft delete - vai para lixeira)
 } elseif (isset($_POST['delete'])) {
-
     Session::checkCSRF($_POST);
+
+    $entity_id = filter_input(INPUT_POST, 'entities_id', FILTER_VALIDATE_INT);
+    if ($entity_id === false || $entity_id === null || $entity_id < 0) {
+        $entity_id = 0;
+    }
 
     // Verificar direitos de deleção
     $system->check($_POST['id'], DELETE);
@@ -116,8 +128,12 @@ if (isset($_POST['add'])) {
 
 // 8 AÇÃO: PURGAR SISTEMA (hard delete - remove permanentemente)
 } elseif (isset($_POST['purge'])) {
-
     Session::checkCSRF($_POST);
+
+    $entity_id = filter_input(INPUT_POST, 'entities_id', FILTER_VALIDATE_INT);
+    if ($entity_id === false || $entity_id === null || $entity_id < 0) {
+        $entity_id = 0;
+    }
 
     // Verificar direitos de purga
     $system->check($_POST['id'], PURGE);

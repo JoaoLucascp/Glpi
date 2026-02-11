@@ -63,6 +63,10 @@ use GlpiPlugin\Newbase\Config;
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-cache, must-revalidate');
 header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
+header('X-Content-Type-Options: nosniff');
+header('X-Frame-Options: DENY');
+header('X-XSS-Protection: 1; mode=block');
+header('Referrer-Policy: strict-origin-when-cross-origin');
 
 // VALIDAÇÕES DE SEGURANÇ
 
@@ -252,7 +256,6 @@ try {
     $signature = new TaskSignature();
 
     if ($existing_signature) {
-
         // 22 ATUALIZAR ASSINATURA EXISTENTE
 
         // Remover arquivo antigo
@@ -271,9 +274,7 @@ try {
         ]);
 
         $action = 'updated';
-
     } else {
-
         // 23 CRIAR NOVA ASSINATURA
         $result = $signature->add([
             'plugin_newbase_tasks_id' => $task_id,
@@ -310,7 +311,6 @@ try {
                 Toolbox::getSize($image_size)
             )
         );
-
     } else {
         // Falhou ao salvar no banco, remover arquivo
         @unlink($filepath);
@@ -326,22 +326,20 @@ try {
             "ERROR: Failed to save signature to database for task $task_id\n"
         );
     }
-
 } catch (Exception $e) {
-
     // 25 TRATAMENTO DE ERRO
     http_response_code(500);
-    
+
     $response = [
         'success' => false,
         'message' => __('Error processing signature', 'newbase'),
     ];
-    
+
     // Incluir detalhes apenas em debug
     if (defined('GLPI_DEBUG')) {
         $response['error'] = $e->getMessage();
     }
-    
+
     echo json_encode($response);
 
     Toolbox::logInFile(

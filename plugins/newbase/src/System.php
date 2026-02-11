@@ -1,6 +1,34 @@
 <?php
 
 /**
+* -------------------------------------------------------------------------
+* Newbase plugin for GLPI
+* -------------------------------------------------------------------------
+*
+* LICENSE
+*
+* This file is part of Newbase.
+*
+* Newbase is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2 of the License, or
+* (at your option) any later version.
+*
+* Newbase is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with Newbase. If not, see <http://www.gnu.org/licenses/>.
+* -------------------------------------------------------------------------
+* @copyright Copyright (C) 2024-2026 by João Lucas
+* @license   GPLv2 https://www.gnu.org/licenses/gpl-2.0.html
+* @link      https://github.com/JoaoLucascp/Glpi
+* -------------------------------------------------------------------------
+*/
+
+/**
 * System Class - Telecommunication systems management
 * @package   Plugin - Newbase
 * @author    João Lucas
@@ -9,6 +37,8 @@
 * @version   2.1.0
 */
 
+declare(strict_types=1);
+
 namespace GlpiPlugin\Newbase;
 
 use CommonDBTM;
@@ -16,7 +46,7 @@ use CommonGLPI;
 use Entity;
 use Session;
 use Html;
-use Toolbox;
+use Plugin;
 
 /**
 * System - Manages telecommunication systems
@@ -75,6 +105,41 @@ class System extends CommonDBTM
     public static function getIcon(): string
     {
         return 'ti ti-server';
+    }
+
+/**
+* Get menu content for this item type
+* @return array Menu content
+*/
+    public static function getMenuContent(): array
+    {
+        $menu = [];
+
+        // Check user rights
+        if (!Session::haveRight(self::$rightname, READ)) {
+            return $menu;
+        }
+
+        // Get plugin URL
+        $plugin = new Plugin();
+        $baseUrl = Plugin::getWebDir('newbase');
+
+        // Menu configuration
+        $menu['title'] = self::getTypeName(2);
+        $menu['page']  = self::getSearchURL(false);
+        $menu['icon']  = self::getIcon();
+
+        // Add links
+        $menu['links'] = [
+            'search' => self::getSearchURL(false),
+        ];
+
+        // Add form link if user can create
+        if (self::canCreate()) {
+            $menu['links']['add'] = self::getFormURL(false);
+        }
+
+        return $menu;
     }
 
 /**
