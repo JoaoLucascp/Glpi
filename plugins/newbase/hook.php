@@ -1,38 +1,40 @@
 <?php
 /**
-* -------------------------------------------------------------------------
-* Newbase plugin for GLPI
-* -------------------------------------------------------------------------
-*
-* LICENSE
-*
-* This file is part of Newbase.
-*
-* Newbase is free software; you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation; either version 2 of the License, or
-* (at your option) any later version.
-*
-* Newbase is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with Newbase. If not, see <http://www.gnu.org/licenses/>.
-* -------------------------------------------------------------------------
-* @copyright Copyright (C) 2024-2026 by João Lucas
-* @license   GPLv2 https://www.gnu.org/licenses/gpl-2.0.html
-* @link      https://github.com/JoaoLucascp/Glpi
-* -------------------------------------------------------------------------
-*/
+ * -------------------------------------------------------------------------
+ * Newbase plugin for GLPI
+ * -------------------------------------------------------------------------
+ *
+ * LICENSE
+ *
+ * This file is part of Newbase.
+ *
+ * Newbase is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * Newbase is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Newbase. If not, see <http://www.gnu.org/licenses/>.
+ * -------------------------------------------------------------------------
+ * @copyright Copyright (C) 2024-2026 by João Lucas
+ * @license   GPLv2 [https://www.gnu.org/licenses/gpl-2.0.html](https://www.gnu.org/licenses/gpl-2.0.html)
+ * @link      [https://github.com/JoaoLucascp/Glpi](https://github.com/JoaoLucascp/Glpi)
+ * -------------------------------------------------------------------------
+ */
+
+use Config as CoreConfig;
 
 /**
-* Plugin Installation - REQUIRED BY GLPI
-* Creates all database tables needed by the plugin
-*
-* @return bool Success status
-*/
+ * Plugin Installation - REQUIRED BY GLPI
+ * Creates all database tables needed by the plugin
+ *
+ * @return bool Success status
+ */
 function plugin_newbase_install(): bool
 {
     global $DB;
@@ -228,34 +230,21 @@ function plugin_newbase_install(): bool
             $DB->queryOrDie($query, 'Error creating company extras table');
         }
 
-        // TABLE 6: Configuration
-        if (!$DB->tableExists('glpi_plugin_newbase_config')) {
-            $migration->displayMessage('Creating configuration table...');
-            $query = "CREATE TABLE `glpi_plugin_newbase_config` (
-                `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-                `config_key` VARCHAR(255) NOT NULL,
-                `config_value` LONGTEXT,
-                `date_mod` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                PRIMARY KEY (`id`),
-                UNIQUE KEY `unique_config_key` (`config_key`)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
-            $DB->queryOrDie($query, 'Error creating configuration table');
+        // Execute DB changes
+        $migration->executeMigration();
 
-            // Insert default configurations
-            $default_configs = [
-                ['config_key' => 'enable_signature', 'config_value' => '1'],
-                ['config_key' => 'require_signature', 'config_value' => '0'],
-                ['config_key' => 'enable_gps', 'config_value' => '1'],
-                ['config_key' => 'calculate_mileage', 'config_value' => '1'],
-                ['config_key' => 'default_map_zoom', 'config_value' => '13'],
-            ];
-
-            foreach ($default_configs as $config) {
-                $DB->insert('glpi_plugin_newbase_config', $config);
-            }
+        // --- NEW CONFIGURATION LOGIC ---
+        // Initializes default configuration in glpi_configs if it doesn't exist
+        if (!CoreConfig::getConfigurationValues('plugin:newbase')) {
+            CoreConfig::setConfigurationValues('plugin:newbase', [
+                'enable_signature'     => 0,
+                'require_signature'    => 0,
+                'enable_gps'           => 0,
+                'calculate_mileage'    => 0,
+                'default_zoom'         => 10,
+            ]);
         }
 
-        $migration->executeMigration();
         plugin_newbase_log('Plugin installed successfully', 'info');
         return true;
     } catch (Exception $e) {
@@ -265,11 +254,11 @@ function plugin_newbase_install(): bool
 }
 
 /**
-* Plugin Uninstallation - REQUIRED BY GLPI
-* Removes all database tables created by the plugin
-*
-* @return bool Success status
-*/
+ * Plugin Uninstallation - REQUIRED BY GLPI
+ * Removes all database tables created by the plugin
+ *
+ * @return bool Success status
+ */
 function plugin_newbase_uninstall(): bool
 {
     global $DB;
@@ -282,7 +271,7 @@ function plugin_newbase_uninstall(): bool
             'glpi_plugin_newbase_addresses',       // Independent
             'glpi_plugin_newbase_systems',         // Independent
             'glpi_plugin_newbase_company_extras',  // Independent
-            'glpi_plugin_newbase_config',          // Independent
+            // 'glpi_plugin_newbase_config',       // REMOVED - using core config now
         ];
 
         foreach ($tables as $table) {
@@ -290,6 +279,11 @@ function plugin_newbase_uninstall(): bool
                 $DB->query("DROP TABLE IF EXISTS `{$table}`");
             }
         }
+
+        // --- CLEANUP CONFIGURATION ---
+        // Remove plugin configs from glpi_configs
+        $config = new CoreConfig();
+        $config->deleteByCriteria(['context' => 'plugin:newbase']);
 
         plugin_newbase_log('Plugin uninstalled successfully', 'info');
         return true;
@@ -299,16 +293,14 @@ function plugin_newbase_uninstall(): bool
     }
 }
 
-
-
 /**
-* Log plugin operations to file
-*
-* @param string $message Log message
-* @param string $level   Log level (info, warning, error)
-*
-* @return void
-*/
+ * Log plugin operations to file
+ *
+ * @param string $message Log message
+ * @param string $level   Log level (info, warning, error)
+ *
+ * @return void
+ */
 function plugin_newbase_log(string $message, string $level = 'info'): void
 {
     $log_dir = defined('GLPI_LOG_DIR') ? GLPI_LOG_DIR : GLPI_ROOT . '/files/_log';
@@ -324,10 +316,10 @@ function plugin_newbase_log(string $message, string $level = 'info'): void
 }
 
 /**
-* Validate plugin tables schema
-*
-* @return array Array with found errors
-*/
+ * Validate plugin tables schema
+ *
+ * @return array Array with found errors
+ */
 function plugin_newbase_validateSchema(): array
 {
     global $DB;
@@ -350,10 +342,10 @@ function plugin_newbase_validateSchema(): array
 }
 
 /**
-* Check tables status
-*
-* @return array Array with table status
-*/
+ * Check tables status
+ *
+ * @return array Array with table status
+ */
 function plugin_newbase_checkTableStatus(): array
 {
     global $DB;
@@ -364,7 +356,7 @@ function plugin_newbase_checkTableStatus(): array
         'glpi_plugin_newbase_tasks',
         'glpi_plugin_newbase_task_signatures',
         'glpi_plugin_newbase_company_extras',
-        'glpi_plugin_newbase_config',
+        // 'glpi_plugin_newbase_config', // REMOVED
     ];
 
     $status = [];

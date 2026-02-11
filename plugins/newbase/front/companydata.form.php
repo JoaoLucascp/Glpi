@@ -1,16 +1,16 @@
 <?php
 
 /**
-* ---------------------------------------------------------------------
-* Formulário de Gerenciamento de Empresas - Plugin Newbase
-* ---------------------------------------------------------------------
-*
-* Este arquivo processa ações CRUD (Create, Read, Update, Delete) para empresas
-* e exibe o formulário correspondente. Empresas são baseadas em Entidades do GLPI.
-* @package   Plugin - Newbase
-* @author    João Lucas
-* @license   GPLv2+
-*/
+ * ---------------------------------------------------------------------
+ * Formulário de Gerenciamento de Empresas - Plugin Newbase
+ * ---------------------------------------------------------------------
+ *
+ * Este arquivo processa ações CRUD (Create, Read, Update, Delete) para empresas
+ * e exibe o formulário correspondente. Empresas são baseadas em Entidades do GLPI.
+ * @package   Plugin - Newbase
+ * @author    João Lucas
+ * @license   GPLv2+
+ */
 
 // 1 SEGURANÇA: Carregar o núcleo do GLPI
 include('../../../inc/includes.php');
@@ -304,10 +304,6 @@ $entity_id = max(0, $entity_id);
 // 9 RENDERIZAR CABEÇALHO DO GLPI
 Html::header('Newbase', $_SERVER['PHP_SELF'], "plugins", "newbase", "menu_slug");
 
-// GLPI 10.0.20: Injetar variáveis JavaScript (incluindo CSRF token)
-echo Html::getCoreVariablesForJavascript();
-
-
 // 10 CARREGAR DADOS DA EMPRESA (se estiver editando)
 if ($entity_id > 0) {
     if (!$companydata->getFromDB($entity_id)) {
@@ -320,7 +316,7 @@ if ($entity_id > 0) {
     }
 }
 
-// 11 EXIBIR FORMULÁRIO
+// 11 EXIBIR FORMULÁRIO (o método showForm() deve gerenciar o CSRF internamente)
 $companydata->showForm($entity_id);
 
 // 12 RENDERIZAR RODAPÉ DO GLPI

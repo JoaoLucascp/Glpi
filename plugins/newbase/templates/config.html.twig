@@ -1,0 +1,87 @@
+<form action="{{ path('front/config.form.php') }}" method="post" data-track-changes="true">
+	<input type="hidden" name="update_config" value="1"/>
+	<input type="hidden" name="_glpi_csrf_token" value="{{ csrf_token() }}"/>
+
+	<table class="tab_cadre_fixe">
+		<thead>
+			<tr>
+				<th colspan="2">{{ __('Plugin Configuration', 'newbase') }}</th>
+			</tr>
+		</thead>
+		<tbody>
+
+			{# Enable digital signature #}
+			<tr class="tab_bg_1">
+				<td>{{ __('Enable digital signature', 'newbase') }}</td>
+				<td>
+					{% if can_edit %}
+						<input type="checkbox" name="enable_signature" value="1" {{ config.enable_signature ? 'checked' : '' }}>
+					{% else %}
+						{{ config.enable_signature ? __('Yes') : __('No') }}
+					{% endif %}
+				</td>
+			</tr>
+
+			{# Require signature #}
+			<tr class="tab_bg_1">
+				<td>{{ __('Require signature to complete tasks', 'newbase') }}</td>
+				<td>
+					{% if can_edit %}
+						<input type="checkbox" name="require_signature" value="1" {{ config.require_signature ? 'checked' : '' }}>
+					{% else %}
+						{{ config.require_signature ? __('Yes') : __('No') }}
+					{% endif %}
+				</td>
+			</tr>
+
+			{# Enable GPS #}
+			<tr class="tab_bg_1">
+				<td>{{ __('Enable GPS tracking', 'newbase') }}</td>
+				<td>
+					{% if can_edit %}
+						<input type="checkbox" name="enable_gps" value="1" {{ config.enable_gps ? 'checked' : '' }}>
+					{% else %}
+						{{ config.enable_gps ? __('Yes') : __('No') }}
+					{% endif %}
+				</td>
+			</tr>
+
+			{# Calculate Mileage #}
+			<tr class="tab_bg_1">
+				<td>{{ __('Calculate mileage automatically', 'newbase') }}</td>
+				<td>
+					{% if can_edit %}
+						<input type="checkbox" name="calculate_mileage" value="1" {{ config.calculate_mileage ? 'checked' : '' }}>
+					{% else %}
+						{{ config.calculate_mileage ? __('Yes') : __('No') }}
+					{% endif %}
+				</td>
+			</tr>
+
+			{# Default Zoom #}
+			<tr class="tab_bg_1">
+				<td>{{ __('Default map zoom level', 'newbase') }}
+					(1-20)</td>
+				<td>
+					{% if can_edit %}
+						<input type="number" name="default_zoom" value="{{ config.default_zoom }}" min="1" max="20" step="1">
+					{% else %}
+						{{ config.default_zoom }}
+					{% endif %}
+				</td>
+			</tr>
+
+			{% if can_edit %}
+				<tr class="tab_bg_2">
+					<td colspan="2" class="center">
+						<button type="submit" class="btn btn-primary">
+							<i class="fas fa-save"></i>
+							{{ __('Save') }}
+						</button>
+					</td>
+				</tr>
+			{% endif %}
+
+		</tbody>
+	</table>
+</form>
