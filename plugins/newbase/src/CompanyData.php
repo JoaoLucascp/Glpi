@@ -378,7 +378,7 @@ class CompanyData extends CommonDBTM
 
         // --- SEGURANÇA: Token CSRF Explícito ---
         // Essencial para validação no PHP e fallback no JavaScript
-        echo Html::hidden('_glpi_csrf_token', ['value' => Session::getNewCSRFToken()]);
+        //echo Html::hidden('_glpi_csrf_token', ['value' => Session::getNewCSRFToken()]);
 
         // --- CAMPOS OCULTOS ---
         if (!$is_new) {
@@ -534,15 +534,15 @@ class CompanyData extends CommonDBTM
 
             if ($entity->canDelete()) {
                 echo "&nbsp;&nbsp;";
-                echo "<input type='submit' name='delete' value='" . _sx('button', 'Delete') . "' 
-                        class='btn btn-danger' 
+                echo "<input type='submit' name='delete' value='" . _sx('button', 'Delete') . "'
+                        class='btn btn-danger'
                         onclick='return confirm(\"" . __('Confirm deletion?') . "\");' />";
             }
 
             if ($entity->canPurge()) {
                 echo "&nbsp;&nbsp;";
-                echo "<input type='submit' name='purge' value='" . _sx('button', 'Delete permanently') . "' 
-                        class='btn btn-danger' 
+                echo "<input type='submit' name='purge' value='" . _sx('button', 'Delete permanently') . "'
+                        class='btn btn-danger'
                         onclick='return confirm(\"" . __('Confirm permanent deletion? This action cannot be undone!') . "\");' />";
             }
         }
