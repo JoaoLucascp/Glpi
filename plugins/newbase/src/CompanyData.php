@@ -1,32 +1,32 @@
 <?php
 
 /**
- * -------------------------------------------------------------------------
- * Newbase plugin for GLPI
- * -------------------------------------------------------------------------
- *
- * LICENSE
- *
- * This file is part of Newbase.
- *
- * Newbase is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * Newbase is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Newbase. If not, see <http://www.gnu.org/licenses/>.
- * -------------------------------------------------------------------------
- * @copyright Copyright (C) 2024-2026 by João Lucas
- * @license   GPLv2 [https://www.gnu.org/licenses/gpl-2.0.html](https://www.gnu.org/licenses/gpl-2.0.html)
- * @link      [https://github.com/JoaoLucascp/Glpi](https://github.com/JoaoLucascp/Glpi)
- * -------------------------------------------------------------------------
- */
+* -------------------------------------------------------------------------
+* Newbase plugin for GLPI
+* -------------------------------------------------------------------------
+*
+* LICENSE
+*
+* This file is part of Newbase.
+*
+* Newbase is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2 of the License, or
+* (at your option) any later version.
+*
+* Newbase is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with Newbase. If not, see <http://www.gnu.org/licenses/>.
+* -------------------------------------------------------------------------
+* @copyright Copyright (C) 2024-2026 by João Lucas
+* @license   GPLv2 [https://www.gnu.org/licenses/gpl-2.0.html](https://www.gnu.org/licenses/gpl-2.0.html)
+* @link      [https://github.com/JoaoLucascp/Glpi](https://github.com/JoaoLucascp/Glpi)
+* -------------------------------------------------------------------------
+*/
 
 declare(strict_types=1);
 
@@ -40,60 +40,60 @@ use Session;
 use Html;
 
 /**
- * CompanyData Class - Company data management for Newbase plugin
- *
- * @package   Plugin - Newbase
- * @author    João Lucas
- * @copyright 2026 João Lucas
- * @license   GPLv2+
- * @version   2.1.0
- */
+* CompanyData Class - Company data management for Newbase plugin
+*
+* @package   Plugin - Newbase
+* @author    João Lucas
+* @copyright 2026 João Lucas
+* @license   GPLv2+
+* @version   2.1.0
+*/
 class CompanyData extends CommonDBTM
 {
     /**
-     * Rights management
-     * @var string
-     */
+    * Rights management
+    * @var string
+    */
     public static $rightname = 'plugin_newbase';
 
     /**
-     * Enable history tracking
-     * @var bool
-     */
+    * Enable history tracking
+    * @var bool
+    */
     public $dohistory = true;
 
     /**
-     * Get table name - Override to use correct table
-     * @return string Table name
-     */
+    * Get table name - Override to use correct table
+    * @return string Table name
+    */
     public static function getTable($classname = null): string
     {
         return 'glpi_plugin_newbase_company_extras';
     }
 
     /**
-     * Get type name
-     * @param int $nb Number of items
-     * @return string Type name
-     */
+    * Get type name
+    * @param int $nb Number of items
+    * @return string Type name
+    */
     public static function getTypeName($nb = 0): string
     {
         return $nb > 1 ? __('Companies', 'newbase') : __('Company', 'newbase');
     }
 
     /**
-     * Get icon for menus (Tabler Icons)
-     * @return string Icon class
-     */
+    * Get icon for menus (Tabler Icons)
+    * @return string Icon class
+    */
     public static function getIcon(): string
     {
         return 'ti ti-building';
     }
 
     /**
-     * Get menu content for this item type
-     * @return array Menu content
-     */
+    * Get menu content for this item type
+    * @return array Menu content
+    */
     public static function getMenuContent(): array
     {
         $menu = [];
@@ -125,19 +125,19 @@ class CompanyData extends CommonDBTM
     }
 
     /**
-     * Get company search URL
-     * @param bool $full Full path
-     * @return string Search URL
-     */
+    * Get company search URL
+    * @param bool $full Full path
+    * @return string Search URL
+    */
     public static function getSearchURL($full = true)
     {
         return Plugin::getWebDir('newbase', $full) . '/front/companydata.php';
     }
 
     /**
-     * Get all active companies from glpi_entities
-     * @return array Associative array [id => name, ...]
-     */
+    * Get all active companies from glpi_entities
+    * @return array Associative array [id => name, ...]
+    */
     public static function getAllCompanies(): array
     {
         global $DB;
@@ -158,10 +158,10 @@ class CompanyData extends CommonDBTM
     }
 
     /**
-     * Get complete company data by ID
-     * @param int $entity_id Entity ID (glpi_entities.id)
-     * @return array|null Array with company data or null
-     */
+    * Get complete company data by ID
+    * @param int $entity_id Entity ID (glpi_entities.id)
+    * @return array|null Array with company data or null
+    */
     public static function getCompanyById(int $entity_id): ?array
     {
         global $DB;
@@ -183,10 +183,10 @@ class CompanyData extends CommonDBTM
     }
 
     /**
-     * Get company by CNPJ
-     * @param string $cnpj CNPJ with or without formatting
-     * @return array|null Array with company data or null
-     */
+    * Get company by CNPJ
+    * @param string $cnpj CNPJ with or without formatting
+    * @return array|null Array with company data or null
+    */
     public static function getCompanyByCNPJ(string $cnpj): ?array
     {
         global $DB;
@@ -216,10 +216,10 @@ class CompanyData extends CommonDBTM
     }
 
     /**
-     * Get company complementary data
-     * @param int $entity_id Entity ID
-     * @return array|null Array with complementary data or null
-     */
+    * Get company complementary data
+    * @param int $entity_id Entity ID
+    * @return array|null Array with complementary data or null
+    */
     public static function getCompanyExtras(int $entity_id): ?array
     {
         global $DB;
@@ -236,11 +236,11 @@ class CompanyData extends CommonDBTM
     }
 
     /**
-     * Save or update company complementary data
-     * @param int $entity_id Entity ID
-     * @param array $data Data to save (cnpj, corporate_name, fantasy_name, etc)
-     * @return int|bool Record ID or false
-     */
+    * Save or update company complementary data
+    * @param int $entity_id Entity ID
+    * @param array $data Data to save (cnpj, corporate_name, fantasy_name, etc)
+    * @return int|bool Record ID or false
+    */
     public static function saveCompanyExtras(int $entity_id, array $data): int|bool
     {
         // Validate data
@@ -287,11 +287,11 @@ class CompanyData extends CommonDBTM
     }
 
     /**
-     * Search companies by term
-     * @param string $search Search term
-     * @param int $limit Result limit
-     * @return array Array of found companies
-     */
+    * Search companies by term
+    * @param string $search Search term
+    * @param int $limit Result limit
+    * @return array Array of found companies
+    */
     public static function searchCompanies(string $search, int $limit = 20): array
     {
         global $DB;
@@ -320,10 +320,10 @@ class CompanyData extends CommonDBTM
     }
 
     /**
-     * Display dropdown for company selection
-     * @param array $options Dropdown options
-     * @return int|string Dropdown result
-     */
+    * Display dropdown for company selection
+    * @param array $options Dropdown options
+    * @return int|string Dropdown result
+    */
     public static function dropdown($options = [])
     {
         $defaults = [
@@ -340,11 +340,11 @@ class CompanyData extends CommonDBTM
     }
 
     /**
-     * Display company form
-     * @param int $entity_id Entity ID (0 for new company)
-     * @param array $options Form options
-     * @return bool|void
-     */
+    * Display company form
+    * @param int $entity_id Entity ID (0 for new company)
+    * @param array $options Form options
+    * @return bool|void
+    */
     public function showForm($entity_id = 0, $options = [])
     {
         $is_new = ($entity_id == 0);
@@ -376,6 +376,10 @@ class CompanyData extends CommonDBTM
         echo "<div class='center'>";
         echo "<form name='form_company' id='form_company' method='post' action='" . $form_action . "' enctype='multipart/form-data'>";
 
+        // --- SEGURANÇA: Token CSRF Explícito ---
+        // Essencial para validação no PHP e fallback no JavaScript
+        echo Html::hidden('_glpi_csrf_token', ['value' => Session::getNewCSRFToken()]);
+
         // --- CAMPOS OCULTOS ---
         if (!$is_new) {
             echo "<input type='hidden' name='entities_id' value='" . $entity_id . "' />";
@@ -391,7 +395,7 @@ class CompanyData extends CommonDBTM
         echo "</th>";
         echo "</tr>";
 
-        // Company Name *
+        // Company Name*
         echo "<tr class='tab_bg_1'>";
         echo "<td>" . __('Name') . " <span class='red'>*</span></td>";
         echo "<td>";
@@ -549,8 +553,7 @@ class CompanyData extends CommonDBTM
         echo "</table>";
         echo "</div>";
 
-        // --- ENCERRAMENTO CORRETO DO FORMULÁRIO ---
-        // Html::closeForm() fecha a tag </form> e adiciona o token CSRF automaticamente
+        // Fecha a tag form
         Html::closeForm();
 
         echo "</div>"; // Fecha div.center
@@ -562,7 +565,7 @@ class CompanyData extends CommonDBTM
         // Include inline JS for masks
         echo "<script type='text/javascript'>\n";
         echo "$(document).ready(function() {\n";
-        echo "  /* CNPJ Mask */\n";
+        echo "  /* CNPJ Mask*/\n";
         echo "  if (typeof $.fn.mask !== 'undefined') {\n";
         echo "    $('#cnpj').mask('00.000.000/0000-00');\n";
         echo "    $('#cep').mask('00000-000');\n";
@@ -575,10 +578,10 @@ class CompanyData extends CommonDBTM
     }
 
     /**
-     * Get search options for GLPI search engine
-     * (Used if CompanyData becomes a full CommonDBTM in the future)
-     * @return array Search options
-     */
+    * Get search options for GLPI search engine
+    * (Used if CompanyData becomes a full CommonDBTM in the future)
+    * @return array Search options
+    */
     public function rawSearchOptions(): array
     {
         return [
