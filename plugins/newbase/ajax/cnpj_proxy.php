@@ -28,6 +28,8 @@
  * -------------------------------------------------------------------------
  */
 
+declare(strict_types=1);
+
 /**
  * AJAX Proxy for CNPJ APIs
  *
@@ -51,141 +53,77 @@ include('../../../inc/includes.php');
 
 use GlpiPlugin\Newbase\Common;
 use GlpiPlugin\Newbase\Config;
+use GlpiPlugin\Newbase\AjaxHandler;
+use Session;
+use Toolbox;
 
 if (!defined('GLPI_ROOT')) {
     die("Sorry. You can't access this file directly");
 }
 
-// Security headers
-header('Content-Type: application/json; charset=utf-8');
-header('Cache-Control: no-cache, must-revalidate');
-header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
-header('X-Content-Type-Options: nosniff');
-header('X-Frame-Options: SAMEORIGIN');
-header('X-XSS-Protection: 1; mode=block');
-
-/**
- * Send JSON response and exit
- * @param bool $success Success status
- * @param string $message Message
- * @param array $data Additional data
- * @param int $http_code HTTP status code
- */
-function sendResponse(bool $success, string $message, array $data = [], int $http_code = 200): void
-{
-    http_response_code($http_code);
-
-    $response = [
-        'success' => $success,
-        'message' => $message,
-    ];
-
-    if (!empty($data)) {
-        $response['data'] = $data;
-    }
-
-    echo json_encode($response, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-    exit;
-}
+// Set security headers
+AjaxHandler::setSecurityHeaders();
 
 /**
  * Search company data in Brasil API
+ *
  * @param string $cnpj CNPJ without formatting (14 digits)
  * @return array|null Company data or null if not found
  */
 function searchBrasilAPI(string $cnpj): ?array
 {
     $url = "https://brasilapi.com.br/api/cnpj/v1/{$cnpj}";
+    $response = AjaxHandler::fetchCurl($url);
 
-    $ch = curl_init();
-    curl_setopt_array($ch, [
-        CURLOPT_URL            => $url,
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_TIMEOUT        => 15,
-        CURLOPT_CONNECTTIMEOUT => 10,
-        CURLOPT_SSL_VERIFYPEER => true,
-        CURLOPT_FOLLOWLOCATION => true,
-        CURLOPT_USERAGENT      => 'GLPI-Newbase-Plugin/2.1.0',
-        CURLOPT_HTTPHEADER     => [
-            'Accept: application/json',
-        ],
-    ]);
-
-    $response = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    $error = curl_error($ch);
-    curl_close($ch);
-
-    if ($error) {
-        Toolbox::logInFile('newbase_plugin', "Brasil API CURL Error for CNPJ {$cnpj}: {$error}\n");
+    if ($response === false) {
         return null;
     }
 
-    if ($httpCode === 200 && $response !== false) {
-        $data = json_decode($response, true);
-        if (is_array($data) && isset($data['cnpj'])) {
-            Toolbox::logInFile('newbase_plugin', "Brasil API success for CNPJ {$cnpj}\n");
-            return $data;
-        }
+    $data = json_decode($response, true);
+
+    if (is_array($data) && isset($data['cnpj'])) {
+        Toolbox::logInFile('newbase_plugin', "Brasil API success for CNPJ {$cnpj}\n");
+        return $data;
     }
 
-    Toolbox::logInFile('newbase_plugin', "Brasil API failed for CNPJ {$cnpj} (HTTP {$httpCode})\n");
+    Toolbox::logInFile('newbase_plugin', "Brasil API failed for CNPJ {$cnpj}\n");
     return null;
 }
 
 /**
  * Search company data in ReceitaWS API
+ *
  * @param string $cnpj CNPJ without formatting (14 digits)
  * @return array|null Company data or null if not found
  */
 function searchReceitaWSAPI(string $cnpj): ?array
 {
     $url = "https://www.receitaws.com.br/v1/cnpj/{$cnpj}";
+    $response = AjaxHandler::fetchCurl($url);
 
-    $ch = curl_init();
-    curl_setopt_array($ch, [
-        CURLOPT_URL            => $url,
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_TIMEOUT        => 15,
-        CURLOPT_CONNECTTIMEOUT => 10,
-        CURLOPT_SSL_VERIFYPEER => true,
-        CURLOPT_FOLLOWLOCATION => true,
-        CURLOPT_USERAGENT      => 'GLPI-Newbase-Plugin/2.1.0',
-        CURLOPT_HTTPHEADER     => [
-            'Accept: application/json',
-        ],
-    ]);
-
-    $response = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    $error = curl_error($ch);
-    curl_close($ch);
-
-    if ($error) {
-        Toolbox::logInFile('newbase_plugin', "ReceitaWS CURL Error for CNPJ {$cnpj}: {$error}\n");
+    if ($response === false) {
         return null;
     }
 
-    if ($httpCode === 200 && $response !== false) {
-        $data = json_decode($response, true);
+    $data = json_decode($response, true);
 
-        // ReceitaWS returns errors within JSON
-        if (is_array($data) && isset($data['status']) && $data['status'] === 'OK') {
-            Toolbox::logInFile('newbase_plugin', "ReceitaWS success for CNPJ {$cnpj}\n");
-            return $data;
-        }
-
-        if (isset($data['message'])) {
-            Toolbox::logInFile('newbase_plugin', "ReceitaWS error for CNPJ {$cnpj}: {$data['message']}\n");
-        }
+    // ReceitaWS returns errors within JSON
+    if (is_array($data) && isset($data['status']) && $data['status'] === 'OK') {
+        Toolbox::logInFile('newbase_plugin', "ReceitaWS success for CNPJ {$cnpj}\n");
+        return $data;
     }
 
-    Toolbox::logInFile('newbase_plugin', "ReceitaWS failed for CNPJ {$cnpj} (HTTP {$httpCode})\n");
+    if (isset($data['message'])) {
+        Toolbox::logInFile('newbase_plugin', "ReceitaWS error for CNPJ {$cnpj}: {$data['message']}\n");
+    }
+
+    Toolbox::logInFile('newbase_plugin', "ReceitaWS failed for CNPJ {$cnpj}\n");
     return null;
 }
 
 /**
  * Merge data from multiple APIs prioritizing Brasil API
+ *
  * @param array|null $brasilAPI Brasil API data
  * @param array|null $receitaWS ReceitaWS data
  * @return array Merged and normalized data
@@ -224,8 +162,8 @@ function mergeAPIData(?array $brasilAPI, ?array $receitaWS): array
 
         // Street: concatenate type + name
         $result['street'] = trim(
-            ($brasilAPI['descricao_tipo_logradouro'] ?? '') . ' ' . 
-            ($brasilAPI['logradouro'] ?? '')
+            ($brasilAPI['descricao_tipo_logradouro'] ?? '') . ' '
+            . ($brasilAPI['logradouro'] ?? '')
         );
 
         $result['number'] = $brasilAPI['numero'] ?? '';
@@ -280,67 +218,42 @@ function mergeAPIData(?array $brasilAPI, ?array $receitaWS): array
     return $result;
 }
 
-// ===== AUTHENTICATION CHECK =====
-if (!Session::getLoginUserID()) {
-    sendResponse(false, __('Authentication required'), [], 401);
-}
-
-// ===== CHECK PERMISSIONS =====
-if (!Session::haveRight('plugin_newbase', CREATE) && !Session::haveRight('plugin_newbase', UPDATE)) {
-    Toolbox::logInFile(
-        'newbase_plugin',
-        sprintf("User %d tried to search CNPJ without permission\n", Session::getLoginUserID())
-    );
-    sendResponse(false, __('You do not have permission to access this feature', 'newbase'), [], 403);
-}
-
-// ===== CHECK IF FEATURE IS ENABLED =====
-$config = Config::getConfig();
-$enable_cnpj_search = $config['enable_cnpj_search'] ?? 1;
-
-if (!$enable_cnpj_search) {
-    sendResponse(false, __('CNPJ search feature is disabled', 'newbase'), [], 403);
-}
-
-// ===== GET REQUEST METHOD =====
-$method = $_SERVER['REQUEST_METHOD'];
-
-// ===== GET REQUEST DATA =====
-$rawInput = file_get_contents('php://input');
-$input = json_decode($rawInput, true);
-
-// Handle non-JSON requests (fallback to POST/GET data)
-if ($input === null) {
-    $input = ($method === 'POST') ? $_POST : $_GET;
-}
-
-if (!is_array($input)) {
-    $input = [];
-}
-
-// ===== CSRF TOKEN VALIDATION (for POST) =====
-if ($method === 'POST') {
-    $csrf_token = $_SERVER['HTTP_X_GLPI_CSRF_TOKEN'] ?? $input['_glpi_csrf_token'] ?? '';
-
-    if (empty($csrf_token)) {
-        Toolbox::logInFile('newbase_plugin', "AJAX CNPJ search: CSRF token missing\n");
-        sendResponse(false, __('CSRF token is required', 'newbase'), [], 403);
-    }
-
-    try {
-        Session::checkCSRF(['_glpi_csrf_token' => $csrf_token]);
-    } catch (Exception $e) {
-        Toolbox::logInFile('newbase_plugin', "AJAX CNPJ search: Invalid CSRF token\n");
-        sendResponse(false, __('Invalid or expired security token', 'newbase'), [], 403);
-    }
-}
-
-// ===== PROCESS REQUEST =====
+// ===== MAIN EXECUTION =====
 
 try {
-    // Only allow POST and GET methods
+    // ===== AUTHENTICATION & AUTHORIZATION =====
+    if (!Session::getLoginUserID()) {
+        AjaxHandler::sendResponse(false, __('Authentication required'), [], 401);
+    }
+
+    // Check permissions
+    if (!AjaxHandler::checkPermissions('plugin_newbase')) {
+        Toolbox::logInFile(
+            'newbase_plugin',
+            sprintf("User %d tried to search CNPJ without permission\n", Session::getLoginUserID())
+        );
+        AjaxHandler::sendResponse(false, __('You do not have permission to access this feature', 'newbase'), [], 403);
+    }
+
+    // ===== CHECK IF FEATURE IS ENABLED =====
+    $config = Config::getConfig();
+    $enable_cnpj_search = $config['enable_cnpj_search'] ?? 1;
+
+    if (!$enable_cnpj_search) {
+        AjaxHandler::sendResponse(false, __('CNPJ search feature is disabled', 'newbase'), [], 403);
+    }
+
+    // ===== CSRF TOKEN VALIDATION =====
+    if (!AjaxHandler::checkCSRFToken()) {
+        Toolbox::logInFile('newbase_plugin', "AJAX CNPJ search: Invalid CSRF token\n");
+        AjaxHandler::sendResponse(false, __('Invalid or expired security token', 'newbase'), [], 403);
+    }
+
+    // ===== GET REQUEST DATA =====
+    $method = $_SERVER['REQUEST_METHOD'];
+
     if (!in_array($method, ['POST', 'GET'], true)) {
-        sendResponse(
+        AjaxHandler::sendResponse(
             false,
             sprintf(__('Method %s not allowed', 'newbase'), $method),
             [],
@@ -348,29 +261,29 @@ try {
         );
     }
 
+    // Parse input
+    $input = json_decode(file_get_contents('php://input'), true);
+    if ($input === null) {
+        $input = ($method === 'POST') ? $_POST : $_GET;
+    }
+
+    if (!is_array($input)) {
+        $input = [];
+    }
+
     // ===== GET AND VALIDATE CNPJ =====
     $cnpj = $input['cnpj'] ?? '';
 
     if (empty($cnpj)) {
-        sendResponse(false, __('CNPJ is required', 'newbase'), [], 400);
+        AjaxHandler::sendResponse(false, __('CNPJ is required', 'newbase'), [], 400);
     }
 
     // Remove formatting
     $cnpj = preg_replace('/[^0-9]/', '', $cnpj);
 
-    // Validate length
-    if (strlen($cnpj) !== 14) {
-        sendResponse(
-            false,
-            __('Invalid CNPJ: must have 14 digits', 'newbase'),
-            ['cnpj' => $cnpj, 'length' => strlen($cnpj)],
-            400
-        );
-    }
-
-    // Validate check digits using Common class
-    if (!class_exists('GlpiPlugin\\Newbase\\Common') || !Common::validateCNPJ($cnpj)) {
-        sendResponse(
+    // Validate using Common class
+    if (!Common::validateCNPJ($cnpj)) {
+        AjaxHandler::sendResponse(
             false,
             __('Invalid CNPJ: check digits verification failed', 'newbase'),
             ['cnpj' => $cnpj],
@@ -392,7 +305,7 @@ try {
     // Check if at least one API returned data
     if ($brasilAPIData === null && $receitaWSData === null) {
         Toolbox::logInFile('newbase_plugin', "CNPJ {$cnpj} not found in any API\n");
-        sendResponse(
+        AjaxHandler::sendResponse(
             false,
             __('CNPJ not found or APIs are temporarily unavailable', 'newbase'),
             ['cnpj' => $cnpj],
@@ -416,7 +329,7 @@ try {
     );
 
     // Success response
-    sendResponse(
+    AjaxHandler::sendResponse(
         true,
         __('Company data loaded successfully', 'newbase'),
         $result,
@@ -428,8 +341,7 @@ try {
     Toolbox::logInFile(
         'newbase_plugin',
         sprintf(
-            "ERROR in cnpj_proxy.php (%s): %s\n",
-            $method,
+            "ERROR in cnpj_proxy.php: %s\n",
             $e->getMessage()
         )
     );
@@ -442,7 +354,7 @@ try {
         $error_data['trace'] = $e->getTraceAsString();
     }
 
-    sendResponse(
+    AjaxHandler::sendResponse(
         false,
         __('An error occurred while searching company data', 'newbase'),
         $error_data,
