@@ -651,11 +651,12 @@ class TaskSignature extends CommonDBTM
 
     /**
      * Get tab name for item
+     *
      * @param CommonGLPI $item Item
      * @param int $withtemplate Template mode
      * @return string|array Tab name
      */
-    public function getTabNameForItem(CommonGLPI $item, $withtemplate = 0)
+    public function getTabNameForItem(CommonGLPI $item, int $withtemplate = 0): string|array
     {
         if ($item instanceof Task) {
             return self::createTabEntry(self::getTypeName(1));

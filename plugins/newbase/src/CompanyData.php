@@ -333,11 +333,11 @@ class CompanyData extends CommonDBTM
      * Display dropdown for company selection
      * 
      * Wrapper around Entity::dropdown() for consistency
-     * 
-     * @param array $options Dropdown options
+     *
+     * @param array $options Dropdown options (name, value, etc.)
      * @return int|string Dropdown result
      */
-    public static function dropdown($options = [])
+    public static function dropdown(array $options = []): int|string
     {
         $defaults = [
             'name'    => 'entities_id',

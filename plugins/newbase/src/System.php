@@ -247,7 +247,7 @@ class System extends CommonDBTM
      * @param array  $options Options
      * @return string Formatted value
      */
-    public static function getSpecificValueToDisplay($field, $values, array $options = []): string
+    public static function getSpecificValueToDisplay(string $field, mixed $values, array $options = []): string
     {
         if (!is_array($values)) {
             $values = [$field => $values];
@@ -352,11 +352,16 @@ class System extends CommonDBTM
 
     /**
      * Prepare input for add
-     * @param array $input Input data
+     *
+     * @param array $input Input data from form
      * @return array|bool Prepared input or false on error
      */
-    public function prepareInputForAdd($input)
+    public function prepareInputForAdd(array $input): array|bool
     {
+        // Guard clause: validate input is array
+        if (empty($input)) {
+            return false;
+        }
         // Validate system type
         if (isset($input['system_type'])) {
             $validTypes = array_keys(self::getSystemTypes());
@@ -388,11 +393,16 @@ class System extends CommonDBTM
 
     /**
      * Prepare input for update
-     * @param array $input Input data
+     *
+     * @param array $input Input data from form
      * @return array|bool Prepared input or false on error
      */
-    public function prepareInputForUpdate($input)
+    public function prepareInputForUpdate(array $input): array|bool
     {
+        // Guard clause: validate input is array
+        if (empty($input)) {
+            return false;
+        }
         // Validate system type if provided
         if (isset($input['system_type'])) {
             $validTypes = array_keys(self::getSystemTypes());
@@ -595,10 +605,11 @@ class System extends CommonDBTM
 
     /**
      * Dropdown for system selection
-     * @param array $options Dropdown options
+     *
+     * @param array $options Dropdown options (name, value, etc.)
      * @return int|string Dropdown result
      */
-    public static function dropdown($options = [])
+    public static function dropdown(array $options = []): int|string
     {
         $defaults = [
             'name'   => 'plugin_newbase_systems_id',

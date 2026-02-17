@@ -329,11 +329,16 @@ class Address extends CommonDBTM
 
     /**
      * Preparar dados de entrada antes de adicionar ao banco de dados
-     * @param array $input Dados de entrada
+     *
+     * @param array $input Dados de entrada do formulário
      * @return array|bool Entrada preparada ou false em caso de erro
      */
-    public function prepareInputForAdd($input)
+    public function prepareInputForAdd(array $input): array|bool
     {
+        // Guard clause: validate input is array
+        if (empty($input)) {
+            return false;
+        }
         // VALIDAÇÃO DE CEP
         if (!empty($input['cep'])) {
             $cep = preg_replace('/[^0-9]/', '', $input['cep']);
@@ -397,9 +402,16 @@ class Address extends CommonDBTM
 
     /**
      * Preparar dados antes de atualizar
+     *
+     * @param array $input Dados de entrada do formulário
+     * @return array|bool Entrada preparada ou false em caso de erro
      */
-    public function prepareInputForUpdate($input)
+    public function prepareInputForUpdate(array $input): array|bool
     {
+        // Guard clause: validate input is array
+        if (empty($input)) {
+            return false;
+        }
         if (isset($input['name']) && empty(trim($input['name']))) {
             Session::addMessageAfterRedirect(
                 __('Name cannot be empty', 'newbase'),
