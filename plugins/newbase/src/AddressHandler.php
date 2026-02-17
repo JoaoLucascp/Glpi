@@ -1,41 +1,32 @@
 <?php
 
 /**
-* -------------------------------------------------------------------------
-* Newbase plugin for GLPI
-* -------------------------------------------------------------------------
-*
-* LICENSE
-*
-* This file is part of Newbase.
-*
-* Newbase is free software; you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation; either version 2 of the License, or
-* (at your option) any later version.
-*
-* Newbase is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with Newbase. If not, see <http://www.gnu.org/licenses/>.
-* -------------------------------------------------------------------------
-* @copyright Copyright (C) 2024-2026 by João Lucas
-* @license   GPLv2 https://www.gnu.org/licenses/gpl-2.0.html
-* @link      https://github.com/JoaoLucascp/Glpi
-* -------------------------------------------------------------------------
-*/
-
-/**
-* AddressHandler Class - CEP search handler
-* @package   PluginNewbase
-* @author    João Lucas
-* @copyright 2026 João Lucas
-* @license   GPLv2+
-* @version   2.1.0
-*/
+ * -------------------------------------------------------------------------
+ * Newbase plugin for GLPI
+ * -------------------------------------------------------------------------
+ *
+ * LICENSE
+ *
+ * This file is part of Newbase.
+ *
+ * Newbase is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * Newbase is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Newbase. If not, see <http://www.gnu.org/licenses/>.
+ * -------------------------------------------------------------------------
+ * @copyright Copyright (C) 2024-2026 by João Lucas
+ * @license   GPLv2 https://www.gnu.org/licenses/gpl-2.0.html
+ * @link      https://github.com/JoaoLucascp/Glpi
+ * -------------------------------------------------------------------------
+ */
 
 declare(strict_types=1);
 
@@ -43,26 +34,37 @@ namespace GlpiPlugin\Newbase;
 
 use Toolbox;
 
+if (!defined('GLPI_ROOT')) {
+    die("Sorry. You can't access this file directly");
+}
+
 /**
-* AddressHandler - Handles CEP (Brazilian ZIP code) searches
-* Validates input, calls ViaCEP API, and returns formatted response
-*/
+ * AddressHandler - Handles CEP (Brazilian ZIP code) searches
+ *
+ * Validates input, calls ViaCEP API, and returns formatted response.
+ * This is a utility class with static methods for address-related operations.
+ *
+ * @package GlpiPlugin\Newbase
+ */
 class AddressHandler
 {
-/**
-* Search address by CEP (Brazilian ZIP code)
-* @param string|null $cep CEP with or without formatting
-* @return array Response array with success status and data
-*/
+    /**
+     * Search address by CEP (Brazilian ZIP code)
+     *
+     * @param string|null $cep CEP with or without formatting (e.g., "01310-100" or "01310100")
+     * @return array Response array with keys:
+     *               - success (bool): Whether the search was successful
+     *               - message (string): User-friendly message
+     *               - data (array|null): Address data or null if not found
+     */
     public static function searchByCEP(?string $cep): array
     {
-
         // VALIDAÇÃO DE ENTRADA
         if (empty($cep)) {
             return [
                 'success' => false,
                 'message' => __('CEP is required', 'newbase'),
-                'data' => null,
+                'data'    => null,
             ];
         }
 
@@ -74,7 +76,7 @@ class AddressHandler
             return [
                 'success' => false,
                 'message' => __('Invalid CEP: must have 8 digits', 'newbase'),
-                'data' => null,
+                'data'    => null,
             ];
         }
 
@@ -83,7 +85,7 @@ class AddressHandler
             return [
                 'success' => false,
                 'message' => __('Invalid CEP pattern', 'newbase'),
-                'data' => null,
+                'data'    => null,
             ];
         }
 
@@ -99,7 +101,7 @@ class AddressHandler
             return [
                 'success' => false,
                 'message' => __('Address not found or API temporarily unavailable', 'newbase'),
-                'data' => null,
+                'data'    => null,
             ];
         }
 
@@ -112,46 +114,56 @@ class AddressHandler
         return [
             'success' => true,
             'message' => __('Address loaded successfully', 'newbase'),
-            'data' => [
-                'cep' => $cep,
-                'street' => $addressData['logradouro'] ?? '',
-                'complement' => $addressData['complemento'] ?? '',
+            'data'    => [
+                'cep'          => $cep,
+                'street'       => $addressData['logradouro'] ?? '',
+                'complement'   => $addressData['complemento'] ?? '',
                 'neighborhood' => $addressData['bairro'] ?? '',
-                'city' => $addressData['localidade'] ?? '',
-                'state' => $addressData['uf'] ?? '',
-                'ibge_code' => $addressData['ibge'] ?? '',
+                'city'         => $addressData['localidade'] ?? '',
+                'state'        => $addressData['uf'] ?? '',
+                'ibge_code'    => $addressData['ibge'] ?? '',
             ],
         ];
     }
 
-/**
-* Call ViaCEP API to get address data
-* @param string $cep CEP without formatting (8 digits)
-* @return array|null Address data or null if error/not found
-*/
+    /**
+     * Call ViaCEP API to get address data
+     *
+     * Makes an HTTP request to the ViaCEP public API (https://viacep.com.br/)
+     * to retrieve address information based on the CEP.
+     *
+     * @param string $cep CEP without formatting (8 digits)
+     * @return array|null Address data array or null if error/not found
+     */
     private static function callViaCEPAPI(string $cep): ?array
     {
         $url = "https://viacep.com.br/ws/{$cep}/json/";
 
         try {
+            // Check if cURL is available
+            if (!function_exists('curl_init')) {
+                Toolbox::logInFile('newbase_plugin', "cURL is not available on this server\n");
+                return null;
+            }
+
             // FAZER REQUISIÇÃO HTTP
             $ch = curl_init();
             curl_setopt_array($ch, [
-                CURLOPT_URL => $url,
+                CURLOPT_URL            => $url,
                 CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_TIMEOUT => 10,
+                CURLOPT_TIMEOUT        => 10,
                 CURLOPT_CONNECTTIMEOUT => 5,
                 CURLOPT_SSL_VERIFYPEER => true,
                 CURLOPT_FOLLOWLOCATION => true,
-                CURLOPT_USERAGENT => 'GLPI Newbase Plugin/2.0',
-                CURLOPT_HTTPHEADER => [
+                CURLOPT_USERAGENT      => 'GLPI Newbase Plugin/2.0',
+                CURLOPT_HTTPHEADER     => [
                     'Accept: application/json',
                 ],
             ]);
 
             $response = curl_exec($ch);
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            $error = curl_error($ch);
+            $error    = curl_error($ch);
             curl_close($ch);
 
             // VERIFICAR RESPOSTA HTTP
@@ -201,11 +213,14 @@ class AddressHandler
         }
     }
 
-/**
-* Format CEP for display (XXXXX-XXX)
-* @param string $cep CEP without formatting
-* @return string Formatted CEP
-*/
+    /**
+     * Format CEP for display (XXXXX-XXX)
+     *
+     * Converts unformatted CEP (e.g., "01310100") to formatted version (e.g., "01310-100")
+     *
+     * @param string $cep CEP without formatting
+     * @return string Formatted CEP or original if invalid
+     */
     public static function formatCEP(string $cep): string
     {
         $cep = preg_replace('/[^0-9]/', '', $cep);
@@ -217,11 +232,17 @@ class AddressHandler
         return $cep;
     }
 
-/**
-* Validate CEP format
-* @param string $cep CEP with or without formatting
-* @return bool True if valid, false otherwise
-*/
+    /**
+     * Validate CEP format
+     *
+     * Checks if a CEP is valid according to Brazilian standards:
+     * - Must have exactly 8 digits
+     * - Cannot be all zeros (00000000)
+     * - Cannot be sequential (11111111, 22222222, etc.)
+     *
+     * @param string $cep CEP with or without formatting
+     * @return bool True if valid, false otherwise
+     */
     public static function validateCEP(string $cep): bool
     {
         $cep = preg_replace('/[^0-9]/', '', $cep);
@@ -237,5 +258,17 @@ class AddressHandler
         }
 
         return true;
+    }
+
+    /**
+     * Get CEP pattern regex for validation
+     *
+     * Returns a regex pattern that can be used in HTML5 inputs or JavaScript validation
+     *
+     * @return string Regex pattern for CEP validation
+     */
+    public static function getCEPPattern(): string
+    {
+        return '[0-9]{5}-?[0-9]{3}';
     }
 }

@@ -1,400 +1,234 @@
 <?php
 
-/**
-* ---------------------------------------------------------------------
-* Relatórios e Estatísticas - Plugin Newbase
-* ---------------------------------------------------------------------
-*
-* Este arquivo exibe relatórios analíticos sobre:
-* - Status de tarefas
-* - Quilometragem (total, média)
-* - Tarefas por empresa
-* - Tarefas por usuário
-*
-* @package   GlpiPlugin\Newbase
-* @author    João Lucas
-* @license   GPLv2+
-*/
+include ('../../../inc/includes.php');
 
-// 1 SEGURANÇA: Carregar o núcleo do GLPI
-include('../../../inc/includes.php');
+use GlpiPlugin\Newbase\Task;
 
-// 2 SEGURANÇA: Verificar se usuário está logado
+// 1. Verificação de Sessão
 Session::checkLoginUser();
 
-// 3 IMPORTAR CLASSES DO PLUGIN
-use GlpiPlugin\Newbase\Task;
-use GlpiPlugin\Newbase\CompanyData;
-
-// 4 VERIFICAR PERMISSÕES DE VISUALIZAÇÃO
+// 2. Verificação de Permissões
 if (!Task::canView()) {
     Html::displayRightError();
 }
 
-// 5 PROCESSAR FILTROS DE PERÍODO (opcional)
-$period = $_GET['period'] ?? 'all';
-$date_filter = '';
-
-switch ($period) {
-    case 'today':
-        $date_filter = " AND DATE(t.date_creation) = CURDATE()";
-        break;
-    case 'week':
-        $date_filter = " AND t.date_creation >= DATE_SUB(NOW(), INTERVAL 7 DAY)";
-        break;
-    case 'month':
-        $date_filter = " AND MONTH(t.date_creation) = MONTH(NOW())
-                        AND YEAR(t.date_creation) = YEAR(NOW())";
-        break;
-    case 'year':
-        $date_filter = " AND YEAR(t.date_creation) = YEAR(NOW())";
-        break;
-    default:
-        $date_filter = ''; // all
-}
-
-// COLETAR DADOS DOS RELATÓRIOS
-
-global $DB;
-
-// 6 RELATÓRIO 1: Tarefas por Status
-$status_query = "
-    SELECT
-        is_completed,
-        COUNT(*) AS count
-    FROM glpi_plugin_newbase_tasks AS t
-    WHERE is_deleted = 0
-    $date_filter
-    GROUP BY is_completed
-";
-
-$status_result = $DB->query($status_query);
-$status_data = [
-    'pending' => 0,
-    'completed' => 0
-];
-
-if ($status_result) {
-    while ($row = $DB->fetchAssoc($status_result)) {
-        if ($row['is_completed'] == 1) {
-            $status_data['completed'] = (int) $row['count'];
-        } else {
-            $status_data['pending'] = (int) $row['count'];
-        }
-    }
-}
-
-$status_data['total'] = $status_data['pending'] + $status_data['completed'];
-
-// 7 RELATÓRIO 2: Quilometragem
-$mileage_query = "
-    SELECT
-        SUM(mileage) AS total_mileage,
-        AVG(mileage) AS avg_mileage,
-        COUNT(CASE WHEN mileage > 0 THEN 1 END) AS task_count
-    FROM glpi_plugin_newbase_tasks AS t
-    WHERE is_deleted = 0
-    $date_filter
-";
-
-$mileage_result = $DB->query($mileage_query);
-$mileage_data = [
-    'total_mileage' => 0,
-    'avg_mileage' => 0,
-    'task_count' => 0
-];
-
-if ($mileage_result && $row = $DB->fetchAssoc($mileage_result)) {
-    $mileage_data = [
-        'total_mileage' => (float) ($row['total_mileage'] ?? 0),
-        'avg_mileage' => (float) ($row['avg_mileage'] ?? 0),
-        'task_count' => (int) ($row['task_count'] ?? 0)
-    ];
-}
-
-// 8 RELATÓRIO 3: Tarefas por Empresa
-$company_query = "
-    SELECT
-        e.name AS company_name,
-        COUNT(t.id) AS task_count
-    FROM glpi_plugin_newbase_tasks AS t
-    LEFT JOIN glpi_entities AS e ON t.entities_id = e.id
-    WHERE t.is_deleted = 0
-    $date_filter
-    GROUP BY t.entities_id, e.name
-    ORDER BY task_count DESC
-    LIMIT 10
-";
-
-$company_result = $DB->query($company_query);
-$company_data = [];
-
-if ($company_result) {
-    while ($row = $DB->fetchAssoc($company_result)) {
-        $company_data[] = $row;
-    }
-}
-
-// 9 RELATÓRIO 4: Tarefas por Usuário
-$user_query = "
-    SELECT
-        u.name AS user_name,
-        COUNT(t.id) AS task_count
-    FROM glpi_plugin_newbase_tasks AS t
-    LEFT JOIN glpi_users AS u ON t.users_id = u.id
-    WHERE t.is_deleted = 0
-    AND t.users_id > 0
-    $date_filter
-    GROUP BY t.users_id, u.name
-    ORDER BY task_count DESC
-    LIMIT 10
-";
-
-$user_result = $DB->query($user_query);
-$user_data = [];
-
-if ($user_result) {
-    while ($row = $DB->fetchAssoc($user_result)) {
-        $user_data[] = $row;
-    }
-}
-
-// RENDERIZAR PÁGINA
-
-// 10 CABEÇALHO
+// 3. Cabeçalho
 Html::header(
     __('Reports', 'newbase'),
     $_SERVER['PHP_SELF'],
     'management',
-    'GlpiPlugin\Newbase\Menu',
+    'GlpiPlugin\Newbase\CompanyData', // Ajuste conforme seu menu pai real
     'report'
 );
 
+// --- PROCESSAMENTO DE FILTROS ---
+
+$period = $_GET['period'] ?? 'all';
+$where_date = [];
+
+// Usando lógica de array para WHERE (Padrão GLPI)
+switch ($period) {
+    case 'today':
+        $where_date = ['DATE(t.date_creation)' => date('Y-m-d')];
+        break;
+    case 'week':
+        $where_date = ['t.date_creation' => ['>=', new \QueryExpression('DATE_SUB(NOW(), INTERVAL 7 DAY)')]];
+        break;
+    case 'month':
+        $where_date = [
+            'MONTH(t.date_creation)' => date('m'),
+            'YEAR(t.date_creation)'  => date('Y')
+        ];
+        break;
+    case 'year':
+        $where_date = ['YEAR(t.date_creation)' => date('Y')];
+        break;
+    default:
+        $where_date = []; // All time
+}
+
+// Base criteria para todas as buscas
+$base_criteria = [
+    'FROM'  => 'glpi_plugin_newbase_tasks AS t',
+    'WHERE' => array_merge(['t.is_deleted' => 0], $where_date)
+];
+
+// --- COLETA DE DADOS (DBUtils Iterator) ---
+
+// 1. Status Counter
+$iterator = $DB->request([
+    'SELECT' => ['t.is_completed', 'COUNT(*) AS count'],
+    'GROUP'  => ['t.is_completed']
+] + $base_criteria);
+
+$status_data = ['pending' => 0, 'completed' => 0, 'total' => 0];
+
+foreach ($iterator as $row) {
+    if ($row['is_completed']) {
+        $status_data['completed'] = $row['count'];
+    } else {
+        $status_data['pending'] = $row['count'];
+    }
+}
+$status_data['total'] = $status_data['pending'] + $status_data['completed'];
+
+// 2. Mileage Stats
+$iterator = $DB->request([
+    'SELECT' => [
+        'SUM(t.mileage) AS total_mileage',
+        'AVG(t.mileage) AS avg_mileage',
+        'COUNT(t.id) AS task_count'
+    ],
+    'WHERE'  => array_merge($base_criteria['WHERE'], ['t.mileage' => ['>', 0]])
+] + $base_criteria);
+
+$mileage_data = ['total' => 0, 'avg' => 0, 'count' => 0];
+foreach ($iterator as $row) {
+    $mileage_data = [
+        'total' => (float)($row['total_mileage'] ?? 0),
+        'avg'   => (float)($row['avg_mileage'] ?? 0),
+        'count' => (int)($row['task_count'] ?? 0)
+    ];
+}
+
+// 3. Top Empresas
+$iterator_companies = $DB->request([
+    'SELECT'    => ['e.name AS company_name', 'COUNT(t.id) AS task_count'],
+    'LEFT JOIN' => [
+        'glpi_entities AS e' => ['ON' => ['t.entities_id' => 'e.id']]
+    ],
+    'GROUP'     => ['t.entities_id', 'e.name'],
+    'ORDER'     => ['task_count DESC'],
+    'LIMIT'     => 10
+] + $base_criteria);
+
+// 4. Top Usuários
+$iterator_users = $DB->request([
+    'SELECT'    => ['u.name AS user_name', 'COUNT(t.id) AS task_count'],
+    'LEFT JOIN' => [
+        'glpi_users AS u' => ['ON' => ['t.users_id' => 'u.id']]
+    ],
+    'WHERE'     => array_merge($base_criteria['WHERE'], ['t.users_id' => ['>', 0]]),
+    'GROUP'     => ['t.users_id', 'u.name'],
+    'ORDER'     => ['task_count DESC'],
+    'LIMIT'     => 10
+] + $base_criteria);
+
+// --- EXIBIÇÃO (Bootstrap 5 Nativo) ---
 ?>
 
-<!-- 11 FILTROS DE PERÍODO -->
-<div class="report-filters">
-    <h2><?php echo __('Period Filter', 'newbase'); ?></h2>
-    <form method="GET" action="<?php echo $_SERVER['PHP_SELF']; ?>">
-        <select name="period" onchange="this.form.submit()">
-            <option value="all" <?php echo $period === 'all' ? 'selected' : ''; ?>>
-                <?php echo __('All Time', 'newbase'); ?>
-            </option>
-            <option value="today" <?php echo $period === 'today' ? 'selected' : ''; ?>>
-                <?php echo __('Today', 'newbase'); ?>
-            </option>
-            <option value="week" <?php echo $period === 'week' ? 'selected' : ''; ?>>
-                <?php echo __('Last 7 Days', 'newbase'); ?>
-            </option>
-            <option value="month" <?php echo $period === 'month' ? 'selected' : ''; ?>>
-                <?php echo __('Current Month', 'newbase'); ?>
-            </option>
-            <option value="year" <?php echo $period === 'year' ? 'selected' : ''; ?>>
-                <?php echo __('Current Year', 'newbase'); ?>
-            </option>
-        </select>
-    </form>
-</div>
+<div class="container-fluid mt-4">
 
-<!-- 12 CARDS DE RESUMO -->
-<div class="report-summary">
-
-    <div class="summary-card">
-        <div class="card-icon pending">
-            <i class="ti ti-clock"></i>
+    <!-- Filtro -->
+    <div class="card mb-4">
+        <div class="card-body p-3 d-flex align-items-center justify-content-between">
+            <h3 class="m-0"><i class="ti ti-filter"></i> <?php echo __('Period Filter', 'newbase'); ?></h3>
+            <form method="GET" action="<?php echo $_SERVER['PHP_SELF']; ?>" class="d-inline-block">
+                <select name="period" class="form-select" onchange="this.form.submit()">
+                    <option value="all" <?php echo $period === 'all' ? 'selected' : ''; ?>><?php echo __('All Time', 'newbase'); ?></option>
+                    <option value="today" <?php echo $period === 'today' ? 'selected' : ''; ?>><?php echo __('Today', 'newbase'); ?></option>
+                    <option value="week" <?php echo $period === 'week' ? 'selected' : ''; ?>><?php echo __('Last 7 Days', 'newbase'); ?></option>
+                    <option value="month" <?php echo $period === 'month' ? 'selected' : ''; ?>><?php echo __('Current Month', 'newbase'); ?></option>
+                    <option value="year" <?php echo $period === 'year' ? 'selected' : ''; ?>><?php echo __('Current Year', 'newbase'); ?></option>
+                </select>
+            </form>
         </div>
-        <div class="card-value"><?php echo $status_data['pending']; ?></div>
-        <div class="card-label"><?php echo __('Pending Tasks', 'newbase'); ?></div>
     </div>
 
-    <div class="summary-card">
-        <div class="card-icon completed">
-            <i class="ti ti-check"></i>
-        </div>
-        <div class="card-value"><?php echo $status_data['completed']; ?></div>
-        <div class="card-label"><?php echo __('Completed Tasks', 'newbase'); ?></div>
+    <!-- Cards Resumo -->
+    <div class="row mb-4">
+        <?php
+        $cards = [
+            ['icon' => 'ti-clock', 'color' => 'warning', 'value' => $status_data['pending'], 'label' => __('Pending Tasks', 'newbase')],
+            ['icon' => 'ti-check', 'color' => 'success', 'value' => $status_data['completed'], 'label' => __('Completed Tasks', 'newbase')],
+            ['icon' => 'ti-sum', 'color' => 'primary', 'value' => $status_data['total'], 'label' => __('Total Tasks', 'newbase')],
+            ['icon' => 'ti-route', 'color' => 'info', 'value' => number_format($mileage_data['total'], 2, ',', '.') . ' km', 'label' => __('Total Mileage', 'newbase')],
+        ];
+
+        foreach($cards as $c) {
+            echo "
+            <div class='col-md-3'>
+                <div class='card text-center mb-3'>
+                    <div class='card-body'>
+                        <i class='ti {$c['icon']} text-{$c['color']} fs-1 mb-2'></i>
+                        <h2 class='fw-bold mb-0'>{$c['value']}</h2>
+                        <span class='text-muted'>{$c['label']}</span>
+                    </div>
+                </div>
+            </div>";
+        }
+        ?>
     </div>
 
-    <div class="summary-card">
-        <div class="card-icon total">
-            <i class="ti ti-sum"></i>
+    <div class="row">
+        <!-- Tabela: Empresas -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="ti ti-building"></i> <?php echo __('Tasks by Company', 'newbase'); ?></h3>
+                </div>
+                <div class="card-body p-0 table-responsive">
+                    <table class="table table-striped table-hover m-0">
+                        <thead>
+                            <tr>
+                                <th><?php echo __('Company', 'newbase'); ?></th>
+                                <th class="text-end"><?php echo __('Tasks', 'newbase'); ?></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php
+                            if (count($iterator_companies)) {
+                                foreach ($iterator_companies as $row) {
+                                    echo "<tr>
+                                        <td>" . htmlspecialchars($row['company_name'] ?? '-') . "</td>
+                                        <td class='text-end'><span class='badge bg-secondary rounded-pill'>{$row['task_count']}</span></td>
+                                    </tr>";
+                                }
+                            } else {
+                                echo "<tr><td colspan='2' class='text-center'>" . __('No data available', 'newbase') . "</td></tr>";
+                            }
+                            ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
-        <div class="card-value"><?php echo $status_data['total']; ?></div>
-        <div class="card-label"><?php echo __('Total Tasks', 'newbase'); ?></div>
+
+        <!-- Tabela: Usuários -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="ti ti-user"></i> <?php echo __('Tasks by User', 'newbase'); ?></h3>
+                </div>
+                <div class="card-body p-0 table-responsive">
+                    <table class="table table-striped table-hover m-0">
+                        <thead>
+                            <tr>
+                                <th><?php echo __('User', 'newbase'); ?></th>
+                                <th class="text-end"><?php echo __('Tasks', 'newbase'); ?></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php
+                            if (count($iterator_users)) {
+                                foreach ($iterator_users as $row) {
+                                    echo "<tr>
+                                        <td>" . htmlspecialchars($row['user_name'] ?? '-') . "</td>
+                                        <td class='text-end'><span class='badge bg-secondary rounded-pill'>{$row['task_count']}</span></td>
+                                    </tr>";
+                                }
+                            } else {
+                                echo "<tr><td colspan='2' class='text-center'>" . __('No data available', 'newbase') . "</td></tr>";
+                            }
+                            ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <div class="summary-card">
-        <div class="card-icon mileage">
-            <i class="ti ti-route"></i>
-        </div>
-        <div class="card-value">
-            <?php echo number_format($mileage_data['total_mileage'], 2, ',', '.'); ?> km
-        </div>
-        <div class="card-label"><?php echo __('Total Mileage', 'newbase'); ?></div>
-    </div>
-
 </div>
-
-<!-- 13 RELATÓRIO: Quilometragem Detalhada -->
-<div class="report-section">
-    <h2>
-        <i class="ti ti-car"></i>
-        <?php echo __('Mileage Statistics', 'newbase'); ?>
-    </h2>
-
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th><?php echo __('Metric', 'newbase'); ?></th>
-                <th><?php echo __('Value', 'newbase'); ?></th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td><?php echo __('Total Mileage', 'newbase'); ?></td>
-                <td><?php echo number_format($mileage_data['total_mileage'], 2, ',', '.'); ?> km</td>
-            </tr>
-            <tr>
-                <td><?php echo __('Average Mileage per Task', 'newbase'); ?></td>
-                <td><?php echo number_format($mileage_data['avg_mileage'], 2, ',', '.'); ?> km</td>
-            </tr>
-            <tr>
-                <td><?php echo __('Tasks with Mileage', 'newbase'); ?></td>
-                <td><?php echo $mileage_data['task_count']; ?></td>
-            </tr>
-        </tbody>
-    </table>
-</div>
-
-<!-- 14 RELATÓRIO: Tarefas por Empresa -->
-<div class="report-section">
-    <h2>
-        <i class="ti ti-building"></i>
-        <?php echo __('Tasks by Company', 'newbase'); ?>
-    </h2>
-
-    <?php if (count($company_data) > 0) : ?>
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th><?php echo __('Company', 'newbase'); ?></th>
-                    <th><?php echo __('Tasks', 'newbase'); ?></th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($company_data as $row) : ?>
-                    <tr>
-                        <td><?php echo htmlspecialchars($row['company_name']); ?></td>
-                        <td><?php echo $row['task_count']; ?></td>
-                    </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
-    <?php else : ?>
-        <p class="alert alert-info"><?php echo __('No data available', 'newbase'); ?></p>
-    <?php endif; ?>
-</div>
-
-<!-- 15 RELATÓRIO: Tarefas por Usuário -->
-<div class="report-section">
-    <h2>
-        <i class="ti ti-user"></i>
-        <?php echo __('Tasks by User', 'newbase'); ?>
-    </h2>
-
-    <?php if (count($user_data) > 0) : ?>
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th><?php echo __('User', 'newbase'); ?></th>
-                    <th><?php echo __('Tasks', 'newbase'); ?></th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($user_data as $row) : ?>
-                    <tr>
-                        <td><?php echo htmlspecialchars($row['user_name']); ?></td>
-                        <td><?php echo $row['task_count']; ?></td>
-                    </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
-    <?php else : ?>
-        <p class="alert alert-info"><?php echo __('No data available', 'newbase'); ?></p>
-    <?php endif; ?>
-</div>
-
-<!-- 16 CSS CUSTOMIZADO -->
-<style>
-.report-filters {
-    background: #fff;
-    padding: 20px;
-    margin: 20px 0;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-}
-
-.report-filters select {
-    padding: 8px 12px;
-    font-size: 14px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-}
-
-.report-summary {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 20px;
-    margin: 20px 0;
-}
-
-.summary-card {
-    background: #fff;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    padding: 20px;
-    text-align: center;
-}
-
-.summary-card .card-icon {
-    font-size: 40px;
-    margin-bottom: 10px;
-}
-
-.summary-card .card-icon.pending { color: #FF9800; }
-.summary-card .card-icon.completed { color: #4CAF50; }
-.summary-card .card-icon.total { color: #2196F3; }
-.summary-card .card-icon.mileage { color: #9C27B0; }
-
-.summary-card .card-value {
-    font-size: 32px;
-    font-weight: bold;
-    color: #333;
-    margin: 10px 0;
-}
-
-.summary-card .card-label {
-    font-size: 14px;
-    color: #666;
-}
-
-.report-section {
-    background: #fff;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    padding: 20px;
-    margin: 20px 0;
-}
-
-.report-section h2 {
-    margin-top: 0;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-</style>
 
 <?php
-// 17 RODAPÉ
 Html::footer();
-?>

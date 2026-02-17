@@ -1,323 +1,77 @@
 <?php
 
-/**
- * ---------------------------------------------------------------------
- * Formulário de Gerenciamento de Empresas - Plugin Newbase
- * ---------------------------------------------------------------------
- *
- * Este arquivo processa ações CRUD (Create, Read, Update, Delete) para empresas
- * e exibe o formulário correspondente. Empresas são baseadas em Entidades do GLPI.
- * @package   Plugin - Newbase
- * @author    João Lucas
- * @license   GPLv2+
- */
+include ('../../../inc/includes.php');
 
-// 1 SEGURANÇA: Carregar o núcleo do GLPI
-include('../../../inc/includes.php');
-
-// 2 SEGURANÇA: Verificar se usuário está logado
-Session::checkLoginUser();
-
-// 3 IMPORTAR CLASSES NECESSÁRIAS
+// Importar a classe corretamente
 use GlpiPlugin\Newbase\CompanyData;
 
-// 4 CRIAR INSTÂNCIA DO OBJETO
-$companydata = new CompanyData();
+// Verificar sessão
+Session::checkLoginUser();
 
-// PROCESSAMENTO DE AÇÕES (POST)
+// Instanciar o objeto principal
+$plugin_item = new CompanyData();
 
-// 5 AÇÃO: SALVAR EMPRESA (criar ou atualizar)
-if (isset($_POST['add']) || isset($_POST['update'])) {
-    // CSRF: Verificar token de segurança
-    Session::checkCSRF($_POST);
+// --- TRATAMENTO DE AÇÕES (POST) ---
 
-    // Determinar se é criação ou atualização
-    $is_new = isset($_POST['add']);
-    $entity_id = filter_input(INPUT_POST, 'entities_id', FILTER_VALIDATE_INT);
-    if ($entity_id === false || $entity_id === null || $entity_id < 0) {
-        $entity_id = 0;
+if (isset($_POST["add"])) {
+    // Verifica permissão de CRIAÇÃO na classe
+    $plugin_item->check(-1, CREATE, $_POST);
+
+    // O método .add() da classe CommonDBTM faz todo o trabalho sujo (CSRF, SQL, Hooks)
+    if ($newID = $plugin_item->add($_POST)) {
+        // Redireciona para a edição do item criado
+        Html::redirect($plugin_item->getFormURLWithID($newID));
     }
+    Html::back();
 
-    // ETAPA 1: GERENCIAR ENTIDADE DO GLPI
+} elseif (isset($_POST["update"])) {
+    // Verifica permissão de ATUALIZAÇÃO e ID
+    $plugin_item->check($_POST["id"], UPDATE);
 
-    $entity = new Entity();
+    // O método .update() trata tudo
+    $plugin_item->update($_POST);
+    Html::back();
 
-    if ($is_new) {
-        // CRIAR NOVA ENTIDADE
+} elseif (isset($_POST["delete"])) {
+    // Verifica permissão de DELEÇÃO (Lixeira)
+    $plugin_item->check($_POST["id"], DELETE);
 
-        // Verificar permissão de criação
-        if (!Entity::canCreate()) {
-            Session::addMessageAfterRedirect(
-                __('You do not have permission to create companies', 'newbase'),
-                false,
-                ERROR
-            );
-            Html::back();
-        }
+    $plugin_item->delete($_POST);
 
-        // Preparar dados da entidade
-        $entity_data = [
-            'name'         => $_POST['name'] ?? '',
-            'completename' => $_POST['name'] ?? '',
-            'email'        => $_POST['email'] ?? '',
-            'phone'        => $_POST['phone'] ?? '',
-            'address'      => $_POST['address'] ?? '',
-            'postcode'     => $_POST['cep'] ?? '',
-            'town'         => $_POST['city'] ?? '',
-            'state'        => $_POST['state'] ?? '',
-            'country'      => $_POST['country'] ?? 'BR',
-            'entities_id'  => $_SESSION['glpiactive_entity'] ?? 0,
-            'comment'      => $_POST['notes'] ?? '',
-        ];
+    // Redireciona para a lista após deletar
+    $plugin_item->redirectToList();
 
-        // Validar nome obrigatório
-        if (empty($entity_data['name'])) {
-            Session::addMessageAfterRedirect(
-                __('Company name is required', 'newbase'),
-                false,
-                ERROR
-            );
-            Html::back();
-        }
+} elseif (isset($_POST["purge"])) {
+    // Verifica permissão de PURGA (Exclusão permanente)
+    $plugin_item->check($_POST["id"], PURGE);
 
-        // Criar entidade
-        $entity_id = $entity->add($entity_data);
+    $plugin_item->delete($_POST, 1);
 
-        if (!$entity_id) {
-            Session::addMessageAfterRedirect(
-                __('Error creating company entity', 'newbase'),
-                false,
-                ERROR
-            );
-            Html::back();
-        }
-    } else {
-        // ATUALIZAR ENTIDADE EXISTENTE
+    $plugin_item->redirectToList();
 
-        // Verificar se entidade existe
-        if (!$entity->getFromDB($entity_id)) {
-            Session::addMessageAfterRedirect(
-                __('Company not found', 'newbase'),
-                false,
-                ERROR
-            );
-            Html::back();
-        }
+} elseif (isset($_POST["restore"])) {
+    // Verifica permissão de RESTAURAÇÃO
+    $plugin_item->check($_POST["id"], DELETE); // Geralmente usa permissão de delete ou purge
 
-        // Verificar permissão de atualização
-        if (!$entity->canUpdate()) {
-            Session::addMessageAfterRedirect(
-                __('You do not have permission to update this company', 'newbase'),
-                false,
-                ERROR
-            );
-            Html::back();
-        }
-
-        // Preparar dados para atualização
-        $entity_data = [
-            'id'       => $entity_id,
-            'name'     => $_POST['name'] ?? $entity->fields['name'],
-            'email'    => $_POST['email'] ?? '',
-            'phone'    => $_POST['phone'] ?? '',
-            'address'  => $_POST['address'] ?? '',
-            'postcode' => $_POST['cep'] ?? '',
-            'town'     => $_POST['city'] ?? '',
-            'state'    => $_POST['state'] ?? '',
-            'comment'  => $_POST['notes'] ?? '',
-        ];
-
-        // Atualizar entidade
-        if (!$entity->update($entity_data)) {
-            Session::addMessageAfterRedirect(
-                __('Error updating company', 'newbase'),
-                false,
-                ERROR
-            );
-            Html::back();
-        }
-    }
-
-    // ETAPA 2: SALVAR DADOS COMPLEMENTARES
-
-    // Dados específicos do plugin (não existem na tabela glpi_entities)
-    $extras = [
-        'cnpj'           => $_POST['cnpj'] ?? '',
-        'corporate_name' => $_POST['corporate_name'] ?? '',
-        'fantasy_name'   => $_POST['fantasy_name'] ?? '',
-        'contact_person' => $_POST['contact_person'] ?? '',
-        'website'        => $_POST['website'] ?? '',
-        'notes'          => $_POST['notes'] ?? '',
-    ];
-
-    // Salvar apenas campos preenchidos
-    $extras = array_filter($extras, function ($value) {
-        return !empty($value);
-    });
-
-    if (!empty($extras)) {
-        CompanyData::saveCompanyExtras($entity_id, $extras);
-    }
-
-    // Mensagem de sucesso
-    Session::addMessageAfterRedirect(
-        $is_new
-            ? __('Company successfully created', 'newbase')
-            : __('Company successfully updated', 'newbase'),
-        false,
-        INFO
-    );
-
-    // Redirecionar para o formulário da empresa criada/atualizada
-    Html::redirect($CFG_GLPI['root_doc'] . '/plugins/newbase/front/companydata.form.php?id=' . $entity_id);
-
-// 6 AÇÃO: DELETAR EMPRESA (soft delete)
-} elseif (isset($_POST['delete'])) {
-    // CSRF: Verificar token de segurança
-    Session::checkCSRF($_POST);
-
-    $entity_id = filter_input(INPUT_POST, 'entities_id', FILTER_VALIDATE_INT);
-    if ($entity_id === false || $entity_id === null || $entity_id < 0) {
-        $entity_id = 0;
-    }
-
-    if ($entity_id <= 0) {
-        Session::addMessageAfterRedirect(
-            __('Invalid company ID', 'newbase'),
-            false,
-            ERROR
-        );
-        Html::back();
-    }
-
-    $entity = new Entity();
-
-    // Verificar se entidade existe
-    if (!$entity->getFromDB($entity_id)) {
-        Session::addMessageAfterRedirect(
-            __('Company not found', 'newbase'),
-            false,
-            ERROR
-        );
-        Html::back();
-    }
-
-    // Verificar permissão de deleção
-    if (!$entity->canDelete()) {
-        Session::addMessageAfterRedirect(
-            __('You do not have permission to delete this company', 'newbase'),
-            false,
-            ERROR
-        );
-        Html::back();
-    }
-
-    // Deletar (soft delete)
-    if ($entity->delete(['id' => $entity_id])) {
-        Session::addMessageAfterRedirect(
-            __('Company successfully deleted', 'newbase'),
-            false,
-            INFO
-        );
-        Html::redirect($CFG_GLPI['root_doc'] . '/plugins/newbase/front/companydata.php');
-    } else {
-        Session::addMessageAfterRedirect(
-            __('Error deleting company', 'newbase'),
-            false,
-            ERROR
-        );
-        Html::back();
-    }
-
-// 7 AÇÃO: PURGAR EMPRESA (hard delete - remove permanentemente)
-} elseif (isset($_POST['purge'])) {
-    // CSRF: Verificar token de segurança
-    Session::checkCSRF($_POST);
-
-    $entity_id = filter_input(INPUT_POST, 'entities_id', FILTER_VALIDATE_INT);
-    if ($entity_id === false || $entity_id === null || $entity_id < 0) {
-        $entity_id = 0;
-    }
-
-    if ($entity_id <= 0) {
-        Session::addMessageAfterRedirect(
-            __('Invalid company ID', 'newbase'),
-            false,
-            ERROR
-        );
-        Html::back();
-    }
-
-    $entity = new Entity();
-
-    // Verificar se entidade existe
-    if (!$entity->getFromDB($entity_id)) {
-        Session::addMessageAfterRedirect(
-            __('Company not found', 'newbase'),
-            false,
-            ERROR
-        );
-        Html::back();
-    }
-
-    // Verificar permissão de purga
-    if (!$entity->canPurge()) {
-        Session::addMessageAfterRedirect(
-            __('You do not have permission to permanently delete this company', 'newbase'),
-            false,
-            ERROR
-        );
-        Html::back();
-    }
-
-    // Purgar (hard delete)
-    if ($entity->delete(['id' => $entity_id], 1)) {
-        Session::addMessageAfterRedirect(
-            __('Company permanently deleted', 'newbase'),
-            false,
-            INFO
-        );
-        Html::redirect($CFG_GLPI['root_doc'] . '/plugins/newbase/front/companydata.php');
-    } else {
-        Session::addMessageAfterRedirect(
-            __('Error permanently deleting company', 'newbase'),
-            false,
-            ERROR
-        );
-        Html::back();
-    }
+    $plugin_item->restore($_POST);
+    Html::back();
 }
 
-// EXIBIÇÃO DO FORMULÁRIO (GET)
+// --- TRATAMENTO DE EXIBIÇÃO (GET) ---
 
-// 8 VALIDAR E SANITIZAR O ID DA URL
-$entity_id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
+// Cabeçalho Padrão
+// O 3º parâmetro define o menu ativo (plugins > newbase > companydata)
+Html::header(
+    CompanyData::getTypeName(Session::getPluralNumber()),
+    $_SERVER['PHP_SELF'],
+    "plugins",
+    "newbase",
+    "companydata"
+);
 
-// Se ID inválido ou não fornecido, assume 0 (novo registro)
-if ($entity_id === false || $entity_id === null) {
-    $entity_id = 0;
-}
+// O método .display() resolve se deve mostrar o formulário vazio, preenchido ou erro 404
+// Ele chama internamente o $plugin_item->showForm($_GET['id'])
+$plugin_item->display($_GET);
 
-// Garantir que ID não seja negativo
-$entity_id = max(0, $entity_id);
-
-// 9 RENDERIZAR CABEÇALHO DO GLPI
-Html::header('Newbase', $_SERVER['PHP_SELF'], "plugins", "newbase", "menu_slug");
-
-// 10 CARREGAR DADOS DA EMPRESA (se estiver editando)
-if ($entity_id > 0) {
-    if (!$companydata->getFromDB($entity_id)) {
-        Session::addMessageAfterRedirect(
-            __('Company not found', 'newbase'),
-            false,
-            ERROR
-        );
-        Html::displayErrorAndDie(__('Company not found', 'newbase'));
-    }
-}
-
-// 11 EXIBIR FORMULÁRIO (o método showForm() deve gerenciar o CSRF internamente)
-$companydata->showForm($entity_id);
-
-// 12 RENDERIZAR RODAPÉ DO GLPI
+// Rodapé Padrão
 Html::footer();

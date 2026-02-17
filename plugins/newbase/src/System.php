@@ -1,41 +1,32 @@
 <?php
 
 /**
-* -------------------------------------------------------------------------
-* Newbase plugin for GLPI
-* -------------------------------------------------------------------------
-*
-* LICENSE
-*
-* This file is part of Newbase.
-*
-* Newbase is free software; you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation; either version 2 of the License, or
-* (at your option) any later version.
-*
-* Newbase is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with Newbase. If not, see <http://www.gnu.org/licenses/>.
-* -------------------------------------------------------------------------
-* @copyright Copyright (C) 2024-2026 by João Lucas
-* @license   GPLv2 https://www.gnu.org/licenses/gpl-2.0.html
-* @link      https://github.com/JoaoLucascp/Glpi
-* -------------------------------------------------------------------------
-*/
-
-/**
-* System Class - Telecommunication systems management
-* @package   Plugin - Newbase
-* @author    João Lucas
-* @copyright 2026 João Lucas
-* @license   GPLv2+
-* @version   2.1.0
-*/
+ * -------------------------------------------------------------------------
+ * Newbase plugin for GLPI
+ * -------------------------------------------------------------------------
+ *
+ * LICENSE
+ *
+ * This file is part of Newbase.
+ *
+ * Newbase is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * Newbase is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Newbase. If not, see <http://www.gnu.org/licenses/>.
+ * -------------------------------------------------------------------------
+ * @copyright Copyright (C) 2024-2026 by João Lucas
+ * @license   GPLv2 https://www.gnu.org/licenses/gpl-2.0.html
+ * @link      https://github.com/JoaoLucascp/Glpi
+ * -------------------------------------------------------------------------
+ */
 
 declare(strict_types=1);
 
@@ -47,70 +38,72 @@ use Entity;
 use Session;
 use Html;
 use Plugin;
+use Dropdown;
+use Toolbox;
+
+if (!defined('GLPI_ROOT')) {
+    die("Sorry. You can't access this file directly");
+}
 
 /**
-* System - Manages telecommunication systems
-* Supports multiple system types: PABX, IPBX, IPBX Cloud, Chatbot, Landline
-*/
+ * System - Manages telecommunication systems
+ * 
+ * Supports multiple system types:
+ * - PABX (Private Automatic Branch Exchange)
+ * - IPBX (IP-based PBX)
+ * - IPBX Cloud (Cloud-based IP PBX)
+ * - Chatbot (Automated chat systems)
+ * - Landline (Traditional phone lines)
+ *
+ * @package GlpiPlugin\Newbase
+ */
 class System extends CommonDBTM
 {
-/**
-* Rights management
-* @var string
-*/
+    /**
+     * Rights management
+     * @var string
+     */
     public static $rightname = 'plugin_newbase';
 
-/**
-* Enable history tracking
-* @var bool
-*/
+    /**
+     * Enable history tracking
+     * @var bool
+     */
     public $dohistory = true;
 
-/**
-* Items ID field name
-* @var string
-*/
-    public static $items_id = 'entities_id';
-
-/**
-* Item type
-* @var string
-*/
-    public static $itemtype = 'Entity';
-
-/**
-* Get type name
-* @param int $nb Number of items
-* @return string Type name
-*/
+    /**
+     * Get type name
+     * @param int $nb Number of items
+     * @return string Type name
+     */
     public static function getTypeName($nb = 0): string
     {
-        return $nb > 1 ? __('Systems', 'newbase') : __('System', 'newbase');
+        return _n('System', 'Systems', $nb, 'newbase');
     }
 
-/**
-* Get table name
-* @param string|null $classname Class name
-* @return string Table name
-*/
+    /**
+     * Get table name
+     * @param string|null $classname Class name
+     * @return string Table name
+     */
     public static function getTable($classname = null): string
     {
         return 'glpi_plugin_newbase_systems';
     }
 
-/**
-* Get icon for menus (Tabler Icons)
-* @return string Icon class
-*/
+    /**
+     * Get icon for menus (Tabler Icons)
+     * @return string Icon class
+     */
     public static function getIcon(): string
     {
         return 'ti ti-server';
     }
 
-/**
-* Get menu content for this item type
-* @return array Menu content
-*/
+    /**
+     * Get menu content for this item type
+     * @return array Menu content
+     */
     public static function getMenuContent(): array
     {
         $menu = [];
@@ -119,10 +112,6 @@ class System extends CommonDBTM
         if (!Session::haveRight(self::$rightname, READ)) {
             return $menu;
         }
-
-        // Get plugin URL
-        $plugin = new Plugin();
-        $baseUrl = Plugin::getWebDir('newbase');
 
         // Menu configuration
         $menu['title'] = self::getTypeName(2);
@@ -142,136 +131,158 @@ class System extends CommonDBTM
         return $menu;
     }
 
-/**
-* Get system types
-* @return array System types [key => label]
-*/
+    /**
+     * Get system types
+     * @return array System types [key => label]
+     */
     public static function getSystemTypes(): array
     {
         return [
-            'pabx' => __('PABX', 'newbase'),
-            'ipbx' => __('IPBX', 'newbase'),
+            'pabx'       => __('PABX', 'newbase'),
+            'ipbx'       => __('IPBX', 'newbase'),
             'ipbx_cloud' => __('IPBX Cloud', 'newbase'),
-            'chatbot' => __('Chatbot', 'newbase'),
-            'landline' => __('Landline', 'newbase'),
+            'chatbot'    => __('Chatbot', 'newbase'),
+            'landline'   => __('Landline', 'newbase'),
         ];
     }
 
-/**
-* Define search options for GLPI search engine
-* @return array Search options
-*/
+    /**
+     * Get system statuses
+     * @return array System statuses [key => label]
+     */
+    public static function getSystemStatuses(): array
+    {
+        return [
+            'active'      => __('Active'),
+            'inactive'    => __('Inactive'),
+            'maintenance' => __('Maintenance'),
+        ];
+    }
+
+    /**
+     * Define search options for GLPI search engine
+     * @return array Search options
+     */
     public function rawSearchOptions(): array
     {
-        $tab = [];
+        $tab = parent::rawSearchOptions();
 
-        // Main tab
         $tab[] = [
-            'id' => 'common',
-            'name' => __('Characteristics'),
-        ];
-
-        // ID
-        $tab[] = [
-            'id' => '2',
-            'table' => self::getTable(),
-            'field' => 'id',
-            'name' => __('ID'),
-            'massiveaction' => false,
-            'datatype' => 'number',
-        ];
-
-        // Name
-        $tab[] = [
-            'id' => '1',
-            'table' => self::getTable(),
-            'field' => 'name',
-            'name' => __('Name'),
-            'datatype' => 'itemlink',
+            'id'            => '2',
+            'table'         => self::getTable(),
+            'field'         => 'name',
+            'name'          => __('Name'),
+            'datatype'      => 'itemlink',
             'massiveaction' => false,
         ];
 
-        // Company
         $tab[] = [
-            'id' => '3',
-            'table' => 'glpi_entities',
-            'field' => 'name',
-            'name' => __('Company', 'newbase'),
+            'id'       => '3',
+            'table'    => 'glpi_entities',
+            'field'    => 'name',
+            'name'     => __('Company', 'newbase'),
             'datatype' => 'dropdown',
         ];
 
-        // System Type
         $tab[] = [
-            'id' => '4',
-            'table' => self::getTable(),
-            'field' => 'system_type',
-            'name' => __('Type', 'newbase'),
-            'datatype' => 'specific',
+            'id'         => '4',
+            'table'      => self::getTable(),
+            'field'      => 'system_type',
+            'name'       => __('Type', 'newbase'),
+            'datatype'   => 'specific',
             'searchtype' => ['equals'],
         ];
 
-        // Description
         $tab[] = [
-            'id' => '5',
-            'table' => self::getTable(),
-            'field' => 'description',
-            'name' => __('Description'),
+            'id'       => '5',
+            'table'    => self::getTable(),
+            'field'    => 'status',
+            'name'     => __('Status'),
+            'datatype' => 'specific',
+        ];
+
+        $tab[] = [
+            'id'       => '6',
+            'table'    => self::getTable(),
+            'field'    => 'description',
+            'name'     => __('Description'),
             'datatype' => 'text',
         ];
 
-        // Configuration
         $tab[] = [
-            'id' => '6',
-            'table' => self::getTable(),
-            'field' => 'configuration',
-            'name' => __('Configuration', 'newbase'),
-            'datatype' => 'text',
+            'id'            => '7',
+            'table'         => self::getTable(),
+            'field'         => 'configuration',
+            'name'          => __('Configuration', 'newbase'),
+            'datatype'      => 'text',
             'massiveaction' => false,
         ];
 
-        // Last update
         $tab[] = [
-            'id' => '19',
-            'table' => self::getTable(),
-            'field' => 'date_mod',
-            'name' => __('Last update'),
-            'datatype' => 'datetime',
+            'id'            => '19',
+            'table'         => self::getTable(),
+            'field'         => 'date_mod',
+            'name'          => __('Last update'),
+            'datatype'      => 'datetime',
             'massiveaction' => false,
         ];
 
-        // Creation date
         $tab[] = [
-            'id' => '121',
-            'table' => self::getTable(),
-            'field' => 'date_creation',
-            'name' => __('Creation date'),
-            'datatype' => 'datetime',
+            'id'            => '121',
+            'table'         => self::getTable(),
+            'field'         => 'date_creation',
+            'name'          => __('Creation date'),
+            'datatype'      => 'datetime',
             'massiveaction' => false,
         ];
 
         return $tab;
     }
 
-/**
-* Display form for system with dynamic fields
-* @param int $ID Item ID (0 for new)
-* @param array $options Additional options
-* @return bool Success
-*/
+    /**
+     * Display specific value for search result
+     * 
+     * @param string $field Field name
+     * @param array  $values Values
+     * @param array  $options Options
+     * @return string Formatted value
+     */
+    public static function getSpecificValueToDisplay($field, $values, array $options = []): string
+    {
+        if (!is_array($values)) {
+            $values = [$field => $values];
+        }
+
+        switch ($field) {
+            case 'system_type':
+                $types = self::getSystemTypes();
+                return $types[$values[$field]] ?? $values[$field];
+
+            case 'status':
+                $statuses = self::getSystemStatuses();
+                return $statuses[$values[$field]] ?? $values[$field];
+        }
+
+        return parent::getSpecificValueToDisplay($field, $values, $options);
+    }
+
+    /**
+     * Display form for system
+     * @param int   $ID      Item ID (0 for new)
+     * @param array $options Additional options
+     * @return bool Success
+     */
     public function showForm($ID, array $options = []): bool
     {
-        // Initialize form with permissions and data
         $this->initForm($ID, $options);
 
-        // Check permissions
         if (!$this->canView()) {
             return false;
         }
 
-        // Get entities_id from URL or form (FK to glpi_entities)
-        $entities_id = $options['entities_id'] ?? $_GET['entities_id'] ?? $this->fields['entities_id'] ?? 0;
+        // Get entities_id (prioritize GET parameter)
+        $entities_id = $_GET['entities_id'] ?? $options['entities_id'] ?? $this->fields['entities_id'] ?? $_SESSION['glpiactive_entity'];
 
-        // Start form rendering
         $this->showFormHeader($options);
 
         // BASIC INFORMATION
@@ -280,16 +291,15 @@ class System extends CommonDBTM
         echo "<td>";
         echo Html::input('name', [
             'value' => $this->fields['name'] ?? '',
-            'size' => 50,
-            'required' => true,
+            'size'  => 50,
         ]);
         echo "</td>";
         echo "<td>" . __('Company', 'newbase') . " <span class='red'>*</span></td>";
         echo "<td>";
         Entity::dropdown([
-            'name' => 'entities_id',
-            'value' => $entities_id,
-            'required' => true,
+            'name'   => 'entities_id',
+            'value'  => $entities_id,
+            'entity' => $entities_id,
         ]);
         echo "</td>";
         echo "</tr>";
@@ -297,18 +307,13 @@ class System extends CommonDBTM
         echo "<tr class='tab_bg_1'>";
         echo "<td>" . __('Type', 'newbase') . " <span class='red'>*</span></td>";
         echo "<td>";
-        \Dropdown::showFromArray('system_type', self::getSystemTypes(), [
+        Dropdown::showFromArray('system_type', self::getSystemTypes(), [
             'value' => $this->fields['system_type'] ?? 'pabx',
-            'required' => true,
         ]);
         echo "</td>";
         echo "<td>" . __('Status') . "</td>";
         echo "<td>";
-        \Dropdown::showFromArray('status', [
-            'active' => __('Active'),
-            'inactive' => __('Inactive'),
-            'maintenance' => __('Maintenance'),
-        ], [
+        Dropdown::showFromArray('status', self::getSystemStatuses(), [
             'value' => $this->fields['status'] ?? 'active',
         ]);
         echo "</td>";
@@ -318,10 +323,10 @@ class System extends CommonDBTM
         echo "<td>" . __('Description') . "</td>";
         echo "<td colspan='3'>";
         echo Html::textarea([
-            'name' => 'description',
+            'name'  => 'description',
             'value' => $this->fields['description'] ?? '',
-            'cols' => 80,
-            'rows' => 4,
+            'cols'  => 80,
+            'rows'  => 4,
         ]);
         echo "</td>";
         echo "</tr>";
@@ -331,30 +336,28 @@ class System extends CommonDBTM
         echo "<td>" . __('Configuration', 'newbase') . "</td>";
         echo "<td colspan='3'>";
         echo Html::textarea([
-            'name' => 'configuration',
+            'name'  => 'configuration',
             'value' => $this->fields['configuration'] ?? '',
-            'cols' => 80,
-            'rows' => 8,
+            'cols'  => 80,
+            'rows'  => 8,
         ]);
         echo "<br><small class='text-muted'>" . __('JSON format for technical configuration', 'newbase') . "</small>";
         echo "</td>";
         echo "</tr>";
 
-        // Finalize form
         $this->showFormButtons($options);
 
         return true;
     }
 
-/**
-* Prepare input for add
-* @param array $input Input data
-* @return array|bool Prepared input or false on error
-*/
+    /**
+     * Prepare input for add
+     * @param array $input Input data
+     * @return array|bool Prepared input or false on error
+     */
     public function prepareInputForAdd($input)
     {
-
-        // VALIDATE SYSTEM TYPE
+        // Validate system type
         if (isset($input['system_type'])) {
             $validTypes = array_keys(self::getSystemTypes());
             if (!in_array($input['system_type'], $validTypes, true)) {
@@ -367,7 +370,7 @@ class System extends CommonDBTM
             }
         }
 
-        // VALIDATE CONFIGURATION JSON
+        // Validate configuration JSON
         if (!empty($input['configuration'])) {
             $decoded = json_decode($input['configuration'], true);
             if (json_last_error() !== JSON_ERROR_NONE) {
@@ -383,11 +386,11 @@ class System extends CommonDBTM
         return parent::prepareInputForAdd($input);
     }
 
-/**
-* Prepare input for update
-* @param array $input Input data
-* @return array|bool Prepared input or false on error
-*/
+    /**
+     * Prepare input for update
+     * @param array $input Input data
+     * @return array|bool Prepared input or false on error
+     */
     public function prepareInputForUpdate($input)
     {
         // Validate system type if provided
@@ -416,23 +419,39 @@ class System extends CommonDBTM
             }
         }
 
-        return $input;
+        return parent::prepareInputForUpdate($input);
     }
 
-/**
-* Get tab name for item
-* @param CommonGLPI $item Item
-* @param int $withtemplate Template mode
-* @return string|bool Tab name
-*/
-    public function getTabNameForItem($item, $withtemplate = 0)
+    /**
+     * Actions after adding item
+     */
+    public function post_addItem(): void
+    {
+        Toolbox::logInFile(
+            'newbase_plugin',
+            sprintf(
+                "System added: ID=%d, Name=%s, Type=%s, Entity=%d\n",
+                $this->fields['id'],
+                $this->fields['name'],
+                $this->fields['system_type'],
+                $this->fields['entities_id']
+            )
+        );
+    }
+
+    /**
+     * Get tab name for item
+     * @param CommonGLPI $item Item
+     * @param int $withtemplate Template mode
+     * @return string|bool Tab name
+     */
+    public function getTabNameForItem(CommonGLPI $item, $withtemplate = 0)
     {
         if ($item instanceof Entity) {
             if ($_SESSION['glpishow_count_on_tabs']) {
-                $count = self::countForItem($item);
                 return self::createTabEntry(
                     self::getTypeName(Session::getPluralNumber()),
-                    $count
+                    self::countForItem($item)
                 );
             }
             return self::getTypeName(Session::getPluralNumber());
@@ -440,13 +459,13 @@ class System extends CommonDBTM
         return '';
     }
 
-/**
-* Display tab content for item
-* @param CommonGLPI $item Item
-* @param int $tabnum Tab number
-* @param int $withtemplate Template mode
-* @return bool Success
-*/
+    /**
+     * Display tab content for item
+     * @param CommonGLPI $item Item
+     * @param int $tabnum Tab number
+     * @param int $withtemplate Template mode
+     * @return bool Success
+     */
     public static function displayTabContentForItem(CommonGLPI $item, $tabnum = 1, $withtemplate = 0): bool
     {
         if ($item instanceof Entity) {
@@ -456,33 +475,27 @@ class System extends CommonDBTM
         return false;
     }
 
-/**
-* Count systems for an entity
-* @param CommonDBTM $item Entity item
-* @return int Count
-*/
+    /**
+     * Count systems for an entity
+     * @param CommonDBTM $item Entity item
+     * @return int Count
+     */
     public static function countForItem(CommonDBTM $item): int
     {
-        global $DB;
-
-        $iterator = $DB->request([
-            'COUNT' => 'cpt',
-            'FROM' => self::getTable(),
-            'WHERE' => [
+        return countElementsInTable(
+            self::getTable(),
+            [
                 'entities_id' => $item->getID(),
-                'is_deleted' => 0,
-            ],
-        ]);
-
-        $result = $iterator->current();
-        return (int) ($result['cpt'] ?? 0);
+                'is_deleted'  => 0,
+            ]
+        );
     }
 
-/**
-* Show systems for an entity
-* @param Entity $entity Entity
-* @return void
-*/
+    /**
+     * Show systems for an entity
+     * @param Entity $entity Entity
+     * @return void
+     */
     public static function showForEntity(Entity $entity): void
     {
         global $DB;
@@ -501,12 +514,12 @@ class System extends CommonDBTM
 
         // Get systems
         $iterator = $DB->request([
-            'FROM' => self::getTable(),
+            'FROM'  => self::getTable(),
             'WHERE' => [
                 'entities_id' => $entity_id,
-                'is_deleted' => 0,
+                'is_deleted'  => 0,
             ],
-            'ORDER' => 'name',
+            'ORDER' => ['name'],
         ]);
 
         if (count($iterator) === 0) {
@@ -518,6 +531,7 @@ class System extends CommonDBTM
 
         // Display table
         $types = self::getSystemTypes();
+        $statuses = self::getSystemStatuses();
 
         echo "<div class='table-responsive'>";
         echo "<table class='tab_cadre_fixehov'>";
@@ -525,6 +539,7 @@ class System extends CommonDBTM
         echo "<tr>";
         echo "<th>" . __('Name') . "</th>";
         echo "<th>" . __('Type', 'newbase') . "</th>";
+        echo "<th>" . __('Status') . "</th>";
         echo "<th>" . __('Description') . "</th>";
         if ($canedit) {
             echo "<th>" . __('Actions') . "</th>";
@@ -534,14 +549,11 @@ class System extends CommonDBTM
         echo "<tbody>";
 
         foreach ($iterator as $data) {
-            $system = new self();
-            $system->getFromDB($data['id']);
-
             echo "<tr>";
 
             // Name
             echo "<td>";
-            echo "<a href='" . $system->getFormURLWithID($data['id']) . "'>";
+            echo "<a href='" . self::getFormURLWithID($data['id']) . "'>";
             echo "<i class='ti ti-server'></i> ";
             echo htmlspecialchars($data['name']);
             echo "</a>";
@@ -550,17 +562,21 @@ class System extends CommonDBTM
             // Type
             echo "<td>" . ($types[$data['system_type']] ?? $data['system_type']) . "</td>";
 
+            // Status
+            echo "<td>" . ($statuses[$data['status']] ?? $data['status']) . "</td>";
+
             // Description (truncated)
-            echo "<td>" . (substr($data['description'] ?? '', 0, 100) ?: '-') . "</td>";
+            $desc = $data['description'] ?? '';
+            echo "<td>" . (mb_strlen($desc) > 100 ? mb_substr($desc, 0, 100) . '...' : ($desc ?: '-')) . "</td>";
 
             // Actions
             if ($canedit) {
                 echo "<td>";
-                echo "<a href='" . $system->getFormURLWithID($data['id']) . "' class='btn btn-sm btn-primary'>";
+                echo "<a href='" . self::getFormURLWithID($data['id']) . "' class='btn btn-sm btn-primary'>";
                 echo "<i class='ti ti-edit'></i>";
                 echo "</a> ";
                 echo Html::getSimpleForm(
-                    $system->getFormURL(),
+                    self::getFormURL(),
                     ['purge' => 'purge', 'id' => $data['id']],
                     __('Delete permanently'),
                     ['class' => 'btn btn-sm btn-danger'],
@@ -575,5 +591,23 @@ class System extends CommonDBTM
         echo "</tbody>";
         echo "</table>";
         echo "</div>";
+    }
+
+    /**
+     * Dropdown for system selection
+     * @param array $options Dropdown options
+     * @return int|string Dropdown result
+     */
+    public static function dropdown($options = [])
+    {
+        $defaults = [
+            'name'   => 'plugin_newbase_systems_id',
+            'value'  => 0,
+            'entity' => $_SESSION['glpiactive_entity'],
+        ];
+
+        $options = array_merge($defaults, $options);
+
+        return Dropdown::show(self::class, $options);
     }
 }

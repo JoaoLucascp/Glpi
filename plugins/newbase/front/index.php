@@ -1,395 +1,227 @@
 <?php
 
 /**
-* ---------------------------------------------------------------------
-* Dashboard Principal - Plugin Newbase
-* ---------------------------------------------------------------------
-*
-* Este arquivo exibe a página inicial do plugin com:
-* - Estatísticas gerais (empresas, sistemas, tarefas)
-* - Tarefas recentes
-* - Links rápidos para principais funcionalidades
-* @package   Plugin - Newbase
-* @author    João Lucas
-* @license   GPLv2+
-*/
+ * -------------------------------------------------------------------------
+ * Newbase plugin for GLPI
+ * -------------------------------------------------------------------------
+ *
+ * LICENSE
+ *
+ * This file is part of Newbase.
+ *
+ * Newbase is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * Newbase is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Newbase. If not, see <http://www.gnu.org/licenses/>.
+ * -------------------------------------------------------------------------
+ * @copyright Copyright (C) 2024-2026 by João Lucas
+ * @license   GPLv2 https://www.gnu.org/licenses/gpl-2.0.html
+ * @link      https://github.com/JoaoLucascp/Glpi
+ * -------------------------------------------------------------------------
+ */
 
-// 1 SEGURANÇA: Carregar o núcleo do GLPI
-include('../../../inc/includes.php');
-
-// 2 SEGURANÇA: Verificar se usuário está logado
-Session::checkLoginUser();
-
-// 3 IMPORTAR CLASSES DO PLUGIN
-use GlpiPlugin\Newbase\CompanyData;
-use GlpiPlugin\Newbase\System;
 use GlpiPlugin\Newbase\Task;
 
-// 4 RENDERIZAR CABEÇALHO DO GLPI
-Html::header(
-    __('Newbase Dashboard', 'newbase'),
-    $_SERVER['PHP_SELF'],
-    'management',
-    'GlpiPlugin\Newbase\Menu',
-    'dashboard'
-);
+// Check GLPI is loaded
+if (!defined('GLPI_ROOT')) {
+    die("Sorry. You can't access this file directly");
+}
 
-// COLETAR ESTATÍSTICAS
+// Include GLPI
+include('../../../inc/includes.php');
 
-// 5 CONTAR EMPRESAS ATIVAS
-$company = new CompanyData();
-$total_companies = countElementsInTable(
-    'glpi_plugin_newbase_company_extras',
-    ['is_deleted' => 0]
-);
+// Check user is authenticated
+Session::checkLoginUser();
 
-// 6 CONTAR SISTEMAS ATIVOS
-$system = new System();
-$total_systems = countElementsInTable(
-    'glpi_plugin_newbase_systems',
-    ['is_deleted' => 0]
-);
+// Check user rights
+Session::checkRight('plugin_newbase', READ);
 
-// 7 CONTAR TAREFAS POR STATUS
-$total_tasks = countElementsInTable(
-    'glpi_plugin_newbase_tasks',
-    ['is_deleted' => 0]
-);
-
-$pending_tasks = countElementsInTable(
-    'glpi_plugin_newbase_tasks',
-    [
-        'is_deleted'   => 0,
-        'is_completed' => 0
-    ]
-);
-
-$completed_tasks = countElementsInTable(
-    'glpi_plugin_newbase_tasks',
-    [
-        'is_deleted'   => 0,
-        'is_completed' => 1
-    ]
-);
-
-// BUSCAR TAREFAS RECENTES
+// Page header
+Html::header(__('Newbase - Dashboard', 'newbase'), $_SERVER['PHP_SELF'], 'plugins', 'newbase');
 
 global $DB;
 
-// 8 QUERY: Últimas 10 tarefas criadas
-$recent_tasks_query = "
-    SELECT
-        t.id,
-        t.description AS title,
-        t.is_completed,
-        t.date_creation,
-        e.name AS company_name
-    FROM glpi_plugin_newbase_tasks AS t
-    LEFT JOIN glpi_plugin_newbase_company_extras AS c
-        ON t.entities_id = c.entities_id
-    LEFT JOIN glpi_entities AS e
-        ON c.entities_id = e.id
-    WHERE t.is_deleted = 0
-    ORDER BY t.date_creation DESC
-    LIMIT 10
-";
+// Get statistics
+$stats = [
+    'total_tasks' => 0,
+    'new_tasks' => 0,
+    'in_progress_tasks' => 0,
+    'completed_tasks' => 0,
+    'total_mileage' => 0,
+];
 
-$recent_tasks_result = $DB->query($recent_tasks_query);
-$recent_tasks = [];
+// Count tasks by status
+$iterator = $DB->request([
+    'SELECT' => [
+        'status',
+        'COUNT(*) AS total',
+        'SUM(mileage) AS total_mileage',
+    ],
+    'FROM' => Task::getTable(),
+    'WHERE' => [
+        'is_deleted' => 0,
+    ],
+    'GROUP' => 'status',
+]);
 
-if ($recent_tasks_result) {
-    while ($row = $DB->fetchAssoc($recent_tasks_result)) {
-        $recent_tasks[] = $row;
+foreach ($iterator as $row) {
+    $stats['total_tasks'] += $row['total'];
+    $stats['total_mileage'] += (float) ($row['total_mileage'] ?? 0);
+
+    switch ($row['status']) {
+        case 'new':
+            $stats['new_tasks'] = $row['total'];
+            break;
+        case 'in_progress':
+            $stats['in_progress_tasks'] = $row['total'];
+            break;
+        case 'completed':
+            $stats['completed_tasks'] = $row['total'];
+            break;
     }
 }
 
-// RENDERIZAR DASHBOARD
-?>
+// Recent tasks - SINTAXE CORRIGIDA
+$recent_tasks = [];
+$iterator = $DB->request([
+    'SELECT' => [
+        't.id',
+        't.title',
+        't.status',
+        't.date_start',
+        't.date_end',
+        't.mileage',
+        'u.realname AS user_realname',
+        'u.firstname AS user_firstname',
+    ],
+    'FROM' => Task::getTable() . ' AS t',
+    'LEFT JOIN' => [
+        'glpi_users AS u' => [
+            'ON' => [
+                't' => 'users_id',
+                'u' => 'id',
+            ],
+        ],
+    ],
+    'WHERE' => [
+        't.is_deleted' => 0,
+    ],
+    'ORDER' => ['t.date_start DESC'],
+    'LIMIT' => 10,
+]);
 
-<!-- 9 GRID DE ESTATÍSTICAS -->
-<div class="dashboard-grid">
-
-    <!-- Card 1: Empresas -->
-    <div class="dashboard-card">
-        <div class="card-icon">
-            <i class="ti ti-building"></i>
-        </div>
-        <div class="card-content">
-            <h3><?php echo $total_companies; ?></h3>
-            <p><?php echo __('Total Companies', 'newbase'); ?></p>
-        </div>
-        <div class="card-action">
-            <a href="<?php echo $CFG_GLPI['root_doc']; ?>/plugins/newbase/front/companydata.php">
-                <?php echo __('View all', 'newbase'); ?> →
-            </a>
-        </div>
-    </div>
-
-    <!-- Card 2: Sistemas -->
-    <div class="dashboard-card">
-        <div class="card-icon">
-            <i class="ti ti-phone"></i>
-        </div>
-        <div class="card-content">
-            <h3><?php echo $total_systems; ?></h3>
-            <p><?php echo __('Phone Systems', 'newbase'); ?></p>
-        </div>
-        <div class="card-action">
-            <a href="<?php echo $CFG_GLPI['root_doc']; ?>/plugins/newbase/front/system.php">
-                <?php echo __('View all', 'newbase'); ?> →
-            </a>
-        </div>
-    </div>
-
-    <!-- Card 3: Tarefas Pendentes -->
-    <div class="dashboard-card">
-        <div class="card-icon status-pending">
-            <i class="ti ti-clock"></i>
-        </div>
-        <div class="card-content">
-            <h3><?php echo $pending_tasks; ?></h3>
-            <p><?php echo __('Pending Tasks', 'newbase'); ?></p>
-        </div>
-        <div class="card-action">
-            <a href="<?php echo $CFG_GLPI['root_doc']; ?>/plugins/newbase/front/task.php">
-                <?php echo __('View all', 'newbase'); ?> →
-            </a>
-        </div>
-    </div>
-
-    <!-- Card 4: Tarefas Concluídas -->
-    <div class="dashboard-card">
-        <div class="card-icon status-completed">
-            <i class="ti ti-check"></i>
-        </div>
-        <div class="card-content">
-            <h3><?php echo $completed_tasks; ?></h3>
-            <p><?php echo __('Completed Tasks', 'newbase'); ?></p>
-        </div>
-        <div class="card-action">
-            <span class="progress-bar">
-                <?php
-                $completion_rate = $total_tasks > 0
-                    ? round(($completed_tasks / $total_tasks) * 100)
-                    : 0;
-                echo $completion_rate . '%';
-                ?>
-            </span>
-        </div>
-    </div>
-
-</div>
-
-<!-- 10 TABELA DE TAREFAS RECENTES -->
-<div class="dashboard-section">
-    <h2>
-        <i class="ti ti-list"></i>
-        <?php echo __('Recent Tasks', 'newbase'); ?>
-    </h2>
-
-    <?php if (count($recent_tasks) > 0) : ?>
-        <table class="table table-hover">
-            <thead>
-                <tr>
-                    <th><?php echo __('Title', 'newbase'); ?></th>
-                    <th><?php echo __('Company', 'newbase'); ?></th>
-                    <th><?php echo __('Status', 'newbase'); ?></th>
-                    <th><?php echo __('Created', 'newbase'); ?></th>
-                    <th><?php echo __('Actions', 'newbase'); ?></th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($recent_tasks as $task) : ?>
-                    <tr>
-                        <td>
-                            <a href="<?php echo $CFG_GLPI['root_doc']; ?>/plugins/newbase/front/task.form.php?id=<?php echo $task['id']; ?>">
-                                <?php echo htmlspecialchars($task['title']); ?>
-                            </a>
-                        </td>
-                        <td>
-                            <?php echo htmlspecialchars($task['company_name'] ?? '-'); ?>
-                        </td>
-                        <td>
-                            <?php if ($task['is_completed']) : ?>
-                                <span class="badge badge-success">
-                                    <i class="ti ti-check"></i>
-                                    <?php echo __('Completed', 'newbase'); ?>
-                                </span>
-                            <?php else : ?>
-                                <span class="badge badge-warning">
-                                    <i class="ti ti-clock"></i>
-                                    <?php echo __('Pending', 'newbase'); ?>
-                                </span>
-                            <?php endif; ?>
-                        </td>
-                        <td>
-                            <?php echo Html::convDateTime($task['date_creation']); ?>
-                        </td>
-                        <td>
-                            <a href="<?php echo $CFG_GLPI['root_doc']; ?>/plugins/newbase/front/task.form.php?id=<?php echo $task['id']; ?>" 
-                                class="btn btn-sm btn-primary">
-                                <?php echo __('View', 'newbase'); ?>
-                            </a>
-                        </td>
-                    </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
-
-    <?php else : ?>
-        <div class="alert alert-info">
-            <i class="ti ti-info-circle"></i>
-            <?php echo __('No recent tasks', 'newbase'); ?>
-        </div>
-
-    <?php endif; ?>
-
-</div>
-
-<!-- 11 LINKS RÁPIDOS -->
-<div class="dashboard-section">
-    <h2>
-        <i class="ti ti-rocket"></i>
-        <?php echo __('Quick Actions', 'newbase'); ?>
-    </h2>
-
-    <div class="quick-actions">
-
-        <a href="<?php echo $CFG_GLPI['root_doc']; ?>/plugins/newbase/front/companydata.form.php"
-            class="quick-action-btn">
-            <i class="ti ti-building-plus"></i>
-            <?php echo __('New Company', 'newbase'); ?>
-        </a>
-
-        <a href="<?php echo $CFG_GLPI['root_doc']; ?>/plugins/newbase/front/system.form.php"
-            class="quick-action-btn">
-            <i class="ti ti-phone-plus"></i>
-            <?php echo __('New System', 'newbase'); ?>
-        </a>
-
-        <a href="<?php echo $CFG_GLPI['root_doc']; ?>/plugins/newbase/front/task.form.php"
-            class="quick-action-btn">
-            <i class="ti ti-checkbox-plus"></i>
-            <?php echo __('New Task', 'newbase'); ?>
-        </a>
-
-        <a href="<?php echo $CFG_GLPI['root_doc']; ?>/plugins/newbase/front/report.php"
-            class="quick-action-btn">
-            <i class="ti ti-file-report"></i>
-            <?php echo __('Reports', 'newbase'); ?>
-        </a>
-
-    </div>
-
-</div>
-
-<!-- 12 ADICIONAR CSS CUSTOMIZADO -->
-<style>
-.dashboard-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 20px;
-    margin: 20px 0;
+foreach ($iterator as $row) {
+    $recent_tasks[] = [
+        'id' => $row['id'],
+        'title' => $row['title'],
+        'status' => $row['status'],
+        'date_start' => $row['date_start'],
+        'date_end' => $row['date_end'],
+        'mileage' => (float) ($row['mileage'] ?? 0),
+        'user_name' => trim(($row['user_firstname'] ?? '') . ' ' . ($row['user_realname'] ?? '')),
+    ];
 }
 
-.dashboard-card {
-    background: #fff;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
+// Display dashboard
+echo "<div class='container-fluid'>";
+
+// Statistics cards
+echo "<div class='row mb-3'>";
+
+echo "<div class='col-md-3'>";
+echo "<div class='card'>";
+echo "<div class='card-body'>";
+echo "<h5 class='card-title'>" . __('Total Tasks', 'newbase') . "</h5>";
+echo "<p class='card-text display-4'>" . $stats['total_tasks'] . "</p>";
+echo "</div>";
+echo "</div>";
+echo "</div>";
+
+echo "<div class='col-md-3'>";
+echo "<div class='card'>";
+echo "<div class='card-body'>";
+echo "<h5 class='card-title'>" . __('New Tasks', 'newbase') . "</h5>";
+echo "<p class='card-text display-4'>" . $stats['new_tasks'] . "</p>";
+echo "</div>";
+echo "</div>";
+echo "</div>";
+
+echo "<div class='col-md-3'>";
+echo "<div class='card'>";
+echo "<div class='card-body'>";
+echo "<h5 class='card-title'>" . __('In Progress', 'newbase') . "</h5>";
+echo "<p class='card-text display-4'>" . $stats['in_progress_tasks'] . "</p>";
+echo "</div>";
+echo "</div>";
+echo "</div>";
+
+echo "<div class='col-md-3'>";
+echo "<div class='card'>";
+echo "<div class='card-body'>";
+echo "<h5 class='card-title'>" . __('Completed', 'newbase') . "</h5>";
+echo "<p class='card-text display-4'>" . $stats['completed_tasks'] . "</p>";
+echo "</div>";
+echo "</div>";
+echo "</div>";
+
+echo "</div>"; // .row
+
+// Recent tasks table
+echo "<div class='row'>";
+echo "<div class='col-12'>";
+echo "<div class='card'>";
+echo "<div class='card-header'>";
+echo "<h3>" . __('Recent Tasks', 'newbase') . "</h3>";
+echo "</div>";
+echo "<div class='card-body'>";
+
+if (empty($recent_tasks)) {
+    echo "<p>" . __('No tasks found', 'newbase') . "</p>";
+} else {
+    echo "<table class='table table-striped'>";
+    echo "<thead>";
+    echo "<tr>";
+    echo "<th>" . __('ID') . "</th>";
+    echo "<th>" . __('Title', 'newbase') . "</th>";
+    echo "<th>" . __('Status') . "</th>";
+    echo "<th>" . __('Assigned to', 'newbase') . "</th>";
+    echo "<th>" . __('Start date', 'newbase') . "</th>";
+    echo "<th>" . __('Mileage (km)', 'newbase') . "</th>";
+    echo "</tr>";
+    echo "</thead>";
+    echo "<tbody>";
+
+    $statuses = Task::getStatuses();
+
+    foreach ($recent_tasks as $task) {
+        echo "<tr>";
+        echo "<td><a href='" . Task::getFormURLWithID($task['id']) . "'>{$task['id']}</a></td>";
+        echo "<td>" . htmlspecialchars($task['title']) . "</td>";
+        echo "<td>" . ($statuses[$task['status']] ?? $task['status']) . "</td>";
+        echo "<td>" . htmlspecialchars($task['user_name'] ?: '-') . "</td>";
+        echo "<td>" . Html::convDateTime($task['date_start']) . "</td>";
+        echo "<td>" . number_format($task['mileage'], 2, ',', '.') . "</td>";
+        echo "</tr>";
+    }
+
+    echo "</tbody>";
+    echo "</table>";
 }
 
-.dashboard-card .card-icon {
-    font-size: 32px;
-    color: #2196F3;
-}
+echo "</div>"; // .card-body
+echo "</div>"; // .card
+echo "</div>"; // .col-12
+echo "</div>"; // .row
 
-.dashboard-card .card-icon.status-pending {
-    color: #FF9800;
-}
+echo "</div>"; // .container-fluid
 
-.dashboard-card .card-icon.status-completed {
-    color: #4CAF50;
-}
-
-.dashboard-card h3 {
-    font-size: 36px;
-    font-weight: bold;
-    margin: 0;
-    color: #333;
-}
-
-.dashboard-card p {
-    color: #666;
-    margin: 0;
-}
-
-.dashboard-card .card-action a {
-    color: #2196F3;
-    text-decoration: none;
-    font-weight: 500;
-}
-
-.dashboard-section {
-    background: #fff;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    padding: 20px;
-    margin: 20px 0;
-}
-
-.dashboard-section h2 {
-    margin-top: 0;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.quick-actions {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 15px;
-}
-
-.quick-action-btn {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 15px;
-    background: #2196F3;
-    color: white;
-    text-decoration: none;
-    border-radius: 6px;
-    font-weight: 500;
-    transition: background 0.3s;
-}
-
-.quick-action-btn:hover {
-    background: #1976D2;
-}
-
-.badge {
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 12px;
-    font-weight: 500;
-}
-
-.badge-success {
-    background: #4CAF50;
-    color: white;
-}
-
-.badge-warning {
-    background: #FF9800;
-    color: white;
-}
-</style>
-
-<?php
-// 13 RENDERIZAR RODAPÉ DO GLPI
+// Page footer
 Html::footer();
-?>

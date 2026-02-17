@@ -53,16 +53,13 @@
 // 1 SEGURANÇA: Carregar o núcleo do GLPI
 include('../../../inc/includes.php');
 
-// 2 SEGURANÇA: Verificar se usuário está logado
-Session::checkLoginUser();
-
-// VERIFICAR TOKEN CSRF
-Session::checkCSRF($_POST);
-
 // 3 IMPORTAR CLASSES NECESSÁRIAS
 use GlpiPlugin\Newbase\Task;
 use GlpiPlugin\Newbase\TaskSignature;
 use GlpiPlugin\Newbase\Config;
+use Toolbox;
+use Session;
+use Exception;
 
 // 4 CONFIGURAR RESPOSTA JSON
 header('Content-Type: application/json; charset=utf-8');
@@ -85,8 +82,28 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-// 6 VERIFICAR TOKEN CSRF
-Session::checkCSRF($_POST);
+// 6 CSRF VALIDATION (GLPI 10.0.20+)
+// IMPORTANT: For AJAX requests, GLPI automatically detects the /ajax/ path
+// and validates CSRF token from "X-Glpi-Csrf-Token" header.
+// This explicit check provides compatibility with both header and POST data.
+try {
+    // GLPI 10.0.20+ supports both:
+    // 1. Header: X-Glpi-Csrf-Token (standard for AJAX)
+    // 2. POST data: _glpi_csrf_token (fallback)
+    $csrf_token = $_SERVER['HTTP_X_GLPI_CSRF_TOKEN'] ?? $_POST['_glpi_csrf_token'] ?? '';
+    if (!empty($csrf_token)) {
+        Session::checkCSRF(['_glpi_csrf_token' => $csrf_token]);
+    } else {
+        throw new Exception(__('CSRF token is missing', 'newbase'));
+    }
+} catch (Exception $e) {
+    http_response_code(403);
+    echo json_encode([
+        'success' => false,
+        'message' => __('Security token invalid or expired', 'newbase'),
+    ]);
+    exit;
+}
 
 // VALIDAÇÃO DE PARÂMETROS
 

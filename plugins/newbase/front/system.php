@@ -1,49 +1,29 @@
 <?php
 
-/**
-* ---------------------------------------------------------------------
-* Página de Listagem de Sistemas - Plugin Newbase
-* ---------------------------------------------------------------------
-*
-* Este arquivo exibe a lista de sistemas telefônicos cadastrados:
-* - Asterisk (IPBX local)
-* - CloudPBX (IPBX em nuvem)
-* - Chatbot (Sistema omnichannel)
-* - VoIP (Linha fixa)
-*
-* Oferece busca, filtros, paginação e ações em massa.
-* @package   Plugin - Newbase
-* @author    João Lucas
-* @license   GPLv2+
-*/
+include ('../../../inc/includes.php');
 
-// 1 SEGURANÇA: Carregar o núcleo do GLPI
-include('../../../inc/includes.php');
-
-// 2 SEGURANÇA: Verificar se usuário está logado
-Session::checkLoginUser();
-
-// 3 IMPORTAR A CLASSE DO PLUGIN
 use GlpiPlugin\Newbase\System;
 
-// 4 RENDERIZAR CABEÇALHO DO GLPI
-Html::header(
-    System::getTypeName(Session::getPluralNumber()),  // Título no plural
-    $_SERVER['PHP_SELF'],                             // URL atual
-    'management',                                     // Categoria do menu
-    System::class,                                    // Classe do item
-    'system'                                          // Identificador único
-);
+// 1. Verificação de Sessão
+Session::checkLoginUser();
 
-// 5 VERIFICAR DIREITOS DE ACESSO
-// Se o usuário não tem permissão para ver sistemas, bloqueia acesso
+// 2. Verificação de Permissões (ANTES do cabeçalho para economizar processamento)
 if (!System::canView()) {
     Html::displayRightError();
 }
 
-// 6 EXIBIR O MECANISMO DE BUSCA DO GLPI
-// Esta linha cria automaticamente toda a interface de busca!
-Search::show('GlpiPlugin\Newbase\System');
+// 3. Cabeçalho
+Html::header(
+    System::getTypeName(Session::getPluralNumber()),
+    $_SERVER['PHP_SELF'],
+    "plugins",        // Menu pai (geralmente "plugins" para plugins de terceiros)
+    "newbase",        // Nome do plugin
+    "system"          // Slug do submenu
+);
 
-// 7 RENDERIZAR RODAPÉ DO GLPI
+// 4. Motor de Busca
+// Usar ::class em vez de string garante compatibilidade com namespaces
+Search::show(System::class);
+
+// 5. Rodapé
 Html::footer();

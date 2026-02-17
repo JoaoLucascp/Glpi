@@ -76,9 +76,9 @@ function plugin_init_newbase(): void
 
     // Menu entries - Check if user has rights
     if (Session::haveRight('plugin_newbase', READ)) {
-        // Add to Tools menu using the correct method
+        // Add to Management menu (Gerenciar)
         $PLUGIN_HOOKS['menu_toadd']['newbase'] = [
-            'tools' => 'GlpiPlugin\\Newbase\\Menu'
+            'management' => 'GlpiPlugin\\Newbase\\Menu'
         ];
     }
 

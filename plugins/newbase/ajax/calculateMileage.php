@@ -1,150 +1,321 @@
 <?php
 
 /**
-* ---------------------------------------------------------------------
-* AJAX - Cálculo de Quilometragem - Plugin Newbase
-* ---------------------------------------------------------------------
-*
-* Este arquivo calcula a distância entre dois pontos GPS usando a
-* fórmula de Haversine e retorna o resultado em JSON.
-*
-* Chamado via JavaScript do formulário de tarefas.
-* @package   GlpiPlugin - Newbase
-* @author    João Lucas
-* @license   GPLv2+
-*/
+ * -------------------------------------------------------------------------
+ * Newbase plugin for GLPI
+ * -------------------------------------------------------------------------
+ *
+ * LICENSE
+ *
+ * This file is part of Newbase.
+ *
+ * Newbase is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * Newbase is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Newbase. If not, see <http://www.gnu.org/licenses/>.
+ * -------------------------------------------------------------------------
+ * @copyright Copyright (C) 2024-2026 by João Lucas
+ * @license   GPLv2 https://www.gnu.org/licenses/gpl-2.0.html
+ * @link      https://github.com/JoaoLucascp/Glpi
+ * -------------------------------------------------------------------------
+ */
 
-// 1 SEGURANÇA: Carregar o núcleo do GLPI
+/**
+ * AJAX Endpoint - Mileage Calculation
+ *
+ * Calculates distance between two GPS coordinates using Haversine formula.
+ *
+ * POST: Calculate distance
+ * - Receives two coordinate pairs (lat/lng)
+ * - Validates coordinate ranges
+ * - Returns distance in kilometers
+ *
+ * Formula: Haversine (great-circle distance)
+ * - Accounts for Earth's curvature
+ * - Precision: ~0.5% (suitable for field tasks)
+ * - Earth radius: 6371 km
+ *
+ * Used by Task forms to automatically calculate mileage from GPS data.
+ */
+
+// Load GLPI core
 include('../../../inc/includes.php');
 
-// 2 SEGURANÇA: Verificar se usuário está logado
-Session::checkLoginUser();
-
-// VERIFICAR TOKEN CSRF
-Session::checkCSRF();
-
-// 3 IMPORTAR CLASSES NECESSÁRIAS
 use GlpiPlugin\Newbase\Common;
 use GlpiPlugin\Newbase\Task;
+use GlpiPlugin\Newbase\Config;
 
-// 4 CONFIGURAR RESPOSTA JSON
+// Security headers
 header('Content-Type: application/json; charset=utf-8');
-
-// 5 BLOQUEAR CACHE (importante para AJAX)
 header('Cache-Control: no-cache, must-revalidate');
 header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
 header('X-Content-Type-Options: nosniff');
-header('X-Frame-Options: DENY');
+header('X-Frame-Options: SAMEORIGIN');
 header('X-XSS-Protection: 1; mode=block');
-header('Referrer-Policy: strict-origin-when-cross-origin');
 
-// 6 VERIFICAR SE É REQUISIÇÃO POST
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405); // Method Not Allowed
-    echo json_encode([
-        'success' => false,
-        'message' => __('Only POST requests are allowed', 'newbase'),
-    ]);
+/**
+ * Send JSON response and exit
+ * @param bool $success Success status
+ * @param string $message Message
+ * @param array $data Additional data
+ * @param int $http_code HTTP status code
+ */
+function sendResponse(bool $success, string $message, array $data = [], int $http_code = 200): void
+{
+    http_response_code($http_code);
+
+    $response = [
+        'success' => $success,
+        'message' => $message,
+    ];
+
+    if (!empty($data)) {
+        $response = array_merge($response, $data);
+    }
+
+    echo json_encode($response, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     exit;
 }
 
-// 7 VERIFICAR TOKEN CSRF
-Session::checkCSRF();
+/**
+ * Validate GPS coordinate
+ * @param float $lat Latitude
+ * @param float $lng Longitude
+ * @return bool Valid coordinate
+ */
+function validateCoordinate(float $lat, float $lng): bool
+{
+    // Validate latitude range (-90 to 90)
+    if ($lat < -90 || $lat > 90) {
+        return false;
+    }
 
-// 8 VERIFICAR PERMISSÕES
+    // Validate longitude range (-180 to 180)
+    if ($lng < -180 || $lng > 180) {
+        return false;
+    }
+
+    return true;
+}
+
+// ===== AUTHENTICATION CHECK =====
+if (!Session::getLoginUserID()) {
+    sendResponse(false, __('Authentication required'), [], 401);
+}
+
+// ===== CHECK PERMISSIONS =====
 if (!Task::canView()) {
-    http_response_code(403); // Forbidden
-    echo json_encode([
-        'success' => false,
-        'message' => __('You do not have permission to perform this action', 'newbase'),
-    ]);
-    exit;
+    Toolbox::logInFile(
+        'newbase_plugin',
+        sprintf("User %d tried to calculate mileage without permission\n", Session::getLoginUserID())
+    );
+    sendResponse(false, __('You do not have permission to perform this action', 'newbase'), [], 403);
 }
 
-// PROCESSAMENTO
+// ===== GET REQUEST METHOD =====
+$method = $_SERVER['REQUEST_METHOD'];
+
+// ===== GET REQUEST DATA =====
+$rawInput = file_get_contents('php://input');
+$input = json_decode($rawInput, true);
+
+// Handle non-JSON requests (fallback to POST/GET data)
+if ($input === null) {
+    $input = ($method === 'POST') ? $_POST : $_GET;
+}
+
+if (!is_array($input)) {
+    $input = [];
+}
+
+// ===== CSRF TOKEN VALIDATION (for POST) =====
+if ($method === 'POST') {
+    $csrf_token = $_SERVER['HTTP_X_GLPI_CSRF_TOKEN'] ?? $input['_glpi_csrf_token'] ?? '';
+
+    if (empty($csrf_token)) {
+        Toolbox::logInFile('newbase_plugin', "AJAX mileage calculation: CSRF token missing\n");
+        sendResponse(false, __('CSRF token is required', 'newbase'), [], 403);
+    }
+
+    // Validate CSRF token
+    try {
+        Session::checkCSRF(['_glpi_csrf_token' => $csrf_token]);
+    } catch (Exception $e) {
+        Toolbox::logInFile('newbase_plugin', "AJAX mileage calculation: Invalid CSRF token\n");
+        sendResponse(false, __('Invalid or expired security token', 'newbase'), [], 403);
+    }
+}
+
+// ===== CHECK IF FEATURE IS ENABLED =====
+$config = Config::getConfig();
+$calculate_mileage = $config['calculate_mileage'] ?? 1;
+
+if (!$calculate_mileage) {
+    sendResponse(false, __('Automatic mileage calculation is disabled', 'newbase'), [], 403);
+}
+
+// ===== PROCESS REQUEST =====
 
 try {
-    // 9️ OBTER COORDENADAS DO POST
-    $lat1 = $_POST['lat1'] ?? null;
-    $lng1 = $_POST['lng1'] ?? null;
-    $lat2 = $_POST['lat2'] ?? null;
-    $lng2 = $_POST['lng2'] ?? null;
+    // Only allow POST and GET methods
+    if (!in_array($method, ['POST', 'GET'], true)) {
+        sendResponse(
+            false,
+            sprintf(__('Method %s not allowed', 'newbase'), $method),
+            [],
+            405
+        );
+    }
 
-    // 10 VALIDAR SE TODAS AS COORDENADAS FORAM ENVIADAS
+    // ===== GET COORDINATES =====
+    $lat1 = $input['lat1'] ?? $input['start_lat'] ?? null;
+    $lng1 = $input['lng1'] ?? $input['start_lng'] ?? null;
+    $lat2 = $input['lat2'] ?? $input['end_lat'] ?? null;
+    $lng2 = $input['lng2'] ?? $input['end_lng'] ?? null;
+
+    // Validate all coordinates are present
     if ($lat1 === null || $lng1 === null || $lat2 === null || $lng2 === null) {
-        echo json_encode([
-            'success' => false,
-            'message' => __('All coordinates are required', 'newbase'),
-        ]);
-        exit;
+        sendResponse(
+            false,
+            __('All coordinates are required (lat1, lng1, lat2, lng2)', 'newbase'),
+            [
+                'required_fields' => ['lat1', 'lng1', 'lat2', 'lng2'],
+                'received' => [
+                    'lat1' => $lat1 !== null,
+                    'lng1' => $lng1 !== null,
+                    'lat2' => $lat2 !== null,
+                    'lng2' => $lng2 !== null,
+                ],
+            ],
+            400
+        );
     }
 
-    // 11 CONVERTER PARA FLOAT
-    $lat1 = floatval($lat1);
-    $lng1 = floatval($lng1);
-    $lat2 = floatval($lat2);
-    $lng2 = floatval($lng2);
+    // Convert to float
+    $lat1 = (float) $lat1;
+    $lng1 = (float) $lng1;
+    $lat2 = (float) $lat2;
+    $lng2 = (float) $lng2;
 
-    // 12 VALIDAR RANGE DE LATITUDE (-90 a 90)
-    if ($lat1 < -90 || $lat1 > 90 || $lat2 < -90 || $lat2 > 90) {
-        echo json_encode([
-            'success' => false,
-            'message' => __('Invalid latitude value (must be between -90 and 90)', 'newbase'),
-        ]);
-        exit;
+    // Validate start coordinate
+    if (!validateCoordinate($lat1, $lng1)) {
+        sendResponse(
+            false,
+            __('Invalid start coordinate', 'newbase'),
+            [
+                'lat1' => $lat1,
+                'lng1' => $lng1,
+                'valid_range' => 'Latitude: -90 to 90, Longitude: -180 to 180',
+            ],
+            400
+        );
     }
 
-    // 13 VALIDAR RANGE DE LONGITUDE (-180 a 180)
-    if ($lng1 < -180 || $lng1 > 180 || $lng2 < -180 || $lng2 > 180) {
-        echo json_encode([
-            'success' => false,
-            'message' => __('Invalid longitude value (must be between -180 and 180)', 'newbase'),
-        ]);
-        exit;
+    // Validate end coordinate
+    if (!validateCoordinate($lat2, $lng2)) {
+        sendResponse(
+            false,
+            __('Invalid end coordinate', 'newbase'),
+            [
+                'lat2' => $lat2,
+                'lng2' => $lng2,
+                'valid_range' => 'Latitude: -90 to 90, Longitude: -180 to 180',
+            ],
+            400
+        );
     }
 
-    // 14 CALCULAR DISTÂNCIA USANDO FÓRMULA DE HAVERSINE
+    // Check if coordinates are identical (distance would be 0)
+    if ($lat1 === $lat2 && $lng1 === $lng2) {
+        sendResponse(
+            true,
+            __('Coordinates are identical', 'newbase'),
+            [
+                'distance' => 0.0,
+                'distance_km' => 0.0,
+                'distance_m' => 0,
+                'formatted' => '0,00 km',
+            ],
+            200
+        );
+    }
+
+    // Calculate distance using Haversine formula
+    if (!class_exists('GlpiPlugin\\Newbase\\Common')) {
+        throw new Exception(__('Common class not found', 'newbase'));
+    }
+
     $distance = Common::calculateDistance($lat1, $lng1, $lat2, $lng2);
 
-    // 15 RESPOSTA DE SUCESSO
-    echo json_encode([
-        'success' => true,
-        'mileage' => number_format($distance, 2, '.', ''),  // 15.50 (para banco)
-        'formatted_mileage' => number_format($distance, 2, ',', '.') . ' km',  // 15,50 km (para exibir)
-        'message' => __('Mileage calculated successfully', 'newbase'),
-    ]);
+    // Validate result
+    if (!is_numeric($distance) || $distance < 0) {
+        throw new Exception(__('Invalid distance calculation result', 'newbase'));
+    }
 
-    // 16 LOG DE SUCESSO (opcional)
+    // Success response
+    sendResponse(
+        true,
+        __('Mileage calculated successfully', 'newbase'),
+        [
+            'distance' => round($distance, 2),
+            'distance_km' => round($distance, 2),
+            'distance_m' => (int) round($distance * 1000),
+            'formatted' => number_format($distance, 2, ',', '.') . ' km',
+            'coordinates' => [
+                'start' => ['lat' => $lat1, 'lng' => $lng1],
+                'end' => ['lat' => $lat2, 'lng' => $lng2],
+            ],
+        ],
+        200
+    );
+
+    // Log success (optional, only in debug mode to avoid log spam)
+    if (defined('GLPI_DEBUG') && GLPI_DEBUG) {
+        Toolbox::logInFile(
+            'newbase_plugin',
+            sprintf(
+                "Mileage calculated: %.2f km from (%.6f, %.6f) to (%.6f, %.6f) by user %d\n",
+                $distance,
+                $lat1,
+                $lng1,
+                $lat2,
+                $lng2,
+                Session::getLoginUserID()
+            )
+        );
+    }
+} catch (Exception $e) {
+    // ===== ERROR HANDLING =====
+
     Toolbox::logInFile(
         'newbase_plugin',
         sprintf(
-            "Mileage calculated: %.2f km between (%.6f, %.6f) and (%.6f, %.6f)\n",
-            $distance,
-            $lat1,
-            $lng1,
-            $lat2,
-            $lng2
+            "ERROR in calculateMileage.php (%s): %s\n",
+            $method,
+            $e->getMessage()
         )
     );
-} catch (Exception $e) {
-    // 17 RESPOSTA DE ERRO
-    http_response_code(500); // Internal Server Error
 
-    $response = [
-        'success' => false,
-        'message' => __('Error calculating mileage', 'newbase'),
-    ];
+    $error_data = [];
 
-    // Incluir detalhes apenas em debug
-    if (defined('GLPI_DEBUG')) {
-        $response['error'] = $e->getMessage();
+    // Include error details only in debug mode
+    if (defined('GLPI_DEBUG') && GLPI_DEBUG) {
+        $error_data['error'] = $e->getMessage();
+        $error_data['trace'] = $e->getTraceAsString();
     }
 
-    echo json_encode($response);
-
-    // 18 LOG DE ERRO
-    Toolbox::logInFile(
-        'newbase_plugin',
-        "ERROR in calculateMileage.php: " . $e->getMessage() . "\n"
+    sendResponse(
+        false,
+        __('An error occurred while calculating mileage', 'newbase'),
+        $error_data,
+        500
     );
 }

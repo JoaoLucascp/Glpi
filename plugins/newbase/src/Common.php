@@ -1,41 +1,32 @@
 <?php
 
 /**
-* -------------------------------------------------------------------------
-* Newbase plugin for GLPI
-* -------------------------------------------------------------------------
-*
-* LICENSE
-*
-* This file is part of Newbase.
-*
-* Newbase is free software; you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation; either version 2 of the License, or
-* (at your option) any later version.
-*
-* Newbase is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with Newbase. If not, see <http://www.gnu.org/licenses/>.
-* -------------------------------------------------------------------------
-* @copyright Copyright (C) 2024-2026 by João Lucas
-* @license   GPLv2 https://www.gnu.org/licenses/gpl-2.0.html
-* @link      https://github.com/JoaoLucascp/Glpi
-* -------------------------------------------------------------------------
-*/
-
-/**
-* Common Class - Base class for all Newbase entities
-* @package   GlpiPlugin\Newbase
-* @author    João Lucas
-* @copyright 2026 João Lucas
-* @license   GPLv2+
-* @version   2.1.0
-*/
+ * -------------------------------------------------------------------------
+ * Newbase plugin for GLPI
+ * -------------------------------------------------------------------------
+ *
+ * LICENSE
+ *
+ * This file is part of Newbase.
+ *
+ * Newbase is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * Newbase is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Newbase. If not, see <http://www.gnu.org/licenses/>.
+ * -------------------------------------------------------------------------
+ * @copyright Copyright (C) 2024-2026 by João Lucas
+ * @license   GPLv2 https://www.gnu.org/licenses/gpl-2.0.html
+ * @link      https://github.com/JoaoLucascp/Glpi
+ * -------------------------------------------------------------------------
+ */
 
 declare(strict_types=1);
 
@@ -46,67 +37,63 @@ use Html;
 use CommonDBTM;
 use Plugin;
 
+if (!defined('GLPI_ROOT')) {
+    die("Sorry. You can't access this file directly");
+}
+
 /**
-* Common - Base class with shared functionality for all Newbase entities
-*
-* Provides common methods for:
-* - URL generation (search, form)
-* - Form display (header, buttons)
-* - Data validation (CNPJ, phone, CEP)
-* - External API integration (Brasil API, ReceitaWS)
-* - Distance calculation for geolocation
-*
-* @method int getID() Get item ID
-* @method bool canView() Check if user can view
-* @method bool canCreate() Check if user can create
-* @method bool canUpdate() Check if user can update
-* @method bool canDelete() Check if user can delete
-* @method bool canPurge() Check if user can purge
-*/
+ * Common - Base class with shared functionality for all Newbase entities
+ *
+ * Provides common methods for:
+ * - URL generation (search, form)
+ * - Data validation (CNPJ, phone, CEP)
+ * - External API integration (Brasil API, ReceitaWS)
+ * - Distance calculation for geolocation
+ * - Brazilian data formatting (CNPJ, phone, CEP)
+ *
+ * @package GlpiPlugin\Newbase
+ */
 abstract class Common extends CommonDBTM
 {
     /**
-    * Rights management
-    * @var string
-    */
+     * Rights management
+     * @var string
+     */
     public static $rightname = 'plugin_newbase';
 
-    // REMOVIDOS (já existem em CommonDBTM/CommonGLPI sem tipo):
-    // - public static string $rightname = 'plugin_newbase';
-    // - public bool $dohistory = true;
-
     /**
-    * Get type name for display
-    *
-    * @param int $nb Number of items
-    *
-    * @return string Type name
-    */
+     * Get type name for display
+     *
+     * @param int $nb Number of items
+     * @return string Type name
+     */
     public static function getTypeName($nb = 0): string
     {
         return static::class;
     }
 
     /**
-    * Get database table name for this class
-    *
-    * @param string|null $classname Class name (optional)
-    *
-    * @return string Table name
-    */
+     * Get database table name for this class
+     *
+     * Automatically generates table name based on class name:
+     * GlpiPlugin\Newbase\Task -> glpi_plugin_newbase_tasks
+     *
+     * @param string|null $classname Class name (optional)
+     * @return string Table name
+     */
     public static function getTable($classname = null): string
     {
         $classname ??= static::class;
         $class = explode('\\', $classname);
         $class = end($class);
-        return 'glpi_plugin_newbase_' . strtolower($class . 's');
+        return 'glpi_plugin_newbase_' . strtolower($class) . 's';
     }
 
     /**
-    * Get short type name without namespace
-    *
-    * @return string Type name
-    */
+     * Get short type name without namespace
+     *
+     * @return string Type name
+     */
     public static function getType(): string
     {
         $class = static::class;
@@ -115,12 +102,11 @@ abstract class Common extends CommonDBTM
     }
 
     /**
-    * Get search/list URL for this item type
-    *
-    * @param bool $full Full path or relative
-    *
-    * @return string Search URL
-    */
+     * Get search/list URL for this item type
+     *
+     * @param bool $full Full path or relative
+     * @return string Search URL
+     */
     public static function getSearchURL($full = true): string
     {
         $dir = Plugin::getWebDir('newbase', $full);
@@ -129,12 +115,11 @@ abstract class Common extends CommonDBTM
     }
 
     /**
-    * Get form URL for this item type
-    *
-    * @param bool $full Full path or relative
-    *
-    * @return string Form URL
-    */
+     * Get form URL for this item type
+     *
+     * @param bool $full Full path or relative
+     * @return string Form URL
+     */
     public static function getFormURL($full = true): string
     {
         $dir = Plugin::getWebDir('newbase', $full);
@@ -143,144 +128,77 @@ abstract class Common extends CommonDBTM
     }
 
     /**
-    * Mostra o cabeçalho do formulário
-    *
-    * @param array $options Opções de exibição
-    * @return void
-    */
-    public function showFormHeader($options = [])
-    {
-        $ID = $this->fields['id'] ?? -1;
-        $params = [
-            'target'         => $this->getFormURL(),
-            'colspan'        => 2,
-            'withtemplate'   => $options['withtemplate'] ?? '',
-            'formoptions'    => $options['formoptions'] ?? '',
-            'canedit'        => $this->canEdit($ID),
-            'formtitle'      => null,
-            'no_header'      => false,
-            'noid'           => false,
-        ];
-
-        foreach ($options as $key => $val) {
-            $params[$key] = $val;
-        }
-
-        echo "<div class='asset'>";
-        echo "<form name='form' method='post' action='" . $params['target'] . "' " . $params['formoptions'] . ">";
-
-        if (!isset($params['withtemplate']) || $params['withtemplate'] != 2) {
-            echo Html::hidden('id', ['value' => $ID]);
-        }
-
-        if ($params['withtemplate'] == 2) {
-            echo Html::hidden('withtemplate', ['value' => 2]);
-        }
-
-        echo "<table class='tab_cadre_fixe'>";
-        parent::showFormHeader($params);
-    }
-
-    /**
-    * Mostra os botões do formulário
-    *
-    * @param array $options Opções dos botões
-    * @return void
-    */
-    public function showFormButtons($options = [])
-    {
-        $ID = $this->fields['id'] ?? -1;
-        $params = [
-            'colspan'      => 2,
-            'withtemplate' => $options['withtemplate'] ?? '',
-            'candel'       => $this->canDelete($ID) && !$this->isDeleted(),
-            'canedit'      => $this->canEdit($ID),
-            'addbuttons'   => [],
-            'formfooter'   => null,
-        ];
-
-        foreach ($options as $key => $val) {
-            $params[$key] = $val;
-        }
-
-        parent::showFormButtons($params);
-
-        echo "</form>";
-        echo "</div>"; // .asset
-    }
-
-    /**
-    * Show form (must be implemented by child classes)
-    *
-    * @param int   $ID      Item ID
-    * @param array $options Form options
-    *
-    * @return bool Success
-    */
-    public function showForm($ID, array $options = []): bool
-    {
-        return false;
-    }
-
-    /**
-    * Redirect to list view
-    *
-    * @return void
-    */
+     * Redirect to list view
+     *
+     * @return void
+     */
     public function redirectToList(): void
     {
         Html::redirect($this->getSearchURL());
     }
 
-    /**
-    * Validate CNPJ format and checksum
-    *
-    * @param string|null $cnpj CNPJ without formatting (14 digits)
-    *
-    * @return bool True if valid, false otherwise
-    */
-    public static function validateCNPJ(?string $cnpj): bool
-    {
-        if ($cnpj === null || $cnpj === '') {
-            return false;
-        }
+    // ========== VALIDATION METHODS ==========
 
+    /**
+     * Validate CNPJ format and checksum
+     *
+     * Validates Brazilian CNPJ (Cadastro Nacional da Pessoa Jurídica)
+     * using the official checksum algorithm.
+     *
+     * @param string|null $cnpj CNPJ with or without formatting
+     * @return bool True if valid, false otherwise
+     */
+    public static function validateCNPJ(string $cnpj): bool
+    {
         // Remove non-numeric characters
         $cnpj = preg_replace('/[^0-9]/', '', $cnpj);
 
-        // Check if it has exactly 14 digits
+        // Check length
         if (strlen($cnpj) !== 14) {
             return false;
         }
 
-        // Check if all digits are the same (invalid CNPJ)
+        // Check if all digits are the same (invalid)
         if (preg_match('/^(\d)\1{13}$/', $cnpj)) {
             return false;
         }
 
         // Calculate first check digit
-        $firstDigit = self::calculateCNPJCheckDigit(substr($cnpj, 0, 12), 5);
-        if ((int)$cnpj[12] !== $firstDigit) {
+        $sum = 0;
+        $weights = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+
+        for ($i = 0; $i < 12; $i++) {
+            $sum += (int) $cnpj[$i] * $weights[$i];
+        }
+
+        $remainder = $sum % 11;
+        $digit1 = ($remainder < 2) ? 0 : (11 - $remainder);
+
+        if ((int) $cnpj[12] !== $digit1) {
             return false;
         }
 
         // Calculate second check digit
-        $secondDigit = self::calculateCNPJCheckDigit(substr($cnpj, 0, 13), 6);
-        if ((int)$cnpj[13] !== $secondDigit) {
-            return false;
+        $sum = 0;
+        $weights = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+
+        for ($i = 0; $i < 13; $i++) {
+            $sum += (int) $cnpj[$i] * $weights[$i];
         }
 
-        return true;
+        $remainder = $sum % 11;
+        $digit2 = ($remainder < 2) ? 0 : (11 - $remainder);
+
+        return ((int) $cnpj[13] === $digit2);
     }
 
     /**
-    * Calculate CNPJ check digit
-    *
-    * @param string $base             Base string (12 or 13 digits)
-    * @param int    $multiplierStart  Starting multiplier (5 or 6)
-    *
-    * @return int Check digit
-    */
+     * Calculate CNPJ check digit
+     *
+     * @param string $base            Base string (12 or 13 digits)
+     * @param int    $multiplierStart Starting multiplier (5 or 6)
+     * @return int Check digit
+     */
     private static function calculateCNPJCheckDigit(string $base, int $multiplierStart): int
     {
         $sum = 0;
@@ -298,13 +216,14 @@ abstract class Common extends CommonDBTM
         return $remainder < 2 ? 0 : 11 - $remainder;
     }
 
+    // ========== EXTERNAL API METHODS ==========
+
     /**
-    * Search company data by CNPJ using external API
-    *
-    * @param string|null $cnpj CNPJ without formatting
-    *
-    * @return array|false Company data or false if not found
-    */
+     * Search company data by CNPJ using Brasil API
+     *
+     * @param string|null $cnpj CNPJ without formatting
+     * @return array|false Company data or false if not found
+     */
     public static function searchCompanyByCNPJ(?string $cnpj): array|false
     {
         if ($cnpj === null || $cnpj === '') {
@@ -323,18 +242,20 @@ abstract class Common extends CommonDBTM
             // Use Brasil API (free, no authentication required)
             $url = "https://brasilapi.com.br/api/cnpj/v1/{$cnpj}";
 
-            $options = [
-                'http' => [
-                    'method' => 'GET',
-                    'header' => 'User-Agent: GLPI-Newbase/2.1.0',
-                    'timeout' => 10,
-                ],
-            ];
+            $ch = curl_init();
+            curl_setopt_array($ch, [
+                CURLOPT_URL            => $url,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_TIMEOUT        => 10,
+                CURLOPT_SSL_VERIFYPEER => true,
+                CURLOPT_USERAGENT      => 'GLPI-Newbase/2.1.0',
+            ]);
 
-            $context = stream_context_create($options);
-            $response = @file_get_contents($url, false, $context);
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
 
-            if ($response === false) {
+            if ($response === false || $httpCode !== 200) {
                 return false;
             }
 
@@ -346,30 +267,30 @@ abstract class Common extends CommonDBTM
 
             // Return standardized data
             return [
-                'legal_name'   => $data['nome'] ?? $data['legal_name'] ?? '',
-                'fantasy_name' => $data['fantasia'] ?? $data['fantasy_name'] ?? '',
+                'legal_name'   => $data['razao_social'] ?? '',
+                'fantasy_name' => $data['nome_fantasia'] ?? '',
                 'cnpj'         => $data['cnpj'] ?? $cnpj,
-                'status'       => $data['situacao'] ?? '',
-                'opening_date' => $data['data_abertura'] ?? '',
+                'status'       => $data['descricao_situacao_cadastral'] ?? '',
+                'opening_date' => $data['data_inicio_atividade'] ?? '',
+                'email'        => $data['email'] ?? '',
+                'phone'        => $data['ddd_telefone_1'] ?? '',
             ];
         } catch (\Exception $e) {
             Toolbox::logInFile(
                 'newbase_plugin',
-                "Error searching CNPJ {$cnpj}: " . $e->getMessage()
+                "Error searching CNPJ {$cnpj}: " . $e->getMessage() . "\n"
             );
             return false;
         }
     }
 
     /**
-    * Search for additional company data via multiple APIs
-    *
-    * @param string|null $cnpj        CNPJ number
-    * @param string      $companyName Company name for alternative search
-    *
-    * @return array Company data with email and phone
-    */
-    public static function searchCompanyAdditionalData(?string $cnpj, string $companyName = ''): array
+     * Search for additional company data via ReceitaWS API
+     *
+     * @param string|null $cnpj CNPJ number
+     * @return array Company data with email, phone, and website
+     */
+    public static function searchCompanyAdditionalData(?string $cnpj): array
     {
         $result = [
             'email'   => '',
@@ -384,43 +305,24 @@ abstract class Common extends CommonDBTM
         // Remove formatting
         $cnpj = preg_replace('/[^0-9]/', '', $cnpj);
 
-        // Try ReceitaWS API
-        $result = array_merge($result, self::searchReceitaWSAPI($cnpj));
-
-        return $result;
-    }
-
-    /**
-    * Search for company data via ReceitaWS API
-    *
-    * @param string $cnpj CNPJ number
-    *
-    * @return array Company data or empty array
-    */
-    private static function searchReceitaWSAPI(string $cnpj): array
-    {
-        $result = [
-            'email'   => '',
-            'phone'   => '',
-            'website' => '',
-        ];
-
         try {
             // ReceitaWS API - Brazilian public data
             $url = "https://www.receitaws.com.br/v1/cnpj/{$cnpj}";
 
-            $options = [
-                'http' => [
-                    'method' => 'GET',
-                    'header' => 'User-Agent: GLPI-Newbase/2.1.0',
-                    'timeout' => 8,
-                ],
-            ];
+            $ch = curl_init();
+            curl_setopt_array($ch, [
+                CURLOPT_URL            => $url,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_TIMEOUT        => 8,
+                CURLOPT_SSL_VERIFYPEER => true,
+                CURLOPT_USERAGENT      => 'GLPI-Newbase/2.1.0',
+            ]);
 
-            $context = stream_context_create($options);
-            $response = @file_get_contents($url, false, $context);
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
 
-            if ($response === false) {
+            if ($response === false || $httpCode !== 200) {
                 return $result;
             }
 
@@ -428,32 +330,35 @@ abstract class Common extends CommonDBTM
 
             // Check if request was successful
             if (isset($data['status']) && $data['status'] === 'OK') {
-                $result['email'] = $data['email'] ?? '';
-                $result['phone'] = $data['telefone'] ?? '';
-                $result['website'] = $data['website'] ?? '';
+                $result['email']   = $data['email'] ?? '';
+                $result['phone']   = $data['telefone'] ?? '';
+                $result['website'] = $data['site'] ?? '';
 
                 Toolbox::logInFile(
                     'newbase_plugin',
-                    "ReceitaWS API found data for CNPJ {$cnpj}"
+                    "ReceitaWS API found data for CNPJ {$cnpj}\n"
                 );
             }
         } catch (\Exception $e) {
             Toolbox::logInFile(
                 'newbase_plugin',
-                "ReceitaWS API Error for CNPJ {$cnpj}: " . $e->getMessage()
+                "ReceitaWS API Error for CNPJ {$cnpj}: " . $e->getMessage() . "\n"
             );
         }
 
         return $result;
     }
 
+    // ========== FORMATTING METHODS ==========
+
     /**
-    * Format phone number to Brazilian format
-    *
-    * @param string|null $phone Phone number
-    *
-    * @return string Formatted phone number
-    */
+     * Format phone number to Brazilian format
+     *
+     * Converts phone to (XX) XXXXX-XXXX or (XX) XXXX-XXXX
+     *
+     * @param string|null $phone Phone number
+     * @return string Formatted phone number
+     */
     public static function formatPhone(?string $phone = ''): string
     {
         if ($phone === null || $phone === '') {
@@ -481,16 +386,18 @@ abstract class Common extends CommonDBTM
                 substr($phone, 6)
             );
         }
+
         return $phone;
     }
 
     /**
-    * Format CEP (Brazilian ZIP code)
-    *
-    * @param string|null $cep CEP to format
-    *
-    * @return string Formatted CEP (XXXXX-XXX)
-    */
+     * Format CEP (Brazilian ZIP code)
+     *
+     * Converts CEP to XXXXX-XXX format
+     *
+     * @param string|null $cep CEP to format
+     * @return string Formatted CEP (XXXXX-XXX)
+     */
     public static function formatCEP(?string $cep): string
     {
         if ($cep === null || $cep === '') {
@@ -507,12 +414,13 @@ abstract class Common extends CommonDBTM
     }
 
     /**
-    * Format CNPJ to Brazilian format
-    *
-    * @param string|null $cnpj CNPJ to format
-    *
-    * @return string Formatted CNPJ (XX.XXX.XXX/XXXX-XX)
-    */
+     * Format CNPJ to Brazilian format
+     *
+     * Converts CNPJ to XX.XXX.XXX/XXXX-XX format
+     *
+     * @param string|null $cnpj CNPJ to format
+     * @return string Formatted CNPJ (XX.XXX.XXX/XXXX-XX)
+     */
     public static function formatCNPJ(?string $cnpj): string
     {
         if ($cnpj === null || $cnpj === '') {
@@ -538,15 +446,233 @@ abstract class Common extends CommonDBTM
     }
 
     /**
-    * Calculate distance between two GPS coordinates using Haversine formula
-    *
-    * @param float $lat1 Latitude of first point
-    * @param float $lng1 Longitude of first point
-    * @param float $lat2 Latitude of second point
-    * @param float $lng2 Longitude of second point
-    *
-    * @return float Distance in kilometers
-    */
+     * Validate CEP format (Brazilian ZIP code)
+     *
+     * @param string $cep CEP with or without formatting
+     * @return bool True if valid, false otherwise
+     */
+    public static function validateCEP(string $cep): bool
+    {
+        if (empty($cep)) {
+            return false;
+        }
+
+        // Remove non-numeric characters
+        $cep = preg_replace('/[^0-9]/', '', $cep);
+
+        // CEP must have exactly 8 digits
+        return strlen($cep) === 8 && is_numeric($cep);
+    }
+
+    /**
+     * Validate email format
+     *
+     * @param string $email Email address
+     * @return bool True if valid, false otherwise
+     */
+    public static function validateEmail(string $email): bool
+    {
+        if (empty($email)) {
+            return false;
+        }
+
+        return filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
+    }
+
+    /**
+     * Validate phone format (Brazilian)
+     *
+     * Accepts phone numbers with 10 or 11 digits (after removing non-numeric chars)
+     *
+     * @param string $phone Phone number
+     * @return bool True if valid, false otherwise
+     */
+    public static function validatePhone(string $phone): bool
+    {
+        if (empty($phone)) {
+            return false;
+        }
+
+        // Remove non-numeric characters
+        $phone = preg_replace('/[^0-9]/', '', $phone);
+
+        // Valid Brazilian phone has 10 (landline) or 11 (mobile) digits
+        return in_array(strlen($phone), [10, 11], true) && is_numeric($phone);
+    }
+
+    /**
+     * Validate GPS coordinates
+     *
+     * @param float $latitude  Latitude (-90 to 90)
+     * @param float $longitude Longitude (-180 to 180)
+     * @return bool True if valid, false otherwise
+     */
+    public static function validateCoordinates(float $latitude, float $longitude): bool
+    {
+        return $latitude >= -90
+            && $latitude <= 90
+            && $longitude >= -180
+            && $longitude <= 180;
+    }
+
+    /**
+     * Search address by CEP using ViaCEP API
+     *
+     * Queries the ViaCEP public API to fetch address information from a CEP code.
+     *
+     * @param string $cep CEP code with or without formatting
+     * @return array|false Address data or false if not found
+     */
+    public static function fetchAddressByCEP(string $cep): array|false
+    {
+        if (!self::validateCEP($cep)) {
+            return false;
+        }
+
+        // Remove formatting
+        $cep = preg_replace('/[^0-9]/', '', $cep);
+
+        try {
+            // ViaCEP is a free Brazilian CEP lookup API
+            $url = "https://viacep.com.br/ws/{$cep}/json/";
+
+            $ch = curl_init();
+            curl_setopt_array($ch, [
+                CURLOPT_URL            => $url,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_TIMEOUT        => 10,
+                CURLOPT_CONNECTTIMEOUT => 5,
+                CURLOPT_SSL_VERIFYPEER => true,
+                CURLOPT_USERAGENT      => 'GLPI-Newbase/2.1.0',
+            ]);
+
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+
+            if ($response === false || $httpCode !== 200) {
+                return false;
+            }
+
+            $data = json_decode($response, true);
+
+            // Check if response contains error
+            if (isset($data['erro']) && $data['erro'] === true) {
+                return false;
+            }
+
+            // Return standardized data
+            return [
+                'cep'          => $data['cep'] ?? $cep,
+                'street'       => $data['logradouro'] ?? '',
+                'neighborhood' => $data['bairro'] ?? '',
+                'city'         => $data['localidade'] ?? '',
+                'state'        => $data['uf'] ?? '',
+                'complement'   => $data['complemento'] ?? '',
+            ];
+        } catch (\Exception $e) {
+            Toolbox::logInFile(
+                'newbase_plugin',
+                "Error fetching CEP {$cep}: " . $e->getMessage() . "\n"
+            );
+            return false;
+        }
+    }
+
+    /**
+     * Fetch GPS coordinates (latitude/longitude) by CEP
+     *
+     * Uses OpenStreetMap Nominatim service to convert address to coordinates.
+     * Falls back to a default city coordinate if specific address is not found.
+     *
+     * @param string $cep CEP code
+     * @param string $city City name (optional, for context)
+     * @return array|false Array with 'latitude' and 'longitude' keys, or false on error
+     */
+    public static function fetchCoordinatesByCEP(string $cep, string $city = ''): array|false
+    {
+        if (!self::validateCEP($cep)) {
+            return false;
+        }
+
+        // First try to get address details
+        $address = self::fetchAddressByCEP($cep);
+
+        if (!$address) {
+            return false;
+        }
+
+        // Construct full address for geocoding
+        $fullAddress = sprintf(
+            '%s, %s, %s, Brazil',
+            $address['street'] ?? '',
+            $address['city'] ?? $city,
+            $address['state'] ?? ''
+        );
+
+        try {
+            // Using Nominatim (OpenStreetMap) - free geolocation service
+            $url = 'https://nominatim.openstreetmap.org/search';
+            $params = [
+                'q'      => trim($fullAddress),
+                'format' => 'json',
+            ];
+
+            $ch = curl_init();
+            curl_setopt_array($ch, [
+                CURLOPT_URL            => $url . '?' . http_build_query($params),
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_TIMEOUT        => 10,
+                CURLOPT_SSL_VERIFYPEER => true,
+                CURLOPT_USERAGENT      => 'GLPI-Newbase/2.1.0',
+                CURLOPT_HTTPHEADER     => [
+                    'Accept: application/json',
+                ],
+            ]);
+
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+
+            if ($response === false || $httpCode !== 200) {
+                return false;
+            }
+
+            $data = json_decode($response, true);
+
+            if (empty($data) || !is_array($data)) {
+                return false;
+            }
+
+            $first = $data[0];
+
+            return [
+                'latitude'  => (float) $first['lat'] ?? 0.0,
+                'longitude' => (float) $first['lon'] ?? 0.0,
+            ];
+        } catch (\Exception $e) {
+            Toolbox::logInFile(
+                'newbase_plugin',
+                "Error fetching coordinates for CEP {$cep}: " . $e->getMessage() . "\n"
+            );
+            return false;
+        }
+    }
+
+    // ========== GEOLOCATION METHODS ==========
+
+    /**
+     * Calculate distance between two GPS coordinates using Haversine formula
+     *
+     * Uses the Haversine formula to calculate the great-circle distance
+     * between two points on a sphere given their longitudes and latitudes.
+     *
+     * @param float $lat1 Latitude of first point (in degrees)
+     * @param float $lng1 Longitude of first point (in degrees)
+     * @param float $lat2 Latitude of second point (in degrees)
+     * @param float $lng2 Longitude of second point (in degrees)
+     * @return float Distance in kilometers (rounded to 2 decimals)
+     */
     public static function calculateDistance(
         float $lat1,
         float $lng1,

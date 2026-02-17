@@ -5,6 +5,18 @@ Aplique as correções diretamente no plugin Newbase, não mecha nos código do 
 Não quebre meu código.
 Sou iniciante, não sei programa. Mas tenho expertise em informática.
 
+Esta é a documentação técnica do meu plugin: D:\laragon\www\glpi\plugins\newbase\docs\DOCUMENTACAO_TECNICA_V2.1.0.md
+
+Coloque nela todos os erros encontrado e as correções aplicadas por você.
+
+E se necessário crie outra documentação com os passo a passo necessários.
+
+Observação: Não coloque na documentação erros repetidos e nem soluções repetidas.
+
+apenas novos erros e novas soluções.
+
+Outra coisa. Preciso saber como corrigir esse erro:
+
 ## Ambiente de Desenvolvimento
 
 GLPI Versão: 10.0.20

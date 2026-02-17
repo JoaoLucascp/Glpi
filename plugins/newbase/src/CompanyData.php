@@ -1,32 +1,32 @@
 <?php
 
 /**
-* -------------------------------------------------------------------------
-* Newbase plugin for GLPI
-* -------------------------------------------------------------------------
-*
-* LICENSE
-*
-* This file is part of Newbase.
-*
-* Newbase is free software; you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation; either version 2 of the License, or
-* (at your option) any later version.
-*
-* Newbase is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with Newbase. If not, see <http://www.gnu.org/licenses/>.
-* -------------------------------------------------------------------------
-* @copyright Copyright (C) 2024-2026 by João Lucas
-* @license   GPLv2 [https://www.gnu.org/licenses/gpl-2.0.html](https://www.gnu.org/licenses/gpl-2.0.html)
-* @link      [https://github.com/JoaoLucascp/Glpi](https://github.com/JoaoLucascp/Glpi)
-* -------------------------------------------------------------------------
-*/
+ * -------------------------------------------------------------------------
+ * Newbase plugin for GLPI
+ * -------------------------------------------------------------------------
+ *
+ * LICENSE
+ *
+ * This file is part of Newbase.
+ *
+ * Newbase is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * Newbase is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Newbase. If not, see <http://www.gnu.org/licenses/>.
+ * -------------------------------------------------------------------------
+ * @copyright Copyright (C) 2024-2026 by João Lucas
+ * @license   GPLv2 https://www.gnu.org/licenses/gpl-2.0.html
+ * @link      https://github.com/JoaoLucascp/Glpi
+ * -------------------------------------------------------------------------
+ */
 
 declare(strict_types=1);
 
@@ -39,61 +39,65 @@ use Plugin;
 use Session;
 use Html;
 
+if (!defined('GLPI_ROOT')) {
+    die("Sorry. You can't access this file directly");
+}
+
 /**
-* CompanyData Class - Company data management for Newbase plugin
-*
-* @package   Plugin - Newbase
-* @author    João Lucas
-* @copyright 2026 João Lucas
-* @license   GPLv2+
-* @version   2.1.0
-*/
+ * CompanyData Class - Company data management for Newbase plugin
+ * 
+ * Extends Entity data with additional fields stored in glpi_plugin_newbase_company_extras.
+ * Manages Brazilian company-specific data like CNPJ, corporate name, and fantasy name.
+ *
+ * @package GlpiPlugin\Newbase
+ */
 class CompanyData extends CommonDBTM
 {
     /**
-    * Rights management
-    * @var string
-    */
+     * Rights management
+     * @var string
+     */
     public static $rightname = 'plugin_newbase';
 
     /**
-    * Enable history tracking
-    * @var bool
-    */
+     * Enable history tracking
+     * @var bool
+     */
     public $dohistory = true;
 
     /**
-    * Get table name - Override to use correct table
-    * @return string Table name
-    */
+     * Get table name - Override to use correct table
+     * @param string|null $classname Class name
+     * @return string Table name
+     */
     public static function getTable($classname = null): string
     {
         return 'glpi_plugin_newbase_company_extras';
     }
 
     /**
-    * Get type name
-    * @param int $nb Number of items
-    * @return string Type name
-    */
+     * Get type name
+     * @param int $nb Number of items
+     * @return string Type name
+     */
     public static function getTypeName($nb = 0): string
     {
-        return $nb > 1 ? __('Companies', 'newbase') : __('Company', 'newbase');
+        return _n('Company', 'Companies', $nb, 'newbase');
     }
 
     /**
-    * Get icon for menus (Tabler Icons)
-    * @return string Icon class
-    */
+     * Get icon for menus (Tabler Icons)
+     * @return string Icon class
+     */
     public static function getIcon(): string
     {
         return 'ti ti-building';
     }
 
     /**
-    * Get menu content for this item type
-    * @return array Menu content
-    */
+     * Get menu content for this item type
+     * @return array Menu content
+     */
     public static function getMenuContent(): array
     {
         $menu = [];
@@ -102,9 +106,6 @@ class CompanyData extends CommonDBTM
         if (!Session::haveRight(self::$rightname, READ)) {
             return $menu;
         }
-
-        // Get plugin URL
-        $baseUrl = Plugin::getWebDir('newbase');
 
         // Menu configuration
         $menu['title'] = self::getTypeName(2);
@@ -125,19 +126,31 @@ class CompanyData extends CommonDBTM
     }
 
     /**
-    * Get company search URL
-    * @param bool $full Full path
-    * @return string Search URL
-    */
-    public static function getSearchURL($full = true)
+     * Get company search URL
+     * @param bool $full Full path
+     * @return string Search URL
+     */
+    public static function getSearchURL($full = true): string
     {
         return Plugin::getWebDir('newbase', $full) . '/front/companydata.php';
     }
 
     /**
-    * Get all active companies from glpi_entities
-    * @return array Associative array [id => name, ...]
-    */
+     * Get company form URL
+     * @param bool $full Full path
+     * @return string Form URL
+     */
+    public static function getFormURL($full = true): string
+    {
+        return Plugin::getWebDir('newbase', $full) . '/front/companydata.form.php';
+    }
+
+    // ========== DATA RETRIEVAL METHODS ==========
+
+    /**
+     * Get all active companies from glpi_entities
+     * @return array Associative array [id => name, ...]
+     */
     public static function getAllCompanies(): array
     {
         global $DB;
@@ -145,7 +158,7 @@ class CompanyData extends CommonDBTM
         $companies = [];
 
         $result = $DB->request([
-            'FROM' => 'glpi_entities',
+            'FROM'  => 'glpi_entities',
             'WHERE' => ['is_deleted' => 0],
             'ORDER' => ['name' => 'ASC'],
         ]);
@@ -158,16 +171,19 @@ class CompanyData extends CommonDBTM
     }
 
     /**
-    * Get complete company data by ID
-    * @param int $entity_id Entity ID (glpi_entities.id)
-    * @return array|null Array with company data or null
-    */
+     * Get complete company data by ID
+     * 
+     * Combines data from glpi_entities and glpi_plugin_newbase_company_extras
+     * 
+     * @param int $entity_id Entity ID (glpi_entities.id)
+     * @return array|null Array with company data or null
+     */
     public static function getCompanyById(int $entity_id): ?array
     {
         global $DB;
 
         $entity = $DB->request([
-            'FROM' => 'glpi_entities',
+            'FROM'  => 'glpi_entities',
             'WHERE' => ['id' => $entity_id, 'is_deleted' => 0],
         ])->current();
 
@@ -183,52 +199,44 @@ class CompanyData extends CommonDBTM
     }
 
     /**
-    * Get company by CNPJ
-    * @param string $cnpj CNPJ with or without formatting
-    * @return array|null Array with company data or null
-    */
+     * Get company by CNPJ
+     * @param string $cnpj CNPJ with or without formatting
+     * @return array|null Array with company data or null
+     */
     public static function getCompanyByCNPJ(string $cnpj): ?array
     {
         global $DB;
 
-        // Remove CNPJ formatting
-        $cnpj_clean = preg_replace('/[^0-9]/', '', $cnpj);
+        $iterator = $DB->request([
+            'FROM'  => self::getTable(),
+            'WHERE' => [
+                'cnpj'       => $cnpj,
+                'is_deleted' => 0,
+            ],
+            'LIMIT' => 1,
+        ]);
 
-        if (strlen($cnpj_clean) !== 14) {
+        if (count($iterator) === 0) {
             return null;
         }
 
-        // Search in complementary data
-        $extras = $DB->request([
-            'FROM' => 'glpi_plugin_newbase_company_extras',
-            'WHERE' => [
-                'cnpj' => $cnpj_clean,
-                'is_deleted' => 0,
-            ],
-        ])->current();
-
-        if ($extras) {
-            // Get complete entity data
-            return self::getCompanyById($extras['entities_id']);
-        }
-
-        return null;
+        return $iterator->current();
     }
 
     /**
-    * Get company complementary data
-    * @param int $entity_id Entity ID
-    * @return array|null Array with complementary data or null
-    */
+     * Get company complementary data
+     * @param int $entity_id Entity ID
+     * @return array|null Array with complementary data or null
+     */
     public static function getCompanyExtras(int $entity_id): ?array
     {
         global $DB;
 
         $result = $DB->request([
-            'FROM' => 'glpi_plugin_newbase_company_extras',
+            'FROM'  => 'glpi_plugin_newbase_company_extras',
             'WHERE' => [
                 'entities_id' => $entity_id,
-                'is_deleted' => 0,
+                'is_deleted'  => 0,
             ],
         ])->current();
 
@@ -236,11 +244,11 @@ class CompanyData extends CommonDBTM
     }
 
     /**
-    * Save or update company complementary data
-    * @param int $entity_id Entity ID
-    * @param array $data Data to save (cnpj, corporate_name, fantasy_name, etc)
-    * @return int|bool Record ID or false
-    */
+     * Save or update company complementary data
+     * @param int   $entity_id Entity ID
+     * @param array $data      Data to save (cnpj, corporate_name, fantasy_name, etc)
+     * @return int|bool Record ID or false
+     */
     public static function saveCompanyExtras(int $entity_id, array $data): int|bool
     {
         // Validate data
@@ -252,13 +260,16 @@ class CompanyData extends CommonDBTM
         if (!empty($data['cnpj'])) {
             $data['cnpj'] = preg_replace('/[^0-9]/', '', $data['cnpj']);
 
-            // Requer classe Common para validação (core GLPI)
-            if (method_exists('Common', 'validateCNPJ') && !Common::validateCNPJ($data['cnpj'])) {
-                Toolbox::logInFile(
-                    'newbase_plugin',
-                    "Invalid CNPJ provided: {$data['cnpj']}\n"
-                );
-                return false;
+            // Validate CNPJ if Common class exists
+            if (class_exists('GlpiPlugin\\Newbase\\Common') && 
+                method_exists('GlpiPlugin\\Newbase\\Common', 'validateCNPJ')) {
+                if (!Common::validateCNPJ($data['cnpj'])) {
+                    Toolbox::logInFile(
+                        'newbase_plugin',
+                        "Invalid CNPJ provided: {$data['cnpj']}\n"
+                    );
+                    return false;
+                }
             }
         }
 
@@ -287,23 +298,22 @@ class CompanyData extends CommonDBTM
     }
 
     /**
-    * Search companies by term
-    * @param string $search Search term
-    * @param int $limit Result limit
-    * @return array Array of found companies
-    */
+     * Search companies by term
+     * @param string $search Search term
+     * @param int    $limit  Result limit
+     * @return array Array of found companies
+     */
     public static function searchCompanies(string $search, int $limit = 20): array
     {
         global $DB;
 
         $companies = [];
 
-        // GLPI escapa automaticamente
         $result = $DB->request([
-            'FROM' => 'glpi_entities',
+            'FROM'  => 'glpi_entities',
             'WHERE' => [
                 'is_deleted' => 0,
-                'name' => ['LIKE', '%' . $search . '%'],
+                'name'       => ['LIKE', '%' . $search . '%'],
             ],
             'LIMIT' => $limit,
             'ORDER' => ['name' => 'ASC'],
@@ -311,7 +321,7 @@ class CompanyData extends CommonDBTM
 
         foreach ($result as $entity) {
             $companies[] = [
-                'id' => $entity['id'],
+                'id'   => $entity['id'],
                 'name' => htmlspecialchars($entity['name'], ENT_QUOTES, 'UTF-8'),
             ];
         }
@@ -320,17 +330,20 @@ class CompanyData extends CommonDBTM
     }
 
     /**
-    * Display dropdown for company selection
-    * @param array $options Dropdown options
-    * @return int|string Dropdown result
-    */
+     * Display dropdown for company selection
+     * 
+     * Wrapper around Entity::dropdown() for consistency
+     * 
+     * @param array $options Dropdown options
+     * @return int|string Dropdown result
+     */
     public static function dropdown($options = [])
     {
         $defaults = [
-            'name' => 'entities_id',
-            'value' => 0,
+            'name'    => 'entities_id',
+            'value'   => 0,
             'display' => true,
-            'entity' => -1,
+            'entity'  => -1,
         ];
 
         $options = array_merge($defaults, $options);
@@ -340,284 +353,175 @@ class CompanyData extends CommonDBTM
     }
 
     /**
-    * Display company form
-    * @param int $entity_id Entity ID (0 for new company)
-    * @param array $options Form options
-    * @return bool|void
-    */
-    public function showForm($entity_id = 0, $options = [])
+     * Get search options for GLPI search engine
+     * @return array Search options
+     */
+    public function rawSearchOptions(): array
     {
-        $is_new = ($entity_id == 0);
-        $entity = new Entity();
-        $company_data = [];
+        $tab = parent::rawSearchOptions();
 
-        // Load existing data
-        if (!$is_new) {
-            if (!$entity->getFromDB($entity_id)) {
-                return false;
-            }
-            $company_data = self::getCompanyById($entity_id) ?? [];
+        $tab[] = [
+            'id'            => '2',
+            'table'         => 'glpi_entities',
+            'field'         => 'name',
+            'name'          => __('Name'),
+            'datatype'      => 'itemlink',
+            'massiveaction' => false,
+        ];
+
+        $tab[] = [
+            'id'       => '3',
+            'table'    => $this->getTable(),
+            'field'    => 'cnpj',
+            'name'     => __('CNPJ', 'newbase'),
+            'datatype' => 'string',
+        ];
+
+        $tab[] = [
+            'id'       => '4',
+            'table'    => $this->getTable(),
+            'field'    => 'corporate_name',
+            'name'     => __('Corporate Name', 'newbase'),
+            'datatype' => 'string',
+        ];
+
+        $tab[] = [
+            'id'       => '5',
+            'table'    => $this->getTable(),
+            'field'    => 'fantasy_name',
+            'name'     => __('Fantasy Name', 'newbase'),
+            'datatype' => 'string',
+        ];
+
+        $tab[] = [
+            'id'       => '6',
+            'table'    => $this->getTable(),
+            'field'    => 'contact_person',
+            'name'     => __('Contact Person', 'newbase'),
+            'datatype' => 'string',
+        ];
+
+        $tab[] = [
+            'id'       => '7',
+            'table'    => $this->getTable(),
+            'field'    => 'website',
+            'name'     => __('Website', 'newbase'),
+            'datatype' => 'weblink',
+        ];
+
+        $tab[] = [
+            'id'            => '19',
+            'table'         => $this->getTable(),
+            'field'         => 'date_mod',
+            'name'          => __('Last update'),
+            'datatype'      => 'datetime',
+            'massiveaction' => false,
+        ];
+
+        $tab[] = [
+            'id'            => '121',
+            'table'         => $this->getTable(),
+            'field'         => 'date_creation',
+            'name'          => __('Creation date'),
+            'datatype'      => 'datetime',
+            'massiveaction' => false,
+        ];
+
+        return $tab;
+    }
+
+    /**
+     * Display form for company
+     * 
+     * @param int   $ID      Item ID (0 for new)
+     * @param array $options Form options
+     * @return bool Success
+     */
+    public function showForm($ID, array $options = []): bool
+    {
+        $this->initForm($ID, $options);
+
+        if (!$this->canView()) {
+            return false;
         }
 
-        // Check permissions
-        if ($is_new) {
-            if (!Entity::canCreate()) {
-                return false;
-            }
-        } else {
-            if (!$entity->canView()) {
-                return false;
-            }
-        }
+        $this->showFormHeader($options);
 
-        // Start form
-        $form_action = Plugin::getWebDir('newbase') . '/front/companydata.form.php';
-
-        echo "<div class='center'>";
-        echo "<form name='form_company' id='form_company' method='post' action='" . $form_action . "' enctype='multipart/form-data'>";
-
-        // --- SEGURANÇA: Token CSRF Explícito ---
-        // Essencial para validação no PHP e fallback no JavaScript
-        //echo Html::hidden('_glpi_csrf_token', ['value' => Session::getNewCSRFToken()]);
-
-        // --- CAMPOS OCULTOS ---
-        if (!$is_new) {
-            echo "<input type='hidden' name='entities_id' value='" . $entity_id . "' />";
-        }
-
-        echo "<div class='spaced'>";
-        echo "<table class='tab_cadre_fixe'>";
-
-        // Header
-        echo "<tr class='tab_bg_1'>";
-        echo "<th colspan='4'>";
-        echo $is_new ? __("New Company", 'newbase') : __("Edit Company", 'newbase');
-        echo "</th>";
-        echo "</tr>";
-
-        // Company Name*
+        // Nome da Empresa
         echo "<tr class='tab_bg_1'>";
         echo "<td>" . __('Name') . " <span class='red'>*</span></td>";
         echo "<td>";
-        echo "<input type='text' name='name' id='name' value='" .
-                htmlspecialchars($company_data['name'] ?? '', ENT_QUOTES, 'UTF-8') .
-                "' size='50' required='required' />";
+        echo Html::input('name', [
+            'value' => $this->fields['name'] ?? '',
+            'size'  => 50,
+        ]);
         echo "</td>";
 
         // CNPJ
         echo "<td>" . __('CNPJ', 'newbase') . "</td>";
         echo "<td>";
-        echo "<div style='display:flex; align-items:center; gap:5px;'>";
-        echo "<input type='text' name='cnpj' id='cnpj' value='" .
-                htmlspecialchars($company_data['cnpj'] ?? '', ENT_QUOTES, 'UTF-8') .
-                "' size='20' maxlength='18' />";
-        echo "<button type='button' data-action='search-cnpj' class='btn btn-sm btn-icon btn-ghost-secondary' title='" . __('Search CNPJ', 'newbase') . "'><i class='ti ti-search'></i></button>";
-        echo "</div>";
+        echo Html::input('cnpj', [
+            'value'     => $this->fields['cnpj'] ?? '',
+            'size'      => 20,
+            'maxlength' => 18,
+        ]);
         echo "</td>";
         echo "</tr>";
 
-        // Corporate Name / Fantasy Name
+        // Razão Social / Nome Fantasia
         echo "<tr class='tab_bg_1'>";
         echo "<td>" . __('Corporate Name', 'newbase') . "</td>";
         echo "<td>";
-        echo "<input type='text' name='corporate_name' id='corporate_name' value='" .
-                htmlspecialchars($company_data['corporate_name'] ?? '', ENT_QUOTES, 'UTF-8') .
-                "' size='50' />";
+        echo Html::input('corporate_name', [
+            'value' => $this->fields['corporate_name'] ?? '',
+            'size'  => 50,
+        ]);
         echo "</td>";
 
         echo "<td>" . __('Fantasy Name', 'newbase') . "</td>";
         echo "<td>";
-        echo "<input type='text' name='fantasy_name' id='fantasy_name' value='" .
-                htmlspecialchars($company_data['fantasy_name'] ?? '', ENT_QUOTES, 'UTF-8') .
-                "' size='50' />";
+        echo Html::input('fantasy_name', [
+            'value' => $this->fields['fantasy_name'] ?? '',
+            'size'  => 50,
+        ]);
         echo "</td>";
         echo "</tr>";
 
-        // Email / Phone
-        echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __('Email') . "</td>";
-        echo "<td>";
-        echo "<input type='email' name='email' id='email' value='" .
-                htmlspecialchars($company_data['email'] ?? '', ENT_QUOTES, 'UTF-8') .
-                "' size='50' />";
-        echo "</td>";
-
-        echo "<td>" . __('Phone') . "</td>";
-        echo "<td>";
-        echo "<input type='text' name='phone' id='phone' value='" .
-                htmlspecialchars($company_data['phone'] ?? '', ENT_QUOTES, 'UTF-8') .
-                "' size='20' />";
-        echo "</td>";
-        echo "</tr>";
-
-        // Contact Person / Website
+        // Pessoa de Contato / Website
         echo "<tr class='tab_bg_1'>";
         echo "<td>" . __('Contact Person', 'newbase') . "</td>";
         echo "<td>";
-        echo "<input type='text' name='contact_person' id='contact_person' value='" .
-                htmlspecialchars($company_data['contact_person'] ?? '', ENT_QUOTES, 'UTF-8') .
-                "' size='50' />";
+        echo Html::input('contact_person', [
+            'value' => $this->fields['contact_person'] ?? '',
+            'size'  => 50,
+        ]);
         echo "</td>";
 
         echo "<td>" . __('Website', 'newbase') . "</td>";
         echo "<td>";
-        echo "<input type='url' name='website' id='website' value='" .
-                htmlspecialchars($company_data['website'] ?? '', ENT_QUOTES, 'UTF-8') .
-                "' size='50' />";
+        echo Html::input('website', [
+            'value' => $this->fields['website'] ?? '',
+            'type'  => 'url',
+            'size'  => 50,
+        ]);
         echo "</td>";
         echo "</tr>";
 
-        // Address
-        echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __('Address') . "</td>";
-        echo "<td colspan='3'>";
-        echo "<input type='text' name='address' id='address' value='" .
-                htmlspecialchars($company_data['address'] ?? '', ENT_QUOTES, 'UTF-8') .
-                "' size='100' style='width:95%' />";
-        echo "</td>";
-        echo "</tr>";
-
-        // CEP / City / State
-        echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __('Postal code') . "</td>";
-        echo "<td>";
-        echo "<div style='display:flex; align-items:center; gap:5px;'>";
-        echo "<input type='text' name='cep' id='cep' value='" .
-                htmlspecialchars($company_data['postcode'] ?? '', ENT_QUOTES, 'UTF-8') .
-                "' size='10' />";
-        echo "<button type='button' data-action='search-cep' class='btn btn-sm btn-icon btn-ghost-secondary' title='" . __('Search CEP', 'newbase') . "'><i class='ti ti-search'></i></button>";
-        echo "</div>";
-        echo "</td>";
-
-        echo "<td>" . __('City') . "</td>";
-        echo "<td>";
-        echo "<input type='text' name='city' id='city' value='" .
-                htmlspecialchars($company_data['town'] ?? '', ENT_QUOTES, 'UTF-8') .
-                "' size='30' />";
-        echo "</td>";
-        echo "</tr>";
-
-        echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __('State') . "</td>";
-        echo "<td>";
-        echo "<input type='text' name='state' id='state' value='" .
-                htmlspecialchars($company_data['state'] ?? '', ENT_QUOTES, 'UTF-8') .
-                "' size='20' maxlength='2' />";
-        echo "</td>";
-
-        echo "<td>" . __('Country') . "</td>";
-        echo "<td>";
-        echo "<input type='text' name='country' id='country' value='" .
-                htmlspecialchars($company_data['country'] ?? 'BR', ENT_QUOTES, 'UTF-8') .
-                "' size='2' maxlength='2' />";
-        echo "</td>";
-        echo "</tr>";
-
-        // Notes
+        // Observações
         echo "<tr class='tab_bg_1'>";
         echo "<td>" . __('Comments') . "</td>";
         echo "<td colspan='3'>";
-        echo "<textarea name='notes' id='notes' rows='4' style='width:95%'>";
-        echo htmlspecialchars($company_data['notes'] ?? $company_data['comment'] ?? '', ENT_QUOTES, 'UTF-8');
-        echo "</textarea>";
+        echo Html::textarea([
+            'name'  => 'notes',
+            'value' => $this->fields['notes'] ?? '',
+            'cols'  => 80,
+            'rows'  => 4,
+        ]);
         echo "</td>";
         echo "</tr>";
 
-        // Action buttons
-        echo "<tr class='tab_bg_2'>";
-        echo "<td colspan='4' class='center'>";
-
-        if ($is_new) {
-            echo "<input type='submit' name='add' value='" . _sx('button', 'Add') . "' class='btn btn-primary' />";
-        } else {
-            echo "<input type='submit' name='update' value='" . _sx('button', 'Save') . "' class='btn btn-primary' />";
-
-            if ($entity->canDelete()) {
-                echo "&nbsp;&nbsp;";
-                echo "<input type='submit' name='delete' value='" . _sx('button', 'Delete') . "'
-                        class='btn btn-danger'
-                        onclick='return confirm(\"" . __('Confirm deletion?') . "\");' />";
-            }
-
-            if ($entity->canPurge()) {
-                echo "&nbsp;&nbsp;";
-                echo "<input type='submit' name='purge' value='" . _sx('button', 'Delete permanently') . "'
-                        class='btn btn-danger'
-                        onclick='return confirm(\"" . __('Confirm permanent deletion? This action cannot be undone!') . "\");' />";
-            }
-        }
-
-        echo "</td>";
-        echo "</tr>";
-
-        echo "</table>";
-        echo "</div>";
-
-        // Fecha a tag form
-        Html::closeForm();
-
-        echo "</div>"; // Fecha div.center
-
-        // Include JavaScript
-        echo "<script src='" . Plugin::getWebDir('newbase') . "/js/jquery.mask.min.js'></script>\n";
-        echo "<script src='" . Plugin::getWebDir('newbase') . "/js/forms.js'></script>\n";
-
-        // Include inline JS for masks
-        echo "<script type='text/javascript'>\n";
-        echo "$(document).ready(function() {\n";
-        echo "  /* CNPJ Mask*/\n";
-        echo "  if (typeof $.fn.mask !== 'undefined') {\n";
-        echo "    $('#cnpj').mask('00.000.000/0000-00');\n";
-        echo "    $('#cep').mask('00000-000');\n";
-        echo "    $('#phone').mask('(00) 00000-0000');\n";
-        echo "  }\n";
-        echo "});\n";
-        echo "</script>\n";
+        $this->showFormButtons($options);
 
         return true;
-    }
-
-    /**
-    * Get search options for GLPI search engine
-    * (Used if CompanyData becomes a full CommonDBTM in the future)
-    * @return array Search options
-    */
-    public function rawSearchOptions(): array
-    {
-        return [
-            [
-                'id' => 'common',
-                'name' => __('Characteristics'),
-            ],
-            [
-                'id' => '1',
-                'table' => 'glpi_entities',
-                'field' => 'name',
-                'name' => __('Name'),
-                'datatype' => 'itemlink',
-                'massiveaction' => false,
-            ],
-            [
-                'id' => '2',
-                'table' => 'glpi_plugin_newbase_company_extras',
-                'field' => 'cnpj',
-                'name' => __('CNPJ', 'newbase'),
-                'datatype' => 'string',
-            ],
-            [
-                'id' => '3',
-                'table' => 'glpi_plugin_newbase_company_extras',
-                'field' => 'corporate_name',
-                'name' => __('Corporate Name', 'newbase'),
-                'datatype' => 'string',
-            ],
-            [
-                'id' => '4',
-                'table' => 'glpi_plugin_newbase_company_extras',
-                'field' => 'fantasy_name',
-                'name' => __('Fantasy Name', 'newbase'),
-                'datatype' => 'string',
-            ],
-        ];
     }
 }

@@ -1,207 +1,74 @@
 <?php
 
-/**
-* ---------------------------------------------------------------------
-* Formulário de Gerenciamento de Sistemas - Plugin Newbase
-* ---------------------------------------------------------------------
-*
-* Este arquivo processa ações CRUD para sistemas telefônicos:
-* - Asterisk (IPBX local)
-* - CloudPBX (IPBX em nuvem)
-* - Chatbot (Sistema omnichannel)
-* - VoIP (Linha fixa)
+include ('../../../inc/includes.php');
 
-* @package   Plugin - Newbase
-* @author    João Lucas
-* @license   GPLv2+
-*/
-
-// 1 SEGURANÇA: Carregar o núcleo do GLPI
-include('../../../inc/includes.php');
-
-// 2 SEGURANÇA: Verificar se usuário está logado
-Session::checkLoginUser();
-
-// 3 IMPORTAR CLASSES DO PLUGIN
 use GlpiPlugin\Newbase\System;
 use GlpiPlugin\Newbase\CompanyData;
 
-// 4 CRIAR INSTÂNCIA DO OBJETO SYSTEM
+// 1. Verificação de Sessão
+Session::checkLoginUser();
+
+// 2. Instanciar Objeto
 $system = new System();
 
-// PROCESSAMENTO DE AÇÕES (POST)
+// --- TRATAMENTO DE AÇÕES (POST) ---
 
-// 5 AÇÃO: ADICIONAR NOVO SISTEMA
-if (isset($_POST['add'])) {
-    // CSRF: Verificar token de segurança
-    Session::checkCSRF($_POST);
-
-    $entity_id = filter_input(INPUT_POST, 'entities_id', FILTER_VALIDATE_INT);
-    if ($entity_id === false || $entity_id === null || $entity_id < 0) {
-        $entity_id = 0;
-    }
-
-    // Verificar direitos de criação
+if (isset($_POST["add"])) {
+    // O método check() já verifica CSRF e permissões automaticamente
     $system->check(-1, CREATE, $_POST);
 
-    // Tentar adicionar sistema
-    $newID = $system->add($_POST);
-
-    if ($newID) {
-        Session::addMessageAfterRedirect(
-            __('System added successfully', 'newbase'),
-            false,
-            INFO
-        );
-
-        // Redirecionar de volta para a empresa (se veio de lá)
+    if ($newID = $system->add($_POST)) {
+        // Redireciona para a empresa de origem (se houver), senão para o sistema criado
         if (isset($_POST['plugin_newbase_companydata_id']) && $_POST['plugin_newbase_companydata_id'] > 0) {
-            Html::redirect($CFG_GLPI['root_doc'] . '/plugins/newbase/front/companydata.form.php?id=' . $_POST['plugin_newbase_companydata_id']);
+            Html::redirect(CompanyData::getFormURLWithID($_POST['plugin_newbase_companydata_id']));
         } else {
-            // Ou redirecionar para o novo sistema criado
-            Html::redirect($CFG_GLPI['root_doc'] . '/plugins/newbase/front/system.form.php?id=' . $newID);
+            Html::redirect($system->getFormURLWithID($newID));
         }
-    } else {
-        Session::addMessageAfterRedirect(
-            __('Error creating system', 'newbase'),
-            false,
-            ERROR
-        );
-        Html::back();
     }
+    Html::back();
 
-// 6 AÇÃO: ATUALIZAR SISTEMA EXISTENTE
-} elseif (isset($_POST['update'])) {
-    Session::checkCSRF($_POST);
+} elseif (isset($_POST["update"])) {
+    $system->check($_POST["id"], UPDATE);
+    $system->update($_POST);
+    Html::back();
 
-    $entity_id = filter_input(INPUT_POST, 'entities_id', FILTER_VALIDATE_INT);
-    if ($entity_id === false || $entity_id === null || $entity_id < 0) {
-        $entity_id = 0;
-    }
+} elseif (isset($_POST["delete"])) {
+    $system->check($_POST["id"], DELETE);
+    $system->delete($_POST);
+    $system->redirectToList();
 
-    // Verificar direitos de atualização
-    $system->check($_POST['id'], UPDATE);
+} elseif (isset($_POST["purge"])) {
+    $system->check($_POST["id"], PURGE);
+    $system->delete($_POST, 1);
+    $system->redirectToList();
 
-    if ($system->update($_POST)) {
-        Session::addMessageAfterRedirect(
-            __('System updated successfully', 'newbase'),
-            false,
-            INFO
-        );
-        Html::back();
-    } else {
-        Session::addMessageAfterRedirect(
-            __('Error updating system', 'newbase'),
-            false,
-            ERROR
-        );
-        Html::back();
-    }
-
-// 7 AÇÃO: DELETAR SISTEMA (soft delete - vai para lixeira)
-} elseif (isset($_POST['delete'])) {
-    Session::checkCSRF($_POST);
-
-    $entity_id = filter_input(INPUT_POST, 'entities_id', FILTER_VALIDATE_INT);
-    if ($entity_id === false || $entity_id === null || $entity_id < 0) {
-        $entity_id = 0;
-    }
-
-    // Verificar direitos de deleção
-    $system->check($_POST['id'], DELETE);
-
-    if ($system->delete($_POST)) {
-        Session::addMessageAfterRedirect(
-            __('System deleted successfully', 'newbase'),
-            false,
-            INFO
-        );
-        Html::redirect($CFG_GLPI['root_doc'] . '/plugins/newbase/front/system.php');
-    } else {
-        Session::addMessageAfterRedirect(
-            __('Error deleting system', 'newbase'),
-            false,
-            ERROR
-        );
-        Html::back();
-    }
-
-// 8 AÇÃO: PURGAR SISTEMA (hard delete - remove permanentemente)
-} elseif (isset($_POST['purge'])) {
-    Session::checkCSRF($_POST);
-
-    $entity_id = filter_input(INPUT_POST, 'entities_id', FILTER_VALIDATE_INT);
-    if ($entity_id === false || $entity_id === null || $entity_id < 0) {
-        $entity_id = 0;
-    }
-
-    // Verificar direitos de purga
-    $system->check($_POST['id'], PURGE);
-
-    if ($system->delete($_POST, 1)) {
-        Session::addMessageAfterRedirect(
-            __('System purged successfully', 'newbase'),
-            false,
-            INFO
-        );
-        Html::redirect($CFG_GLPI['root_doc'] . '/plugins/newbase/front/system.php');
-    } else {
-        Session::addMessageAfterRedirect(
-            __('Error purging system', 'newbase'),
-            false,
-            ERROR
-        );
-        Html::back();
-    }
+} elseif (isset($_POST["restore"])) {
+    $system->check($_POST["id"], DELETE);
+    $system->restore($_POST);
+    Html::back();
 }
 
-// EXIBIÇÃO DO FORMULÁRIO (GET)
+// --- TRATAMENTO DE EXIBIÇÃO (GET) ---
 
-// 9 VALIDAR E SANITIZAR PARÂMETROS DA URL
-$id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
-if ($id === false || $id === null) {
-    $id = 0;
-}
-$id = max(0, $id);
+// Validar parâmetros
+$id = (int)($_GET['id'] ?? 0);
+$company_id = (int)($_GET['plugin_newbase_companydata_id'] ?? 0);
 
-$company_id = filter_input(INPUT_GET, 'plugin_newbase_companydata_id', FILTER_VALIDATE_INT);
-if ($company_id === false || $company_id === null) {
-    $company_id = 0;
-}
-$company_id = max(0, $company_id);
-
-// 10 RENDERIZAR CABEÇALHO DO GLPI
+// Cabeçalho
 Html::header(
-    System::getTypeName(1),
+    System::getTypeName(Session::getPluralNumber()),
     $_SERVER['PHP_SELF'],
     'management',
     CompanyData::class,
     'system'
 );
 
-// GLPI 10.0.20: Injetar variáveis JavaScript (incluindo CSRF token)
-echo Html::getCoreVariablesForJavascript();
-
-// 11 CARREGAR DADOS DO SISTEMA (se estiver editando)
-if ($id > 0) {
-    // Modo edição: carregar dados existentes
-    if (!$system->getFromDB($id)) {
-        Session::addMessageAfterRedirect(
-            __('System not found', 'newbase'),
-            false,
-            ERROR
-        );
-        Html::displayErrorAndDie(__('System not found', 'newbase'));
-    }
-} elseif ($company_id > 0) {
-    // Modo criação: pré-preencher ID da empresa
-    $system->fields['plugin_newbase_companydata_id'] = $company_id;
+// Se estiver criando e vier de uma empresa, pré-preencher
+if ($id === 0 && $company_id > 0) {
+    $_GET['plugin_newbase_companydata_id'] = $company_id;
 }
 
-// 12 EXIBIR FORMULÁRIO
-$system->showForm($id, [
-    'plugin_newbase_companydata_id' => $company_id
-]);
+// Exibir formulário (o método display() gerencia tudo automaticamente)
+$system->display($_GET);
 
-// 13 RENDERIZAR RODAPÉ DO GLPI
 Html::footer();

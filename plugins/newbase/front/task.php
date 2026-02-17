@@ -13,38 +13,35 @@
  * - Vinculação com empresas
  *
  * Oferece busca, filtros, paginação e ações em massa.
- * @package   GlpiPlugin - Newbase
+ * @package   GlpiPlugin\Newbase
  * @author    João Lucas
  * @license   GPLv2+
  */
 
-// 1 SEGURANÇA: Carregar o núcleo do GLPI
-include('../../../inc/includes.php');
+include ('../../../inc/includes.php');
 
-// 2 SEGURANÇA: Verificar se usuário está logado
-Session::checkLoginUser();
-
-// 3 IMPORTAR A CLASSE DO PLUGIN
 use GlpiPlugin\Newbase\Task;
 
-// 4 RENDERIZAR CABEÇALHO DO GLPI
-Html::header(
-    Task::getTypeName(Session::getPluralNumber()),  // Título no plural ("Tarefas")
-    $_SERVER['PHP_SELF'],                           // URL atual
-    'management',                                   // Categoria do menu
-    Task::class,                                    // Classe do item
-    'task'                                          // Identificador único
-);
+// 1. Verificação de Sessão
+Session::checkLoginUser();
 
-// 5 VERIFICAR DIREITOS DE ACESSO
-// Se o usuário não tem permissão para ver tarefas, bloqueia acesso
+// 2. Verificação de Permissões (ANTES do cabeçalho para economizar processamento)
 if (!Task::canView()) {
     Html::displayRightError();
 }
 
-// 6 EXIBIR O MECANISMO DE BUSCA DO GLPI
-// Esta linha cria automaticamente toda a interface de busca!
-Search::show('GlpiPlugin\Newbase\Task');
+// 3. Cabeçalho
+Html::header(
+    Task::getTypeName(Session::getPluralNumber()),
+    $_SERVER['PHP_SELF'],
+    "plugins",        // Menu pai (geralmente "plugins" para plugins de terceiros)
+    "newbase",        // Nome do plugin
+    "task"            // Slug do submenu
+);
 
-// 7 RENDERIZAR RODAPÉ DO GLPI
+// 4. Motor de Busca
+// Usar ::class em vez de string garante compatibilidade com namespaces
+Search::show(Task::class);
+
+// 5. Rodapé
 Html::footer();
