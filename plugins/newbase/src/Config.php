@@ -243,10 +243,12 @@ class Config extends \Config
     /**
      * Validate boolean value
      *
+     * Converts any value to boolean integer (0 or 1)
+     *
      * @param mixed $value Value to validate
      * @return int 0 or 1
      */
-    private static function validateBoolean($value): int
+    private static function validateBoolean(mixed $value): int
     {
         return (int) (bool) $value;
     }
