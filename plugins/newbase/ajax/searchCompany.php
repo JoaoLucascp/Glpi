@@ -28,6 +28,8 @@
  * -------------------------------------------------------------------------
  */
 
+declare(strict_types=1);
+
 /**
  * AJAX Endpoint - Company Search by CNPJ
  *
@@ -53,42 +55,16 @@ include('../../../inc/includes.php');
 use GlpiPlugin\Newbase\Common;
 use GlpiPlugin\Newbase\CompanyData;
 use GlpiPlugin\Newbase\Config;
+use GlpiPlugin\Newbase\AjaxHandler;
+use Session;
+use Toolbox;
 
 if (!defined('GLPI_ROOT')) {
     die("Sorry. You can't access this file directly");
 }
 
-// Security headers
-header('Content-Type: application/json; charset=utf-8');
-header('Cache-Control: no-cache, must-revalidate');
-header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
-header('X-Content-Type-Options: nosniff');
-header('X-Frame-Options: SAMEORIGIN');
-header('X-XSS-Protection: 1; mode=block');
-
-/**
- * Send JSON response and exit
- * @param bool $success Success status
- * @param string $message Message
- * @param array $data Additional data
- * @param int $http_code HTTP status code
- */
-function sendResponse(bool $success, string $message, array $data = [], int $http_code = 200): void
-{
-    http_response_code($http_code);
-
-    $response = [
-        'success' => $success,
-        'message' => $message,
-    ];
-
-    if (!empty($data)) {
-        $response['data'] = $data;
-    }
-
-    echo json_encode($response, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-    exit;
-}
+// Set security headers
+AjaxHandler::setSecurityHeaders();
 
 /**
  * Search company in local database by CNPJ
@@ -134,6 +110,7 @@ function searchLocalDatabase(string $cnpj): ?array
 
 /**
  * Search company in external APIs via cnpj_proxy.php
+ *
  * @param string $cnpj CNPJ without formatting (14 digits)
  * @return array|null Company data or null if not found
  */
@@ -143,34 +120,24 @@ function searchExternalAPIs(string $cnpj): ?array
     $proxyUrl = PLUGIN_NEWBASE_WEB_DIR . '/ajax/cnpj_proxy.php';
 
     // Make internal request to proxy
-    $ch = curl_init();
-    curl_setopt_array($ch, [
-        CURLOPT_URL            => $proxyUrl,
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_POST           => true,
-        CURLOPT_POSTFIELDS     => http_build_query([
-            'cnpj'             => $cnpj,
-            '_glpi_csrf_token' => Session::getNewCSRFToken(),
-        ]),
-        CURLOPT_TIMEOUT        => 20,
-        CURLOPT_CONNECTTIMEOUT => 10,
-        CURLOPT_HTTPHEADER     => [
-            'X-Glpi-Csrf-Token: ' . Session::getNewCSRFToken(),
+    $response = AjaxHandler::fetchCurl(
+        $proxyUrl,
+        [
+            CURLOPT_POST       => true,
+            CURLOPT_POSTFIELDS => http_build_query([
+                'cnpj'             => $cnpj,
+                '_glpi_csrf_token' => Session::getNewCSRFToken(),
+            ]),
+            CURLOPT_HTTPHEADER => [
+                'X-Glpi-Csrf-Token: ' . Session::getNewCSRFToken(),
+            ],
         ],
-    ]);
+        'POST',
+        20,
+        10
+    );
 
-    $response = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    $error = curl_error($ch);
-    curl_close($ch);
-
-    if ($error) {
-        Toolbox::logInFile('newbase_plugin', "CNPJ Proxy CURL Error: {$error}\n");
-        return null;
-    }
-
-    if ($httpCode !== 200) {
-        Toolbox::logInFile('newbase_plugin', "CNPJ Proxy HTTP Error: {$httpCode}\n");
+    if ($response === false) {
         return null;
     }
 
@@ -183,73 +150,42 @@ function searchExternalAPIs(string $cnpj): ?array
     return $data['data'] ?? null;
 }
 
-// ===== AUTHENTICATION CHECK =====
-
-if (!Session::getLoginUserID()) {
-    sendResponse(false, __('Authentication required'), [], 401);
-}
-
-// ===== CHECK PERMISSIONS =====
-
-if (!Session::haveRight('plugin_newbase', CREATE) && !Session::haveRight('plugin_newbase', UPDATE)) {
-    Toolbox::logInFile(
-        'newbase_plugin',
-        sprintf("User %d tried to search company without permission\n", Session::getLoginUserID())
-    );
-    sendResponse(false, __('You do not have permission to search companies', 'newbase'), [], 403);
-}
-
-// ===== CHECK IF FEATURE IS ENABLED =====
-
-$config = Config::getConfig();
-$enable_cnpj_search = $config['enable_cnpj_search'] ?? 1;
-
-if (!$enable_cnpj_search) {
-    sendResponse(false, __('Company search feature is disabled', 'newbase'), [], 403);
-}
-
-// ===== GET REQUEST METHOD =====
-
-$method = $_SERVER['REQUEST_METHOD'];
-
-// ===== GET REQUEST DATA =====
-
-$rawInput = file_get_contents('php://input');
-$input = json_decode($rawInput, true);
-
-// Handle non-JSON requests (fallback to POST/GET data)
-if ($input === null) {
-    $input = ($method === 'POST') ? $_POST : $_GET;
-}
-
-if (!is_array($input)) {
-    $input = [];
-}
-
-// ===== CSRF TOKEN VALIDATION (for POST) =====
-
-if ($method === 'POST') {
-    $csrf_token = $_SERVER['HTTP_X_GLPI_CSRF_TOKEN'] ?? $input['_glpi_csrf_token'] ?? '';
-
-    if (empty($csrf_token)) {
-        Toolbox::logInFile('newbase_plugin', "AJAX company search: CSRF token missing\n");
-        sendResponse(false, __('CSRF token is required', 'newbase'), [], 403);
-    }
-
-    try {
-        Session::checkCSRF(['_glpi_csrf_token' => $csrf_token]);
-    } catch (Exception $e) {
-        Toolbox::logInFile('newbase_plugin', "AJAX company search: Invalid CSRF token\n");
-        sendResponse(false, __('Invalid or expired security token', 'newbase'), [], 403);
-    }
-}
-
-// ===== PROCESS REQUEST =====
+// ===== MAIN EXECUTION =====
 
 try {
-    // Only allow POST and GET methods
+    // ===== AUTHENTICATION & AUTHORIZATION =====
+    if (!Session::getLoginUserID()) {
+        AjaxHandler::sendResponse(false, __('Authentication required'), [], 401);
+    }
+
+    // Check permissions
+    if (!AjaxHandler::checkPermissions('plugin_newbase')) {
+        Toolbox::logInFile(
+            'newbase_plugin',
+            sprintf("User %d tried to search company without permission\n", Session::getLoginUserID())
+        );
+        AjaxHandler::sendResponse(false, __('You do not have permission to search companies', 'newbase'), [], 403);
+    }
+
+    // ===== CHECK IF FEATURE IS ENABLED =====
+    $config = Config::getConfig();
+    $enable_cnpj_search = $config['enable_cnpj_search'] ?? 1;
+
+    if (!$enable_cnpj_search) {
+        AjaxHandler::sendResponse(false, __('Company search feature is disabled', 'newbase'), [], 403);
+    }
+
+    // ===== CSRF TOKEN VALIDATION =====
+    if (!AjaxHandler::checkCSRFToken()) {
+        Toolbox::logInFile('newbase_plugin', "AJAX company search: Invalid CSRF token\n");
+        AjaxHandler::sendResponse(false, __('Invalid or expired security token', 'newbase'), [], 403);
+    }
+
+    // ===== GET REQUEST DATA =====
+    $method = $_SERVER['REQUEST_METHOD'];
+
     if (!in_array($method, ['POST', 'GET'], true)) {
-        sendResponse(
+        AjaxHandler::sendResponse(
             false,
             sprintf(__('Method %s not allowed', 'newbase'), $method),
             [],
@@ -257,30 +193,29 @@ try {
         );
     }
 
-    // ===== GET AND VALIDATE CNPJ =====
+    // Parse input
+    $input = json_decode(file_get_contents('php://input'), true);
+    if ($input === null) {
+        $input = ($method === 'POST') ? $_POST : $_GET;
+    }
 
+    if (!is_array($input)) {
+        $input = [];
+    }
+
+    // ===== GET AND VALIDATE CNPJ =====
     $cnpj = $input['cnpj'] ?? '';
 
     if (empty($cnpj)) {
-        sendResponse(false, __('CNPJ is required', 'newbase'), [], 400);
+        AjaxHandler::sendResponse(false, __('CNPJ is required', 'newbase'), [], 400);
     }
 
-    // Remove formatting (e.g., "12.345.678/0001-90" -> "12345678000190")
+    // Remove formatting
     $cnpj = preg_replace('/[^0-9]/', '', $cnpj);
 
-    // Validate length
-    if (strlen($cnpj) !== 14) {
-        sendResponse(
-            false,
-            __('Invalid CNPJ: must have 14 digits', 'newbase'),
-            ['cnpj' => $cnpj, 'length' => strlen($cnpj)],
-            400
-        );
-    }
-
-    // Validate check digits
-    if (!class_exists('GlpiPlugin\\Newbase\\Common') || !Common::validateCNPJ($cnpj)) {
-        sendResponse(
+    // Validate CNPJ using Common class
+    if (!Common::validateCNPJ($cnpj)) {
+        AjaxHandler::sendResponse(
             false,
             __('Invalid CNPJ: check digits verification failed', 'newbase'),
             ['cnpj' => $cnpj],
@@ -289,7 +224,6 @@ try {
     }
 
     // ===== STRATEGY 1: SEARCH IN LOCAL DATABASE =====
-
     $companyData = searchLocalDatabase($cnpj);
 
     if ($companyData !== null) {
@@ -303,7 +237,7 @@ try {
             )
         );
 
-        sendResponse(
+        AjaxHandler::sendResponse(
             true,
             __('Company data loaded from local database', 'newbase'),
             $companyData,
@@ -312,12 +246,11 @@ try {
     }
 
     // ===== STRATEGY 2: SEARCH IN EXTERNAL APIs =====
-
     $companyData = searchExternalAPIs($cnpj);
 
     if ($companyData === null) {
         Toolbox::logInFile('newbase_plugin', "Company not found for CNPJ {$cnpj}\n");
-        sendResponse(
+        AjaxHandler::sendResponse(
             false,
             __('Company not found in any database or API', 'newbase'),
             ['cnpj' => $cnpj],
@@ -325,17 +258,8 @@ try {
         );
     }
 
-    // Format CNPJ for display (12345678000190 -> 12.345.678/0001-90)
-    if (strlen($cnpj) === 14) {
-        $companyData['cnpj_formatted'] = sprintf(
-            '%s.%s.%s/%s-%s',
-            substr($cnpj, 0, 2),
-            substr($cnpj, 2, 3),
-            substr($cnpj, 5, 3),
-            substr($cnpj, 8, 4),
-            substr($cnpj, 12, 2)
-        );
-    }
+    // Format CNPJ for display
+    $companyData['cnpj_formatted'] = Common::formatCNPJ($cnpj);
 
     // Success response
     Toolbox::logInFile(
@@ -348,21 +272,20 @@ try {
         )
     );
 
-    sendResponse(
+    AjaxHandler::sendResponse(
         true,
         __('Company data loaded from external API', 'newbase'),
         $companyData,
         200
     );
-} catch (Exception $e) {
+} catch (\Exception $e) {
 
     // ===== ERROR HANDLING =====
 
     Toolbox::logInFile(
         'newbase_plugin',
         sprintf(
-            "ERROR in searchCompany.php (%s): %s\n",
-            $method,
+            "ERROR in searchCompany.php: %s\n",
             $e->getMessage()
         )
     );
@@ -375,7 +298,7 @@ try {
         $error_data['trace'] = $e->getTraceAsString();
     }
 
-    sendResponse(
+    AjaxHandler::sendResponse(
         false,
         __('An error occurred while searching company data', 'newbase'),
         $error_data,

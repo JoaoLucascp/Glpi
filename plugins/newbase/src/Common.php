@@ -62,6 +62,12 @@ abstract class Common extends CommonDBTM
     public static $rightname = 'plugin_newbase';
 
     /**
+     * Cache for CEP lookups within current request
+     * @var array
+     */
+    private static array $cepCache = [];
+
+    /**
      * Get type name for display
      *
      * @param int $nb Number of items
@@ -516,24 +522,33 @@ abstract class Common extends CommonDBTM
     }
 
     /**
-     * Search address by CEP using ViaCEP API
-     *
-     * Queries the ViaCEP public API to fetch address information from a CEP code.
+     * Search address by CEP using ViaCEP API (with optional caching)
      *
      * @param string $cep CEP code with or without formatting
+     * @param bool $useCache Whether to use request-level cache (default: true)
      * @return array|false Address data or false if not found
      */
-    public static function fetchAddressByCEP(string $cep): array|false
+    public static function fetchAddressByCEP(string $cep, bool $useCache = true): array|false
     {
         if (!self::validateCEP($cep)) {
             return false;
         }
 
-        // Remove formatting
+        // Normalize CEP for cache key
+        $cepNormalized = preg_replace('/[^0-9]/', '', $cep);
+        $cacheKey = "cep_{$cepNormalized}";
+
+        // CHECK CACHE FIRST
+        if ($useCache && isset(self::$cepCache[$cacheKey])) {
+            // Log de debug removido para não poluir, ou você pode reativar
+            // Toolbox::logInFile('newbase_plugin', "Cache hit for CEP {$cepNormalized}", 'debug');
+            return self::$cepCache[$cacheKey];
+        }
+
+        // Remove formatting (redundante mas seguro)
         $cep = preg_replace('/[^0-9]/', '', $cep);
 
         try {
-            // ViaCEP is a free Brazilian CEP lookup API
             $url = "https://viacep.com.br/ws/{$cep}/json/";
 
             $ch = curl_init();
@@ -556,20 +571,27 @@ abstract class Common extends CommonDBTM
 
             $data = json_decode($response, true);
 
-            // Check if response contains error
             if (isset($data['erro']) && $data['erro'] === true) {
                 return false;
             }
 
-            // Return standardized data
-            return [
+            $result = [
                 'cep'          => $data['cep'] ?? $cep,
                 'street'       => $data['logradouro'] ?? '',
                 'neighborhood' => $data['bairro'] ?? '',
                 'city'         => $data['localidade'] ?? '',
                 'state'        => $data['uf'] ?? '',
                 'complement'   => $data['complemento'] ?? '',
+                'ibge_code'    => $data['ibge'] ?? '', // Adicionado IBGE Code
             ];
+
+            // STORE IN CACHE
+            if ($useCache) {
+                self::$cepCache[$cacheKey] = $result;
+            }
+
+            return $result;
+
         } catch (\Exception $e) {
             Toolbox::logInFile(
                 'newbase_plugin',
@@ -580,83 +602,11 @@ abstract class Common extends CommonDBTM
     }
 
     /**
-     * Fetch GPS coordinates (latitude/longitude) by CEP
-     *
-     * Uses OpenStreetMap Nominatim service to convert address to coordinates.
-     * Falls back to a default city coordinate if specific address is not found.
-     *
-     * @param string $cep CEP code
-     * @param string $city City name (optional, for context)
-     * @return array|false Array with 'latitude' and 'longitude' keys, or false on error
+     * Clear cache at request end (optional, for long-running scripts)
      */
-    public static function fetchCoordinatesByCEP(string $cep, string $city = ''): array|false
+    public static function clearCEPCache(): void
     {
-        if (!self::validateCEP($cep)) {
-            return false;
-        }
-
-        // First try to get address details
-        $address = self::fetchAddressByCEP($cep);
-
-        if (!$address) {
-            return false;
-        }
-
-        // Construct full address for geocoding
-        $fullAddress = sprintf(
-            '%s, %s, %s, Brazil',
-            $address['street'] ?? '',
-            $address['city'] ?? $city,
-            $address['state'] ?? ''
-        );
-
-        try {
-            // Using Nominatim (OpenStreetMap) - free geolocation service
-            $url = 'https://nominatim.openstreetmap.org/search';
-            $params = [
-                'q'      => trim($fullAddress),
-                'format' => 'json',
-            ];
-
-            $ch = curl_init();
-            curl_setopt_array($ch, [
-                CURLOPT_URL            => $url . '?' . http_build_query($params),
-                CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_TIMEOUT        => 10,
-                CURLOPT_SSL_VERIFYPEER => true,
-                CURLOPT_USERAGENT      => 'GLPI-Newbase/2.1.0',
-                CURLOPT_HTTPHEADER     => [
-                    'Accept: application/json',
-                ],
-            ]);
-
-            $response = curl_exec($ch);
-            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            curl_close($ch);
-
-            if ($response === false || $httpCode !== 200) {
-                return false;
-            }
-
-            $data = json_decode($response, true);
-
-            if (empty($data) || !is_array($data)) {
-                return false;
-            }
-
-            $first = $data[0];
-
-            return [
-                'latitude'  => (float) $first['lat'] ?? 0.0,
-                'longitude' => (float) $first['lon'] ?? 0.0,
-            ];
-        } catch (\Exception $e) {
-            Toolbox::logInFile(
-                'newbase_plugin',
-                "Error fetching coordinates for CEP {$cep}: " . $e->getMessage() . "\n"
-            );
-            return false;
-        }
+        self::$cepCache = [];
     }
 
     // ========== GEOLOCATION METHODS ==========

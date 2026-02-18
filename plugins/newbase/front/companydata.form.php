@@ -6,7 +6,7 @@ include ('../../../inc/includes.php');
 use GlpiPlugin\Newbase\CompanyData;
 
 // Verificar sessão
-Session::checkLoginUser();
+\Session::checkLoginUser();
 
 // Instanciar o objeto principal
 $plugin_item = new CompanyData();
@@ -20,9 +20,9 @@ if (isset($_POST["add"])) {
     // O método .add() da classe CommonDBTM faz todo o trabalho sujo (CSRF, SQL, Hooks)
     if ($newID = $plugin_item->add($_POST)) {
         // Redireciona para a edição do item criado
-        Html::redirect($plugin_item->getFormURLWithID($newID));
+        \Html::redirect($plugin_item->getFormURLWithID($newID));
     }
-    Html::back();
+    \Html::back();
 
 } elseif (isset($_POST["update"])) {
     // Verifica permissão de ATUALIZAÇÃO e ID
@@ -30,7 +30,7 @@ if (isset($_POST["add"])) {
 
     // O método .update() trata tudo
     $plugin_item->update($_POST);
-    Html::back();
+    \Html::back();
 
 } elseif (isset($_POST["delete"])) {
     // Verifica permissão de DELEÇÃO (Lixeira)
@@ -54,15 +54,15 @@ if (isset($_POST["add"])) {
     $plugin_item->check($_POST["id"], DELETE); // Geralmente usa permissão de delete ou purge
 
     $plugin_item->restore($_POST);
-    Html::back();
+    \Html::back();
 }
 
 // --- TRATAMENTO DE EXIBIÇÃO (GET) ---
 
 // Cabeçalho Padrão
 // O 3º parâmetro define o menu ativo (plugins > newbase > companydata)
-Html::header(
-    CompanyData::getTypeName(Session::getPluralNumber()),
+\Html::header(
+    CompanyData::getTypeName(\Session::getPluralNumber()),
     $_SERVER['PHP_SELF'],
     "plugins",
     "newbase",
@@ -74,4 +74,4 @@ Html::header(
 $plugin_item->display($_GET);
 
 // Rodapé Padrão
-Html::footer();
+\Html::footer();

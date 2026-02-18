@@ -247,7 +247,7 @@ function plugin_newbase_install(): bool
 
         plugin_newbase_log('Plugin installed successfully', 'info');
         return true;
-    } catch (Exception $e) {
+    } catch (\Exception $e) {
         plugin_newbase_log('Installation error: ' . $e->getMessage(), 'error');
         return false;
     }
@@ -287,7 +287,7 @@ function plugin_newbase_uninstall(): bool
 
         plugin_newbase_log('Plugin uninstalled successfully', 'info');
         return true;
-    } catch (Exception $e) {
+    } catch (\Exception $e) {
         plugin_newbase_log('Uninstallation error: ' . $e->getMessage(), 'error');
         return false;
     }

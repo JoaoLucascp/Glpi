@@ -333,7 +333,7 @@ class Address extends CommonDBTM
      * @param array $input Dados de entrada do formulário
      * @return array|bool Entrada preparada ou false em caso de erro
      */
-    public function prepareInputForAdd(array $input): array|bool
+    public function prepareInputForAdd($input)
     {
         // Guard clause: validate input is array
         if (empty($input)) {
@@ -406,7 +406,7 @@ class Address extends CommonDBTM
      * @param array $input Dados de entrada do formulário
      * @return array|bool Entrada preparada ou false em caso de erro
      */
-    public function prepareInputForUpdate(array $input): array|bool
+    public function prepareInputForUpdate($input)
     {
         // Guard clause: validate input is array
         if (empty($input)) {

@@ -241,14 +241,15 @@ class System extends CommonDBTM
 
     /**
      * Display specific value for search result
-     * 
+     *
      * @param string $field Field name
      * @param array  $values Values
      * @param array  $options Options
      * @return string Formatted value
      */
-    public static function getSpecificValueToDisplay(string $field, mixed $values, array $options = []): string
+    public static function getSpecificValueToDisplay($field, $values, array $options = []): string
     {
+        // Normalize $values to array format if needed
         if (!is_array($values)) {
             $values = [$field => $values];
         }
@@ -256,11 +257,11 @@ class System extends CommonDBTM
         switch ($field) {
             case 'system_type':
                 $types = self::getSystemTypes();
-                return $types[$values[$field]] ?? $values[$field];
+                return $types[$values[$field]] ?? $values[$field] ?? '';
 
             case 'status':
                 $statuses = self::getSystemStatuses();
-                return $statuses[$values[$field]] ?? $values[$field];
+                return $statuses[$values[$field]] ?? $values[$field] ?? '';
         }
 
         return parent::getSpecificValueToDisplay($field, $values, $options);
@@ -356,7 +357,7 @@ class System extends CommonDBTM
      * @param array $input Input data from form
      * @return array|bool Prepared input or false on error
      */
-    public function prepareInputForAdd(array $input): array|bool
+    public function prepareInputForAdd($input)
     {
         // Guard clause: validate input is array
         if (empty($input)) {
@@ -397,7 +398,7 @@ class System extends CommonDBTM
      * @param array $input Input data from form
      * @return array|bool Prepared input or false on error
      */
-    public function prepareInputForUpdate(array $input): array|bool
+    public function prepareInputForUpdate($input)
     {
         // Guard clause: validate input is array
         if (empty($input)) {
@@ -609,7 +610,7 @@ class System extends CommonDBTM
      * @param array $options Dropdown options (name, value, etc.)
      * @return int|string Dropdown result
      */
-    public static function dropdown(array $options = []): int|string
+    public static function dropdown($options = [])
     {
         $defaults = [
             'name'   => 'plugin_newbase_systems_id',

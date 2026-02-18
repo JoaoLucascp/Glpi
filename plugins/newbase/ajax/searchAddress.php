@@ -250,7 +250,7 @@ try {
         $addressData,
         200
     );
-} catch (Exception $e) {
+} catch (\Exception $e) {
     // ===== ERROR HANDLING =====
 
     Toolbox::logInFile(

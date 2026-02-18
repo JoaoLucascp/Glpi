@@ -32,17 +32,17 @@ declare(strict_types=1);
 
 namespace GlpiPlugin\Newbase;
 
-use Toolbox;
+use GlpiPlugin\Newbase\Common; // Importante: usar a classe Common
 
 if (!defined('GLPI_ROOT')) {
     die("Sorry. You can't access this file directly");
 }
 
 /**
- * AddressHandler - Handles CEP (Brazilian ZIP code) searches
+ * AddressHandler - Facade for Address operations
  *
- * Validates input, calls ViaCEP API, and returns formatted response.
- * This is a utility class with static methods for address-related operations.
+ * This class now acts as a wrapper/facade for address operations,
+ * delegating the core logic to the Common class to avoid code duplication (DRY).
  *
  * @package GlpiPlugin\Newbase
  */
@@ -51,15 +51,14 @@ class AddressHandler
     /**
      * Search address by CEP (Brazilian ZIP code)
      *
-     * @param string|null $cep CEP with or without formatting (e.g., "01310-100" or "01310100")
-     * @return array Response array with keys:
-     *               - success (bool): Whether the search was successful
-     *               - message (string): User-friendly message
-     *               - data (array|null): Address data or null if not found
+     * Delegates to Common::fetchAddressByCEP to use centralized logic and caching.
+     *
+     * @param string|null $cep CEP with or without formatting
+     * @return array Standardized response array
      */
     public static function searchByCEP(?string $cep): array
     {
-        // VALIDAÇÃO DE ENTRADA
+        // 1. Validação básica de entrada
         if (empty($cep)) {
             return [
                 'success' => false,
@@ -68,36 +67,11 @@ class AddressHandler
             ];
         }
 
-        // Remove formatting - keep only numbers
-        $cep = preg_replace('/[^0-9]/', '', trim($cep));
+        // 2. Chama a função centralizada no Common (com cache ativado por padrão)
+        $addressData = Common::fetchAddressByCEP($cep);
 
-        // Validate CEP length (must be 8 digits)
-        if (strlen($cep) !== 8) {
-            return [
-                'success' => false,
-                'message' => __('Invalid CEP: must have 8 digits', 'newbase'),
-                'data'    => null,
-            ];
-        }
-
-        // Validate CEP pattern (not all zeros or sequential)
-        if (preg_match('/^0+$/', $cep) || preg_match('/^(\d)\1{7}$/', $cep)) {
-            return [
-                'success' => false,
-                'message' => __('Invalid CEP pattern', 'newbase'),
-                'data'    => null,
-            ];
-        }
-
-        // BUSCAR ENDEREÇO VIA API
-        $addressData = self::callViaCEPAPI($cep);
-
-        if ($addressData === null) {
-            Toolbox::logInFile(
-                'newbase_plugin',
-                "CEP search failed for: $cep (API error or not found)\n"
-            );
-
+        // 3. Verifica se falhou
+        if ($addressData === false) {
             return [
                 'success' => false,
                 'message' => __('Address not found or API temporarily unavailable', 'newbase'),
@@ -105,167 +79,42 @@ class AddressHandler
             ];
         }
 
-        // SUCESSO - RETORNAR DADOS
-        Toolbox::logInFile(
-            'newbase_plugin',
-            "CEP search successful for: $cep\n"
-        );
-
+        // 4. Sucesso - Retorna estrutura padronizada para o Frontend
         return [
             'success' => true,
             'message' => __('Address loaded successfully', 'newbase'),
             'data'    => [
-                'cep'          => $cep,
-                'street'       => $addressData['logradouro'] ?? '',
-                'complement'   => $addressData['complemento'] ?? '',
-                'neighborhood' => $addressData['bairro'] ?? '',
-                'city'         => $addressData['localidade'] ?? '',
-                'state'        => $addressData['uf'] ?? '',
-                'ibge_code'    => $addressData['ibge'] ?? '',
+                'cep'          => $addressData['cep'],
+                'street'       => $addressData['street'],
+                'complement'   => $addressData['complement'],
+                'neighborhood' => $addressData['neighborhood'],
+                'city'         => $addressData['city'],
+                'state'        => $addressData['state'],
+                'ibge_code'    => $addressData['ibge_code'] ?? '',
             ],
         ];
     }
 
     /**
-     * Call ViaCEP API to get address data
-     *
-     * Makes an HTTP request to the ViaCEP public API (https://viacep.com.br/)
-     * to retrieve address information based on the CEP.
-     *
-     * @param string $cep CEP without formatting (8 digits)
-     * @return array|null Address data array or null if error/not found
-     */
-    private static function callViaCEPAPI(string $cep): ?array
-    {
-        $url = "https://viacep.com.br/ws/{$cep}/json/";
-
-        try {
-            // Check if cURL is available
-            if (!function_exists('curl_init')) {
-                Toolbox::logInFile('newbase_plugin', "cURL is not available on this server\n");
-                return null;
-            }
-
-            // FAZER REQUISIÇÃO HTTP
-            $ch = curl_init();
-            curl_setopt_array($ch, [
-                CURLOPT_URL            => $url,
-                CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_TIMEOUT        => 10,
-                CURLOPT_CONNECTTIMEOUT => 5,
-                CURLOPT_SSL_VERIFYPEER => true,
-                CURLOPT_FOLLOWLOCATION => true,
-                CURLOPT_USERAGENT      => 'GLPI Newbase Plugin/2.0',
-                CURLOPT_HTTPHEADER     => [
-                    'Accept: application/json',
-                ],
-            ]);
-
-            $response = curl_exec($ch);
-            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            $error    = curl_error($ch);
-            curl_close($ch);
-
-            // VERIFICAR RESPOSTA HTTP
-            if ($response === false) {
-                Toolbox::logInFile(
-                    'newbase_plugin',
-                    "CURL error for CEP {$cep}: {$error}\n"
-                );
-                return null;
-            }
-
-            if ($httpCode !== 200) {
-                Toolbox::logInFile(
-                    'newbase_plugin',
-                    "HTTP error for CEP {$cep}: HTTP {$httpCode}\n"
-                );
-                return null;
-            }
-
-            // DECODIFICAR JSON
-            $data = json_decode($response, true);
-
-            if (json_last_error() !== JSON_ERROR_NONE) {
-                Toolbox::logInFile(
-                    'newbase_plugin',
-                    "JSON decode error for CEP {$cep}: " . json_last_error_msg() . "\n"
-                );
-                return null;
-            }
-
-            // VERIFICAR SE CEP FOI ENCONTRADO
-            if (isset($data['erro']) && $data['erro'] === true) {
-                Toolbox::logInFile(
-                    'newbase_plugin',
-                    "CEP not found: {$cep}\n"
-                );
-                return null;
-            }
-
-            return $data;
-        } catch (\Exception $e) {
-            Toolbox::logInFile(
-                'newbase_plugin',
-                "Exception in ViaCEP API for CEP {$cep}: " . $e->getMessage() . "\n"
-            );
-            return null;
-        }
-    }
-
-    /**
      * Format CEP for display (XXXXX-XXX)
-     *
-     * Converts unformatted CEP (e.g., "01310100") to formatted version (e.g., "01310-100")
-     *
-     * @param string $cep CEP without formatting
-     * @return string Formatted CEP or original if invalid
+     * Delegates to Common::formatCEP
      */
     public static function formatCEP(string $cep): string
     {
-        $cep = preg_replace('/[^0-9]/', '', $cep);
-
-        if (strlen($cep) === 8) {
-            return substr($cep, 0, 5) . '-' . substr($cep, 5);
-        }
-
-        return $cep;
+        return Common::formatCEP($cep);
     }
 
     /**
      * Validate CEP format
-     *
-     * Checks if a CEP is valid according to Brazilian standards:
-     * - Must have exactly 8 digits
-     * - Cannot be all zeros (00000000)
-     * - Cannot be sequential (11111111, 22222222, etc.)
-     *
-     * @param string $cep CEP with or without formatting
-     * @return bool True if valid, false otherwise
+     * Delegates to Common::validateCEP
      */
     public static function validateCEP(string $cep): bool
     {
-        $cep = preg_replace('/[^0-9]/', '', $cep);
-
-        // Check length
-        if (strlen($cep) !== 8) {
-            return false;
-        }
-
-        // Check pattern (not all zeros or sequential)
-        if (preg_match('/^0+$/', $cep) || preg_match('/^(\d)\1{7}$/', $cep)) {
-            return false;
-        }
-
-        return true;
+        return Common::validateCEP($cep);
     }
 
     /**
      * Get CEP pattern regex for validation
-     *
-     * Returns a regex pattern that can be used in HTML5 inputs or JavaScript validation
-     *
-     * @return string Regex pattern for CEP validation
      */
     public static function getCEPPattern(): string
     {

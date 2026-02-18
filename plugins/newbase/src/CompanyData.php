@@ -45,7 +45,7 @@ if (!defined('GLPI_ROOT')) {
 
 /**
  * CompanyData Class - Company data management for Newbase plugin
- * 
+ *
  * Extends Entity data with additional fields stored in glpi_plugin_newbase_company_extras.
  * Manages Brazilian company-specific data like CNPJ, corporate name, and fantasy name.
  *
@@ -337,7 +337,7 @@ class CompanyData extends CommonDBTM
      * @param array $options Dropdown options (name, value, etc.)
      * @return int|string Dropdown result
      */
-    public static function dropdown(array $options = []): int|string
+    public static function dropdown($options = [])
     {
         $defaults = [
             'name'    => 'entities_id',

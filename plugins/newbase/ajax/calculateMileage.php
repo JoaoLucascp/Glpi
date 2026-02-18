@@ -28,6 +28,8 @@
  * -------------------------------------------------------------------------
  */
 
+declare(strict_types=1);
+
 /**
  * AJAX Endpoint - Mileage Calculation
  *
@@ -52,122 +54,65 @@ include('../../../inc/includes.php');
 use GlpiPlugin\Newbase\Common;
 use GlpiPlugin\Newbase\Task;
 use GlpiPlugin\Newbase\Config;
+use GlpiPlugin\Newbase\AjaxHandler;
+use Session;
+use Toolbox;
 
-// Security headers
-header('Content-Type: application/json; charset=utf-8');
-header('Cache-Control: no-cache, must-revalidate');
-header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
-header('X-Content-Type-Options: nosniff');
-header('X-Frame-Options: SAMEORIGIN');
-header('X-XSS-Protection: 1; mode=block');
+// Set security headers
+AjaxHandler::setSecurityHeaders();
 
-/**
- * Send JSON response and exit
- * @param bool $success Success status
- * @param string $message Message
- * @param array $data Additional data
- * @param int $http_code HTTP status code
- */
-function sendResponse(bool $success, string $message, array $data = [], int $http_code = 200): void
-{
-    http_response_code($http_code);
-
-    $response = [
-        'success' => $success,
-        'message' => $message,
-    ];
-
-    if (!empty($data)) {
-        $response = array_merge($response, $data);
-    }
-
-    echo json_encode($response, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-    exit;
-}
-
-/**
- * Validate GPS coordinate
- * @param float $lat Latitude
- * @param float $lng Longitude
- * @return bool Valid coordinate
- */
-function validateCoordinate(float $lat, float $lng): bool
-{
-    // Validate latitude range (-90 to 90)
-    if ($lat < -90 || $lat > 90) {
-        return false;
-    }
-
-    // Validate longitude range (-180 to 180)
-    if ($lng < -180 || $lng > 180) {
-        return false;
-    }
-
-    return true;
-}
-
-// ===== AUTHENTICATION CHECK =====
-if (!Session::getLoginUserID()) {
-    sendResponse(false, __('Authentication required'), [], 401);
-}
-
-// ===== CHECK PERMISSIONS =====
-if (!Task::canView()) {
-    Toolbox::logInFile(
-        'newbase_plugin',
-        sprintf("User %d tried to calculate mileage without permission\n", Session::getLoginUserID())
-    );
-    sendResponse(false, __('You do not have permission to perform this action', 'newbase'), [], 403);
-}
-
-// ===== GET REQUEST METHOD =====
-$method = $_SERVER['REQUEST_METHOD'];
-
-// ===== GET REQUEST DATA =====
-$rawInput = file_get_contents('php://input');
-$input = json_decode($rawInput, true);
-
-// Handle non-JSON requests (fallback to POST/GET data)
-if ($input === null) {
-    $input = ($method === 'POST') ? $_POST : $_GET;
-}
-
-if (!is_array($input)) {
-    $input = [];
-}
-
-// ===== CSRF TOKEN VALIDATION (for POST) =====
-if ($method === 'POST') {
-    $csrf_token = $_SERVER['HTTP_X_GLPI_CSRF_TOKEN'] ?? $input['_glpi_csrf_token'] ?? '';
-
-    if (empty($csrf_token)) {
-        Toolbox::logInFile('newbase_plugin', "AJAX mileage calculation: CSRF token missing\n");
-        sendResponse(false, __('CSRF token is required', 'newbase'), [], 403);
-    }
-
-    // Validate CSRF token
-    try {
-        Session::checkCSRF(['_glpi_csrf_token' => $csrf_token]);
-    } catch (Exception $e) {
-        Toolbox::logInFile('newbase_plugin', "AJAX mileage calculation: Invalid CSRF token\n");
-        sendResponse(false, __('Invalid or expired security token', 'newbase'), [], 403);
-    }
-}
-
-// ===== CHECK IF FEATURE IS ENABLED =====
-$config = Config::getConfig();
-$calculate_mileage = $config['calculate_mileage'] ?? 1;
-
-if (!$calculate_mileage) {
-    sendResponse(false, __('Automatic mileage calculation is disabled', 'newbase'), [], 403);
-}
-
-// ===== PROCESS REQUEST =====
+// ===== MAIN EXECUTION =====
 
 try {
+    // ===== AUTHENTICATION CHECK =====
+    if (!Session::getLoginUserID()) {
+        AjaxHandler::sendResponse(false, __('Authentication required'), [], 401);
+    }
+
+    // ===== CHECK PERMISSIONS =====
+    if (!Task::canView()) {
+        Toolbox::logInFile(
+            'newbase_plugin',
+            sprintf("User %d tried to calculate mileage without permission\n", Session::getLoginUserID())
+        );
+        AjaxHandler::sendResponse(false, __('You do not have permission to perform this action', 'newbase'), [], 403);
+    }
+
+    // ===== GET REQUEST METHOD =====
+    $method = $_SERVER['REQUEST_METHOD'];
+
+    // ===== GET REQUEST DATA =====
+    $rawInput = file_get_contents('php://input');
+    $input = json_decode($rawInput, true);
+
+    // Handle non-JSON requests (fallback to POST/GET data)
+    if ($input === null) {
+        $input = ($method === 'POST') ? $_POST : $_GET;
+    }
+
+    if (!is_array($input)) {
+        $input = [];
+    }
+
+    // ===== CSRF TOKEN VALIDATION =====
+    if (!AjaxHandler::checkCSRFToken()) {
+        Toolbox::logInFile('newbase_plugin', "AJAX mileage calculation: Invalid CSRF token\n");
+        AjaxHandler::sendResponse(false, __('Invalid or expired security token', 'newbase'), [], 403);
+    }
+
+    // ===== CHECK IF FEATURE IS ENABLED =====
+    $config = Config::getConfig();
+    $calculate_mileage = $config['calculate_mileage'] ?? 1;
+
+    if (!$calculate_mileage) {
+        AjaxHandler::sendResponse(false, __('Automatic mileage calculation is disabled', 'newbase'), [], 403);
+    }
+
+    // ===== PROCESS REQUEST =====
+
     // Only allow POST and GET methods
     if (!in_array($method, ['POST', 'GET'], true)) {
-        sendResponse(
+        AjaxHandler::sendResponse(
             false,
             sprintf(__('Method %s not allowed', 'newbase'), $method),
             [],
@@ -183,7 +128,7 @@ try {
 
     // Validate all coordinates are present
     if ($lat1 === null || $lng1 === null || $lat2 === null || $lng2 === null) {
-        sendResponse(
+        AjaxHandler::sendResponse(
             false,
             __('All coordinates are required (lat1, lng1, lat2, lng2)', 'newbase'),
             [
@@ -205,9 +150,9 @@ try {
     $lat2 = (float) $lat2;
     $lng2 = (float) $lng2;
 
-    // Validate start coordinate
-    if (!validateCoordinate($lat1, $lng1)) {
-        sendResponse(
+    // Validate start coordinate using Common class
+    if (!Common::validateCoordinates($lat1, $lng1)) {
+        AjaxHandler::sendResponse(
             false,
             __('Invalid start coordinate', 'newbase'),
             [
@@ -219,9 +164,9 @@ try {
         );
     }
 
-    // Validate end coordinate
-    if (!validateCoordinate($lat2, $lng2)) {
-        sendResponse(
+    // Validate end coordinate using Common class
+    if (!Common::validateCoordinates($lat2, $lng2)) {
+        AjaxHandler::sendResponse(
             false,
             __('Invalid end coordinate', 'newbase'),
             [
@@ -235,7 +180,7 @@ try {
 
     // Check if coordinates are identical (distance would be 0)
     if ($lat1 === $lat2 && $lng1 === $lng2) {
-        sendResponse(
+        AjaxHandler::sendResponse(
             true,
             __('Coordinates are identical', 'newbase'),
             [
@@ -249,19 +194,15 @@ try {
     }
 
     // Calculate distance using Haversine formula
-    if (!class_exists('GlpiPlugin\\Newbase\\Common')) {
-        throw new Exception(__('Common class not found', 'newbase'));
-    }
-
     $distance = Common::calculateDistance($lat1, $lng1, $lat2, $lng2);
 
     // Validate result
     if (!is_numeric($distance) || $distance < 0) {
-        throw new Exception(__('Invalid distance calculation result', 'newbase'));
+        throw new \Exception(__('Invalid distance calculation result', 'newbase'));
     }
 
     // Success response
-    sendResponse(
+    AjaxHandler::sendResponse(
         true,
         __('Mileage calculated successfully', 'newbase'),
         [
@@ -292,14 +233,13 @@ try {
             )
         );
     }
-} catch (Exception $e) {
+} catch (\Exception $e) {
     // ===== ERROR HANDLING =====
 
     Toolbox::logInFile(
         'newbase_plugin',
         sprintf(
-            "ERROR in calculateMileage.php (%s): %s\n",
-            $method,
+            "ERROR in calculateMileage.php: %s\n",
             $e->getMessage()
         )
     );
@@ -312,7 +252,7 @@ try {
         $error_data['trace'] = $e->getTraceAsString();
     }
 
-    sendResponse(
+    AjaxHandler::sendResponse(
         false,
         __('An error occurred while calculating mileage', 'newbase'),
         $error_data,

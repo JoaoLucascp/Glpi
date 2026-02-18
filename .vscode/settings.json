@@ -44,5 +44,35 @@
         "**/.git/**",
         "**/.svn/**"
     ],
-    "intelephense.completion.fullyQualifyGlobalConstantsAndFunctions": false
+    "intelephense.completion.fullyQualifyGlobalConstantsAndFunctions": false,
+    "chat.tools.terminal.autoApprove": {
+        "/^cd \"d:\\\\laragon\\\\www\\\\glpi\" ; git add plugins/newbase/src/Task\\.php plugins/newbase/src/System\\.php plugins/newbase/src/Address\\.php plugins/newbase/src/CompanyData\\.php plugins/newbase/src/TaskSignature\\.php ; git commit -m \"\\$\\(cat <<'EOF'\nRefatoração PSR-12 v2\\.2\\.0: FASE 3 Completa - Type Hints em todos métodos críticos\n\n## FASE 3: Type Hints \\(PSR-12 Conformidade\\) ✅\n\n### 3\\.1 Task\\.php ✅ \n- Linha 460: prepareInputForAdd\\(array \\\\\\$input\\): array\\|bool\n- Linha 512: prepareInputForUpdate\\(array \\\\\\$input\\): array\\|bool\n- Linha 620: getTabNameForItem\\(CommonGLPI, int\\): string\\|array\n- Linha 753: dropdown\\(array\\): int\\|string\n- Guard clauses adicionadas\n\n### 3\\.2 System\\.php ✅\n- Linha 250: getSpecificValueToDisplay\\(string, mixed, array\\): string\n- Linha 359: prepareInputForAdd\\(array\\): array\\|bool\n- Linha 400: prepareInputForUpdate\\(array\\): array\\|bool\n- Linha 612: dropdown\\(array\\): int\\|string\n- Guard clauses adicionadas\n\n### 3\\.3 Address\\.php ✅\n- Linha 336: prepareInputForAdd\\(array\\): array\\|bool\n- Linha 409: prepareInputForUpdate\\(array\\): array\\|bool\n- Guard clauses adicionadas\n\n### 3\\.4 CompanyData\\.php ✅\n- Linha 340: dropdown\\(array\\): int\\|string\n\n### 3\\.5 TaskSignature\\.php ✅\n- Linha 659: getTabNameForItem\\(CommonGLPI, int\\): string\\|array\n\n## Impacto Total FASE 3:\n- 13 assinaturas de método atualizadas com type hints\n- Guard clauses adicionadas em 6 métodos\n- 100% conformidade PSR-12 em métodos públicos críticos\n\n## Progresso Geral: 60% \\(3\\.5 de 6 fases\\)\n\nPRÓXIMO: Refatoração de endpoints AJAX com AjaxHandler \\(FASE 5\\)\n\nCo-Authored-By: Claude <noreply@anthropic\\.com>\nEOF\n\\)\"$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^git add plugins/newbase/docs/DOCUMENTACAO_TECNICA_V2\\.1\\.0_ATUALIZADA\\.md ; git commit -m \"Documenta FASE 3 completa - Type Hints em 13 métodos críticos\"$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^git add plugins/newbase/src/Config\\.php ; git commit -m \"FASE 4: Melhorar PHPDoc em Config\\.php - validateBoolean\\(\\) documentado\"$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^cd \"d:\\\\laragon\\\\www\\\\glpi\" ; git add plugins/newbase/ajax/cnpj_proxy\\.php ; git commit -m \"FASE 5\\.1: Refatorar cnpj_proxy\\.php - usar AjaxHandler\n\n- Remover sendResponse\\(\\) duplicado \\(usar AjaxHandler::sendResponse\\)\n- Remover headers de segurança \\(usar AjaxHandler::setSecurityHeaders\\)\n- Remover curl_setopt_array duplicado \\(usar AjaxHandler::fetchCurl\\)\n- Remover CSRF manual \\(usar AjaxHandler::checkCSRFToken\\)\n- Adicionar declare\\(strict_types=1\\)\n- Linhas: 450 → 364 \\(redução de 20% \\| -86 linhas\\)\"$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^cd \"d:\\\\laragon\\\\www\\\\glpi\" ; git add plugins/newbase/ajax/searchAddress\\.php ; git commit -m \"FASE 5\\.2: Refatorar searchAddress\\.php - usar AjaxHandler\n\n- Remover sendResponse\\(\\) duplicado\n- Remover validateCEP\\(\\) duplicado \\(usar Common::validateCEP\\)\n- Remover headers de segurança \\(usar AjaxHandler::setSecurityHeaders\\)\n- Remover CSRF manual \\(usar AjaxHandler::checkCSRFToken\\)\n- Remover curl_setopt_array \\(usar AjaxHandler::fetchCurl\\)\n- Usar Common::formatCEP\\(\\) para formatação\n- Adicionar declare\\(strict_types=1\\)\n- Linhas: 408 → 279 \\(redução de 32% \\| -129 linhas\\)\"$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^php -l \"d:\\\\laragon\\\\www\\\\glpi\\\\plugins\\\\newbase\\\\src\\\\AjaxHandler\\.php\" ; php -l \"d:\\\\laragon\\\\www\\\\glpi\\\\plugins\\\\newbase\\\\src\\\\Common\\.php\" ; php -l \"d:\\\\laragon\\\\www\\\\glpi\\\\plugins\\\\newbase\\\\ajax\\\\cnpj_proxy\\.php\" ; php -l \"d:\\\\laragon\\\\www\\\\glpi\\\\plugins\\\\newbase\\\\ajax\\\\searchAddress\\.php\" ; php -l \"d:\\\\laragon\\\\www\\\\glpi\\\\plugins\\\\newbase\\\\ajax\\\\searchCompany\\.php\" ; php -l \"d:\\\\laragon\\\\www\\\\glpi\\\\plugins\\\\newbase\\\\ajax\\\\signatureUpload\\.php\" ; php -l \"d:\\\\laragon\\\\www\\\\glpi\\\\plugins\\\\newbase\\\\ajax\\\\calculateMileage\\.php\" ; php -l \"d:\\\\laragon\\\\www\\\\glpi\\\\plugins\\\\newbase\\\\ajax\\\\mapData\\.php\" ; php -l \"d:\\\\laragon\\\\www\\\\glpi\\\\plugins\\\\newbase\\\\ajax\\\\taskActions\\.php\"$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^powershell -NoProfile -Command \"Get-Content 'd:\\\\laragon\\\\www\\\\glpi\\\\plugins\\\\newbase\\\\docs\\\\DOCUMENTACAO_TECNICA_V2\\.1\\.0_ATUALIZADA\\.md' \\| Select-Object -Last 40 \\| nl -w3 -s': '\"$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
 }

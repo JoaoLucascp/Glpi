@@ -6,7 +6,7 @@ use GlpiPlugin\Newbase\System;
 use GlpiPlugin\Newbase\CompanyData;
 
 // 1. Verificação de Sessão
-Session::checkLoginUser();
+\Session::checkLoginUser();
 
 // 2. Instanciar Objeto
 $system = new System();
@@ -20,17 +20,17 @@ if (isset($_POST["add"])) {
     if ($newID = $system->add($_POST)) {
         // Redireciona para a empresa de origem (se houver), senão para o sistema criado
         if (isset($_POST['plugin_newbase_companydata_id']) && $_POST['plugin_newbase_companydata_id'] > 0) {
-            Html::redirect(CompanyData::getFormURLWithID($_POST['plugin_newbase_companydata_id']));
+            \Html::redirect(CompanyData::getFormURLWithID($_POST['plugin_newbase_companydata_id']));
         } else {
-            Html::redirect($system->getFormURLWithID($newID));
+            \Html::redirect($system->getFormURLWithID($newID));
         }
     }
-    Html::back();
+    \Html::back();
 
 } elseif (isset($_POST["update"])) {
     $system->check($_POST["id"], UPDATE);
     $system->update($_POST);
-    Html::back();
+    \Html::back();
 
 } elseif (isset($_POST["delete"])) {
     $system->check($_POST["id"], DELETE);
@@ -45,7 +45,7 @@ if (isset($_POST["add"])) {
 } elseif (isset($_POST["restore"])) {
     $system->check($_POST["id"], DELETE);
     $system->restore($_POST);
-    Html::back();
+    \Html::back();
 }
 
 // --- TRATAMENTO DE EXIBIÇÃO (GET) ---
@@ -55,8 +55,8 @@ $id = (int)($_GET['id'] ?? 0);
 $company_id = (int)($_GET['plugin_newbase_companydata_id'] ?? 0);
 
 // Cabeçalho
-Html::header(
-    System::getTypeName(Session::getPluralNumber()),
+\Html::header(
+    System::getTypeName(\Session::getPluralNumber()),
     $_SERVER['PHP_SELF'],
     'management',
     CompanyData::class,
@@ -71,4 +71,4 @@ if ($id === 0 && $company_id > 0) {
 // Exibir formulário (o método display() gerencia tudo automaticamente)
 $system->display($_GET);
 
-Html::footer();
+\Html::footer();

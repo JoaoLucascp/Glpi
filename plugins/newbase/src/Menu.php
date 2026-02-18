@@ -169,6 +169,18 @@ class Menu extends CommonGLPI
             }
         }
 
+        // Company data submenu (link for cadastro/edição/exclusão)
+        // 🔧 ERRO FIX: antendia relatórios onde o menu de empresas não aparecia.
+        // Foi esquecido ao montar o menu principal. Agora incluído com mesmo
+        // padrão de verificação de permissões usado nas outras entidades.
+        if (class_exists('GlpiPlugin\\Newbase\\CompanyData')) {
+            $menu['links']['company'] = CompanyData::getSearchURL(false);
+
+            if (CompanyData::canCreate()) {
+                $menu['links']['add_company'] = CompanyData::getFormURL(false);
+            }
+        }
+
         // Configuration link (only for admins)
         if (Session::haveRight('config', UPDATE)) {
             $menu['links']['config'] = '/plugins/newbase/front/config.form.php';
@@ -190,6 +202,22 @@ class Menu extends CommonGLPI
 
             if (Task::canCreate()) {
                 $menu['options']['task']['links']['add'] = Task::getFormURL(false);
+            }
+        }
+
+        // Company data option
+        if (class_exists('GlpiPlugin\\Newbase\\CompanyData')) {
+            $menu['options']['company'] = [
+                'title' => CompanyData::getTypeName(Session::getPluralNumber()),
+                'page'  => CompanyData::getSearchURL(false),
+                'icon'  => CompanyData::getIcon(),
+                'links' => [
+                    'search' => CompanyData::getSearchURL(false),
+                ],
+            ];
+
+            if (CompanyData::canCreate()) {
+                $menu['options']['company']['links']['add'] = CompanyData::getFormURL(false);
             }
         }
 

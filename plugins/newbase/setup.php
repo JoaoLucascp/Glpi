@@ -51,39 +51,51 @@ function plugin_init_newbase(): void
     $PLUGIN_HOOKS['csrf_compliant']['newbase'] = true;
 
     // Plugin requires login
-    $plugin = new Plugin();
+    $plugin = new \Plugin();
     if (!$plugin->isInstalled('newbase') || !$plugin->isActivated('newbase')) {
         return;
     }
 
     // Add specific CSS
-    $PLUGIN_HOOKS['add_css']['newbase'][] = 'css/newbase.css';
+    // we may include several stylesheets used by the plugin
+    $PLUGIN_HOOKS['add_css']['newbase'] = [
+        'css/newbase.css',
+        'css/forms.css',
+        'css/responsive.css'
+    ];
 
-    // Add specific JavaScript
-    $PLUGIN_HOOKS['add_javascript']['newbase'][] = 'js/newbase.js';
+    // Add specific JavaScript files
+    $PLUGIN_HOOKS['add_javascript']['newbase'] = [
+        'js/newbase.js',
+        'js/forms.js',
+        'js/mileage.js',
+        'js/map.js',
+        'js/signature.js'
+    ];
 
     // Register classes for autoload and rights management
-    Plugin::registerClass('GlpiPlugin\\Newbase\\Address', [
+    \Plugin::registerClass('GlpiPlugin\\Newbase\\Address', [
         'addtabon' => ['Entity']
     ]);
-    Plugin::registerClass('GlpiPlugin\\Newbase\\CompanyData', [
+    \Plugin::registerClass('GlpiPlugin\\Newbase\\CompanyData', [
         'addtabon' => ['Entity']
     ]);
-    Plugin::registerClass('GlpiPlugin\\Newbase\\System');
-    Plugin::registerClass('GlpiPlugin\\Newbase\\Task');
-    Plugin::registerClass('GlpiPlugin\\Newbase\\TaskSignature');
-    Plugin::registerClass('GlpiPlugin\\Newbase\\Config');
+    \Plugin::registerClass('GlpiPlugin\\Newbase\\System');
+    \Plugin::registerClass('GlpiPlugin\\Newbase\\Task');
+    \Plugin::registerClass('GlpiPlugin\\Newbase\\TaskSignature');
+    \Plugin::registerClass('GlpiPlugin\\Newbase\\Config');
+    \Plugin::registerClass('GlpiPlugin\\Newbase\\Menu');
 
     // Menu entries - Check if user has rights
-    if (Session::haveRight('plugin_newbase', READ)) {
-        // Add to Management menu (Gerenciar)
+    if (\Session::haveRight('plugin_newbase', READ)) {
+        // Add to Plugins menu group
         $PLUGIN_HOOKS['menu_toadd']['newbase'] = [
-            'management' => 'GlpiPlugin\\Newbase\\Menu'
+            'plugins' => 'GlpiPlugin\\Newbase\\Menu'
         ];
     }
 
     // Configuration page
-    if (Session::haveRight('config', UPDATE)) {
+    if (\Session::haveRight('config', UPDATE)) {
         $PLUGIN_HOOKS['config_page']['newbase'] = 'front/config.php';
     }
 
@@ -181,14 +193,13 @@ function plugin_newbase_check_config(bool $verbose = false): bool
 {
     global $DB;
 
-    // Check if required tables exist
+    // 1) Verifica se as tabelas essenciais existem (sem a antiga tabela de config)
     $required_tables = [
         'glpi_plugin_newbase_addresses',
         'glpi_plugin_newbase_systems',
         'glpi_plugin_newbase_tasks',
         'glpi_plugin_newbase_task_signatures',
         'glpi_plugin_newbase_company_extras',
-        'glpi_plugin_newbase_config'
     ];
 
     foreach ($required_tables as $table) {
@@ -203,23 +214,13 @@ function plugin_newbase_check_config(bool $verbose = false): bool
         }
     }
 
-    // Check if configuration table has required keys
-    $required_configs = [
-        'enable_signature',
-        'require_signature',
-        'enable_gps',
-        'calculate_mileage',
-        'default_map_zoom'
-    ];
+    // 2) Verifica se existe configuração gravada em glpi_configs (contexto plugin:newbase)
+    $conf = \Config::getConfigurationValues('plugin:newbase');
 
-    $result = $DB->request([
-        'FROM' => 'glpi_plugin_newbase_config',
-        'WHERE' => ['config_key' => $required_configs]
-    ]);
 
-    if (count($result) < count($required_configs)) {
+    if (empty($conf)) {
         if ($verbose) {
-            echo __('Configuration table is missing required keys', 'newbase');
+            echo __('Plugin is installed but not configured yet', 'newbase');
         }
         return false;
     }

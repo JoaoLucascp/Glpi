@@ -41,6 +41,8 @@ use Entity;
 use Dropdown;
 use Plugin;
 use Toolbox;
+use Glpi\Application\View\Template\Template;
+use GlpiPlugin\Newbase\Common; // Importante para validações centralizadas
 
 if (!defined('GLPI_ROOT')) {
     die("Sorry. You can't access this file directly");
@@ -48,12 +50,12 @@ if (!defined('GLPI_ROOT')) {
 
 /**
  * Task - Manages field tasks with geolocation, signatures, and mileage tracking
- * 
+ *
  * Features:
  * - GPS tracking (start and end coordinates)
  * - Automatic mileage calculation
  * - Digital signatures
- * - Status workflow (new → assigned → in progress → completed)
+ * - Status workflow (new, assigned, in progress, completed)
  * - Assignment to users
  * - Links to addresses and systems
  *
@@ -115,15 +117,12 @@ class Task extends CommonDBTM
             return $menu;
         }
 
-        // Menu configuration
         $menu['title'] = self::getTypeName(2);
         $menu['page']  = self::getSearchURL(false);
         $menu['icon']  = self::getIcon();
 
         // Add links
-        $menu['links'] = [
-            'search' => self::getSearchURL(false),
-        ];
+        $menu['links']['search'] = self::getSearchURL(false);
 
         // Add form link if user can create
         if (self::canCreate()) {
@@ -135,17 +134,17 @@ class Task extends CommonDBTM
 
     /**
      * Get task statuses
-     * @return array Task statuses [key => label]
+     * @return array Task statuses (key => label)
      */
     public static function getStatuses(): array
     {
         return [
-            'new'         => __('New', 'newbase'),
-            'assigned'    => __('Assigned', 'newbase'),
-            'in_progress' => __('In Progress', 'newbase'),
-            'pending'     => __('Pending', 'newbase'),
-            'completed'   => __('Completed', 'newbase'),
-            'cancelled'   => __('Cancelled', 'newbase'),
+            'new'        => __('New', 'newbase'),
+            'assigned'   => __('Assigned', 'newbase'),
+            'inprogress' => __('In Progress', 'newbase'),
+            'pending'    => __('Pending', 'newbase'),
+            'completed'  => __('Completed', 'newbase'),
+            'cancelled'  => __('Cancelled', 'newbase'),
         ];
     }
 
@@ -205,7 +204,7 @@ class Task extends CommonDBTM
             'field'      => 'status',
             'name'       => __('Status'),
             'datatype'   => 'specific',
-            'searchtype' => ['equals'],
+            'searchtype' => 'equals',
         ];
 
         $tab[] = [
@@ -257,10 +256,9 @@ class Task extends CommonDBTM
 
     /**
      * Display specific value for search result
-     * 
      * @param string $field Field name
-     * @param array  $values Values
-     * @param array  $options Options
+     * @param array $values Values
+     * @param array $options Options
      * @return string Formatted value
      */
     public static function getSpecificValueToDisplay($field, $values, array $options = []): string
@@ -280,11 +278,11 @@ class Task extends CommonDBTM
 
     /**
      * Display form for task
-     * @param int   $ID      Item ID (0 for new)
+     * @param int $ID Item ID (0 for new)
      * @param array $options Additional options
      * @return bool Success
      */
-    public function showForm($ID, array $options = []): bool
+    public function showForm($ID, array $options = [])
     {
         $this->initForm($ID, $options);
 
@@ -292,77 +290,51 @@ class Task extends CommonDBTM
             return false;
         }
 
-        // Get entities_id (prioritize GET parameter)
-        $entities_id = $_GET['entities_id'] ?? $options['entities_id'] ?? $this->fields['entities_id'] ?? $_SESSION['glpiactive_entity'];
+        // Get entities_id (prioritize GET parameter SAFELY)
+        // CORREÇÃO 1: Sanitização do GET
+        $get_entity = filter_input(INPUT_GET, 'entities_id', FILTER_VALIDATE_INT);
+        $entities_id = $get_entity ?? $options['entities_id'] ?? $this->fields['entities_id'] ?? $_SESSION['glpiactiveentity'];
 
         $this->showFormHeader($options);
 
         // BASIC INFORMATION
         echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __('Title', 'newbase') . " <span class='red'>*</span></td>";
+        echo "<td>" . __('Title', 'newbase') . "<span class='red'>*</span></td>";
         echo "<td>";
-        echo Html::input('title', [
-            'value' => $this->fields['title'] ?? '',
-            'size'  => 50,
-        ]);
+        echo Html::input('title', ['value' => $this->fields['title'] ?? '', 'size' => 50]);
         echo "</td>";
-        echo "<td>" . __('Status') . " <span class='red'>*</span></td>";
+        echo "<td>" . __('Status') . "<span class='red'>*</span></td>";
         echo "<td>";
-        Dropdown::showFromArray('status', self::getStatuses(), [
-            'value' => $this->fields['status'] ?? 'new',
-        ]);
+        Dropdown::showFromArray('status', self::getStatuses(), ['value' => $this->fields['status'] ?? 'new']);
         echo "</td>";
         echo "</tr>";
 
         echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __('Company', 'newbase') . " <span class='red'>*</span></td>";
+        echo "<td>" . __('Company', 'newbase') . "<span class='red'>*</span></td>";
         echo "<td>";
-        Entity::dropdown([
-            'name'   => 'entities_id',
-            'value'  => $entities_id,
-            'entity' => $entities_id,
-        ]);
+        Entity::dropdown(['name' => 'entities_id', 'value' => $entities_id, 'entity' => $entities_id]);
         echo "</td>";
         echo "<td>" . __('Assigned to', 'newbase') . "</td>";
         echo "<td>";
-        User::dropdown([
-            'name'   => 'users_id',
-            'value'  => $this->fields['users_id'] ?? Session::getLoginUserID(),
-            'right'  => 'all',
-            'entity' => $entities_id,
-        ]);
+        User::dropdown(['name' => 'users_id', 'value' => $this->fields['users_id'] ?? Session::getLoginUserID(), 'right' => 'all', 'entity' => $entities_id]);
         echo "</td>";
         echo "</tr>";
 
         echo "<tr class='tab_bg_1'>";
         echo "<td>" . __('Address', 'newbase') . "</td>";
         echo "<td>";
-        if (class_exists('GlpiPlugin\\Newbase\\Address')) {
-            Address::dropdown([
-                'name'   => 'plugin_newbase_addresses_id',
-                'value'  => $this->fields['plugin_newbase_addresses_id'] ?? 0,
-                'entity' => $entities_id,
-            ]);
+        if (class_exists('GlpiPlugin\Newbase\Address')) {
+            Dropdown::show('GlpiPlugin\Newbase\Address', ['name' => 'plugin_newbase_addresses_id', 'value' => $this->fields['plugin_newbase_addresses_id'] ?? 0, 'entity' => $entities_id]);
         } else {
-            echo Html::input('plugin_newbase_addresses_id', [
-                'value' => $this->fields['plugin_newbase_addresses_id'] ?? 0,
-                'type'  => 'number',
-            ]);
+            echo Html::input('plugin_newbase_addresses_id', ['value' => $this->fields['plugin_newbase_addresses_id'] ?? 0, 'type' => 'number']);
         }
         echo "</td>";
         echo "<td>" . __('System', 'newbase') . "</td>";
         echo "<td>";
-        if (class_exists('GlpiPlugin\\Newbase\\System')) {
-            System::dropdown([
-                'name'   => 'plugin_newbase_systems_id',
-                'value'  => $this->fields['plugin_newbase_systems_id'] ?? 0,
-                'entity' => $entities_id,
-            ]);
+        if (class_exists('GlpiPlugin\Newbase\System')) {
+            Dropdown::show('GlpiPlugin\Newbase\System', ['name' => 'plugin_newbase_systems_id', 'value' => $this->fields['plugin_newbase_systems_id'] ?? 0, 'entity' => $entities_id]);
         } else {
-            echo Html::input('plugin_newbase_systems_id', [
-                'value' => $this->fields['plugin_newbase_systems_id'] ?? 0,
-                'type'  => 'number',
-            ]);
+            echo Html::input('plugin_newbase_systems_id', ['value' => $this->fields['plugin_newbase_systems_id'] ?? 0, 'type' => 'number']);
         }
         echo "</td>";
         echo "</tr>";
@@ -371,15 +343,11 @@ class Task extends CommonDBTM
         echo "<tr class='tab_bg_1'>";
         echo "<td>" . __('Start date', 'newbase') . "</td>";
         echo "<td>";
-        Html::showDateTimeField('date_start', [
-            'value' => $this->fields['date_start'] ?? '',
-        ]);
+        Html::showDateTimeField('date_start', ['value' => $this->fields['date_start'] ?? '']);
         echo "</td>";
         echo "<td>" . __('End date', 'newbase') . "</td>";
         echo "<td>";
-        Html::showDateTimeField('date_end', [
-            'value' => $this->fields['date_end'] ?? '',
-        ]);
+        Html::showDateTimeField('date_end', ['value' => $this->fields['date_end'] ?? '']);
         echo "</td>";
         echo "</tr>";
 
@@ -387,12 +355,7 @@ class Task extends CommonDBTM
         echo "<tr class='tab_bg_1'>";
         echo "<td>" . __('Description') . "</td>";
         echo "<td colspan='3'>";
-        echo Html::textarea([
-            'name'  => 'description',
-            'value' => $this->fields['description'] ?? '',
-            'cols'  => 80,
-            'rows'  => 4,
-        ]);
+        echo Html::textarea(['name' => 'description', 'value' => $this->fields['description'] ?? '', 'cols' => 80, 'rows' => 4]);
         echo "</td>";
         echo "</tr>";
 
@@ -401,23 +364,14 @@ class Task extends CommonDBTM
             echo "<tr class='tab_bg_1'>";
             echo "<td>" . __('Mileage (km)', 'newbase') . "</td>";
             echo "<td>";
-            echo Html::input('mileage', [
-                'value' => $this->fields['mileage'] ?? '',
-                'type'  => 'number',
-                'step'  => '0.01',
-                'min'   => '0',
-            ]);
+            echo Html::input('mileage', ['value' => $this->fields['mileage'] ?? '', 'type' => 'number', 'step' => '0.01', 'min' => 0]);
             echo "</td>";
             echo "<td>" . __('GPS Start', 'newbase') . "</td>";
             echo "<td>";
             if (!empty($this->fields['gps_start_lat']) && !empty($this->fields['gps_start_lng'])) {
-                echo sprintf(
-                    '%.6f, %.6f',
-                    $this->fields['gps_start_lat'],
-                    $this->fields['gps_start_lng']
-                );
+                echo sprintf('%.6f, %.6f', $this->fields['gps_start_lat'], $this->fields['gps_start_lng']);
             } else {
-                echo '-';
+                echo "-";
             }
             echo "</td>";
             echo "</tr>";
@@ -426,13 +380,9 @@ class Task extends CommonDBTM
             echo "<td>" . __('GPS End', 'newbase') . "</td>";
             echo "<td>";
             if (!empty($this->fields['gps_end_lat']) && !empty($this->fields['gps_end_lng'])) {
-                echo sprintf(
-                    '%.6f, %.6f',
-                    $this->fields['gps_end_lat'],
-                    $this->fields['gps_end_lng']
-                );
+                echo sprintf('%.6f, %.6f', $this->fields['gps_end_lat'], $this->fields['gps_end_lng']);
             } else {
-                echo '-';
+                echo "-";
             }
             echo "</td>";
             echo "<td>" . __('Signature', 'newbase') . "</td>";
@@ -447,43 +397,35 @@ class Task extends CommonDBTM
         }
 
         $this->showFormButtons($options);
-
         return true;
     }
 
     /**
      * Prepare input for add
-     *
      * @param array $input Input data from form
      * @return array|bool Prepared input or false on error
      */
-    public function prepareInputForAdd(array $input): array|bool
+    public function prepareInputForAdd($input)
     {
         // Guard clause: validate input is array
         if (empty($input)) {
             return false;
         }
+
         // Validate status
         if (isset($input['status'])) {
             $validStatuses = array_keys(self::getStatuses());
             if (!in_array($input['status'], $validStatuses, true)) {
-                Session::addMessageAfterRedirect(
-                    __('Invalid task status', 'newbase'),
-                    false,
-                    ERROR
-                );
+                Session::addMessageAfterRedirect(__('Invalid task status', 'newbase'), false, ERROR);
                 return false;
             }
         }
 
         // Validate GPS coordinates if provided
+        // CORREÇÃO 2: Usar Common::validateCoordinates
         if (!empty($input['gps_start_lat']) && !empty($input['gps_start_lng'])) {
-            if (!$this->validateCoordinates($input['gps_start_lat'], $input['gps_start_lng'])) {
-                Session::addMessageAfterRedirect(
-                    __('Invalid GPS coordinates', 'newbase'),
-                    false,
-                    ERROR
-                );
+            if (!Common::validateCoordinates((float)$input['gps_start_lat'], (float)$input['gps_start_lng'])) {
+                Session::addMessageAfterRedirect(__('Invalid GPS coordinates', 'newbase'), false, ERROR);
                 return false;
             }
         }
@@ -491,11 +433,7 @@ class Task extends CommonDBTM
         // Validate dates
         if (!empty($input['date_start']) && !empty($input['date_end'])) {
             if (strtotime($input['date_end']) < strtotime($input['date_start'])) {
-                Session::addMessageAfterRedirect(
-                    __('End date must be after start date', 'newbase'),
-                    false,
-                    ERROR
-                );
+                Session::addMessageAfterRedirect(__('End date must be after start date', 'newbase'), false, ERROR);
                 return false;
             }
         }
@@ -505,25 +443,21 @@ class Task extends CommonDBTM
 
     /**
      * Prepare input for update
-     *
      * @param array $input Input data from form
      * @return array|bool Prepared input or false on error
      */
-    public function prepareInputForUpdate(array $input): array|bool
+    public function prepareInputForUpdate($input)
     {
         // Guard clause: validate input is array
         if (empty($input)) {
             return false;
         }
+
         // Validate status if provided
         if (isset($input['status'])) {
             $validStatuses = array_keys(self::getStatuses());
             if (!in_array($input['status'], $validStatuses, true)) {
-                Session::addMessageAfterRedirect(
-                    __('Invalid task status', 'newbase'),
-                    false,
-                    ERROR
-                );
+                Session::addMessageAfterRedirect(__('Invalid task status', 'newbase'), false, ERROR);
                 return false;
             }
         }
@@ -531,15 +465,11 @@ class Task extends CommonDBTM
         // Validate dates
         if (isset($input['date_start']) || isset($input['date_end'])) {
             $start = $input['date_start'] ?? $this->fields['date_start'];
-            $end = $input['date_end'] ?? $this->fields['date_end'];
+            $end   = $input['date_end'] ?? $this->fields['date_end'];
 
             if (!empty($start) && !empty($end)) {
                 if (strtotime($end) < strtotime($start)) {
-                    Session::addMessageAfterRedirect(
-                        __('End date must be after start date', 'newbase'),
-                        false,
-                        ERROR
-                    );
+                    Session::addMessageAfterRedirect(__('End date must be after start date', 'newbase'), false, ERROR);
                     return false;
                 }
             }
@@ -547,60 +477,37 @@ class Task extends CommonDBTM
 
         // Calculate mileage if GPS end is set
         if (!empty($input['gps_end_lat']) && !empty($input['gps_end_lng'])) {
-            if ($this->validateCoordinates($input['gps_end_lat'], $input['gps_end_lng'])) {
-                if (!empty($this->fields['gps_start_lat']) && !empty($this->fields['gps_start_lng'])) {
-                    if (class_exists('GlpiPlugin\\Newbase\\Common')) {
-                        $input['mileage'] = Common::calculateDistance(
-                            (float) $this->fields['gps_start_lat'],
-                            (float) $this->fields['gps_start_lng'],
-                            (float) $input['gps_end_lat'],
-                            (float) $input['gps_end_lng']
-                        );
-                    }
-                }
+            // CORREÇÃO 2: Usar Common::validateCoordinates
+            if (!Common::validateCoordinates((float)$input['gps_end_lat'], (float)$input['gps_end_lng'])) {
+                Session::addMessageAfterRedirect(__('Invalid GPS coordinates', 'newbase'), false, ERROR);
+                return false;
+            }
+
+            if (!empty($this->fields['gps_start_lat']) && !empty($this->fields['gps_start_lng'])) {
+                // CORREÇÃO 3: Calcular distância com Common
+                $input['mileage'] = Common::calculateDistance(
+                    (float) $this->fields['gps_start_lat'],
+                    (float) $this->fields['gps_start_lng'],
+                    (float) $input['gps_end_lat'],
+                    (float) $input['gps_end_lng']
+                );
             }
         }
 
         return parent::prepareInputForUpdate($input);
     }
 
-    /**
-     * Validate GPS coordinates
-     * @param mixed $lat Latitude
-     * @param mixed $lng Longitude
-     * @return bool Valid coordinates
-     */
-    private function validateCoordinates(mixed $lat, mixed $lng): bool
-    {
-        if (!is_numeric($lat) || !is_numeric($lng)) {
-            return false;
-        }
-
-        $lat = (float) $lat;
-        $lng = (float) $lng;
-
-        // Validate latitude range (-90 to 90)
-        if ($lat < -90 || $lat > 90) {
-            return false;
-        }
-
-        // Validate longitude range (-180 to 180)
-        if ($lng < -180 || $lng > 180) {
-            return false;
-        }
-
-        return true;
-    }
+    // MÉTODO DE VALIDAÇÃO PRIVADO REMOVIDO (DRY)
 
     /**
      * Actions after adding item
      */
-    public function post_addItem(): void
+    public function post_addItem()
     {
         Toolbox::logInFile(
             'newbase_plugin',
             sprintf(
-                "Task added: ID=%d, Title=%s, Status=%s, Entity=%d, User=%d\n",
+                "Task added: ID=%d, Title=%s, Status=%s, Entity=%d, User=%d",
                 $this->fields['id'],
                 $this->fields['title'],
                 $this->fields['status'],
@@ -612,19 +519,15 @@ class Task extends CommonDBTM
 
     /**
      * Get tab name for item
-     *
      * @param CommonGLPI $item Item
      * @param int $withtemplate Template mode
      * @return string|array Tab name or empty if not applicable
      */
-    public function getTabNameForItem(CommonGLPI $item, int $withtemplate = 0): string|array
+    public function getTabNameForItem(CommonGLPI $item, $withtemplate = 0)
     {
         if ($item instanceof Entity) {
-            if ($_SESSION['glpishow_count_on_tabs'] ?? false) {
-                return self::createTabEntry(
-                    self::getTypeName(Session::getPluralNumber()),
-                    self::countForItem($item)
-                );
+            if ($_SESSION['glpi_use_mode'] == Session::DEBUG_MODE) {
+                return self::getTypeName(Session::getPluralNumber()) . " (Debug)";
             }
             return self::getTypeName(Session::getPluralNumber());
         }
@@ -638,7 +541,7 @@ class Task extends CommonDBTM
      * @param int $withtemplate Template mode
      * @return bool Success
      */
-    public static function displayTabContentForItem(CommonGLPI $item, $tabnum = 1, $withtemplate = 0): bool
+    public static function displayTabContentForItem(CommonGLPI $item, $tabnum = 1, $withtemplate = 0)
     {
         if ($item instanceof Entity) {
             self::showForEntity($item);
@@ -648,37 +551,21 @@ class Task extends CommonDBTM
     }
 
     /**
-     * Count tasks for an entity
-     * @param CommonDBTM $item Entity item
-     * @return int Count
-     */
-    public static function countForItem(CommonDBTM $item): int
-    {
-        return countElementsInTable(
-            self::getTable(),
-            [
-                'entities_id' => $item->getID(),
-                'is_deleted'  => 0,
-            ]
-        );
-    }
-
-    /**
      * Show tasks for an entity
      * @param Entity $entity Entity
      * @return void
      */
-    public static function showForEntity(Entity $entity): void
+    public static function showForEntity(Entity $entity)
     {
         global $DB;
 
-        $entity_id = $entity->getID();
-        $canedit = $entity->canUpdate();
+        $entityID = $entity->getID();
+        $canedit  = $entity->canUpdate();
 
-        // Add button
+        // Add button if can edit
         if ($canedit) {
             echo "<div class='center firstbloc'>";
-            echo "<a class='btn btn-primary' href='" . self::getFormURL() . "?entities_id=$entity_id'>";
+            echo "<a class='btn btn-primary' href='" . self::getFormURL() . "?entities_id=$entityID'>";
             echo "<i class='ti ti-plus'></i> " . __('Add a task', 'newbase');
             echo "</a>";
             echo "</div>";
@@ -686,27 +573,19 @@ class Task extends CommonDBTM
 
         // Get tasks
         $iterator = $DB->request([
-            'SELECT'    => [
-                self::getTable() . '.*',
-                'glpi_users.name AS username',
-            ],
+            'SELECT'    => [self::getTable() . '.*', 'glpi_users.name AS user_name'],
             'FROM'      => self::getTable(),
             'LEFT JOIN' => [
-                'glpi_users' => [
-                    'ON' => [
-                        self::getTable() => 'users_id',
-                        'glpi_users'     => 'id',
-                    ],
-                ],
+                'glpi_users' => ['ON' => [self::getTable() => 'users_id', 'glpi_users' => 'id']]
             ],
             'WHERE'     => [
-                self::getTable() . '.entities_id' => $entity_id,
-                self::getTable() . '.is_deleted'  => 0,
+                self::getTable() . '.entities_id' => $entityID,
+                self::getTable() . '.is_deleted' => 0
             ],
-            'ORDER'     => [self::getTable() . '.date_start DESC'],
+            'ORDER'     => [self::getTable() . '.date_start DESC']
         ]);
 
-        if (count($iterator) === 0) {
+        if (count($iterator) == 0) {
             echo "<div class='center'>";
             echo "<p>" . __('No task found', 'newbase') . "</p>";
             echo "</div>";
@@ -729,13 +608,14 @@ class Task extends CommonDBTM
         echo "</tr></thead><tbody>";
 
         foreach ($iterator as $data) {
-            echo "<tr>";
+            echo "tr";
             echo "<td>{$data['id']}</td>";
             echo "<td><a href='" . self::getFormURLWithID($data['id']) . "'><i class='ti ti-checkbox'></i> " . htmlspecialchars($data['title']) . "</a></td>";
             echo "<td>" . ($statuses[$data['status']] ?? $data['status']) . "</td>";
-            echo "<td>" . ($data['username'] ?? '-') . "</td>";
+            echo "<td>" . ($data['user_name'] ?? '-') . "</td>";
             echo "<td>" . Html::convDateTime($data['date_start']) . "</td>";
             echo "<td>" . ($data['date_end'] ? Html::convDateTime($data['date_end']) : '-') . "</td>";
+            
             $mileage = $data['mileage'] ? number_format((float) $data['mileage'], 2, ',', '.') : '-';
             echo "<td>{$mileage}</td>";
             echo "</tr>";
@@ -746,18 +626,16 @@ class Task extends CommonDBTM
 
     /**
      * Dropdown for task selection
-     *
-     * @param array $options Dropdown options (name, value, etc.)
+     * @param array $options Dropdown options
      * @return int|string Dropdown result
      */
-    public static function dropdown(array $options = []): int|string
+    public static function dropdown($options = [])
     {
         $defaults = [
             'name'   => 'plugin_newbase_tasks_id',
             'value'  => 0,
-            'entity' => $_SESSION['glpiactive_entity'],
+            'entity' => $_SESSION['glpi_active_entity'],
         ];
-
         $options = array_merge($defaults, $options);
 
         return Dropdown::show(self::class, $options);

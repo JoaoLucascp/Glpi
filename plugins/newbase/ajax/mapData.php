@@ -28,6 +28,8 @@
  * -------------------------------------------------------------------------
  */
 
+declare(strict_types=1);
+
 /**
  * AJAX Endpoint - Map Data for Task Geolocation
  *
@@ -50,45 +52,20 @@ include('../../../inc/includes.php');
 
 use GlpiPlugin\Newbase\Task;
 use GlpiPlugin\Newbase\Config;
+use GlpiPlugin\Newbase\AjaxHandler;
+use Session;
+use Toolbox;
 
 if (!defined('GLPI_ROOT')) {
     die("Sorry. You can't access this file directly");
 }
 
-// Security headers
-header('Content-Type: application/json; charset=utf-8');
-header('Cache-Control: no-cache, must-revalidate');
-header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
-header('X-Content-Type-Options: nosniff');
-header('X-Frame-Options: SAMEORIGIN');
-header('X-XSS-Protection: 1; mode=block');
-
-/**
- * Send JSON response and exit
- * @param bool $success Success status
- * @param string $message Message
- * @param array $data Additional data
- * @param int $http_code HTTP status code
- */
-function sendResponse(bool $success, string $message, array $data = [], int $http_code = 200): void
-{
-    http_response_code($http_code);
-
-    $response = [
-        'success' => $success,
-        'message' => $message,
-    ];
-
-    if (!empty($data)) {
-        $response['data'] = $data;
-    }
-
-    echo json_encode($response, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-    exit;
-}
+// Set security headers
+AjaxHandler::setSecurityHeaders();
 
 /**
  * Get map configuration from plugin settings
+ *
  * @return array Map configuration
  */
 function getMapConfig(): array
@@ -110,6 +87,7 @@ function getMapConfig(): array
 
 /**
  * Calculate geographic bounds from coordinates
+ *
  * @param array $markers Array of markers with lat/lng
  * @return array|null Bounds or null if no markers
  */
@@ -138,68 +116,57 @@ function calculateBounds(array $markers): ?array
     ];
 }
 
-// ===== AUTHENTICATION CHECK =====
-if (!Session::getLoginUserID()) {
-    sendResponse(false, __('Authentication required'), [], 401);
-}
-
-// ===== CHECK PERMISSIONS =====
-if (!Task::canView()) {
-    Toolbox::logInFile(
-        'newbase_plugin',
-        sprintf("User %d tried to access map data without permission\n", Session::getLoginUserID())
-    );
-    sendResponse(false, __('You do not have permission to view tasks', 'newbase'), [], 403);
-}
-
-// ===== CHECK IF GPS FEATURE IS ENABLED =====
-$config = Config::getConfig();
-$enable_gps = $config['enable_gps'] ?? 1;
-
-if (!$enable_gps) {
-    sendResponse(false, __('GPS tracking feature is disabled', 'newbase'), [], 403);
-}
-
-// ===== GET REQUEST METHOD =====
-$method = $_SERVER['REQUEST_METHOD'];
-
-// ===== GET REQUEST DATA =====
-$input = ($method === 'POST') ? $_POST : $_GET;
-
-// Support JSON input
-if ($method === 'POST') {
-    $rawInput = file_get_contents('php://input');
-    $jsonInput = json_decode($rawInput, true);
-    if (is_array($jsonInput)) {
-        $input = array_merge($input, $jsonInput);
-    }
-}
-
-// ===== CSRF TOKEN VALIDATION (for POST) =====
-if ($method === 'POST') {
-    $csrf_token = $_SERVER['HTTP_X_GLPI_CSRF_TOKEN'] ?? $input['_glpi_csrf_token'] ?? '';
-
-    if (empty($csrf_token)) {
-        Toolbox::logInFile('newbase_plugin', "AJAX map data: CSRF token missing\n");
-        sendResponse(false, __('CSRF token is required', 'newbase'), [], 403);
-    }
-
-    try {
-        Session::checkCSRF(['_glpi_csrf_token' => $csrf_token]);
-    } catch (Exception $e) {
-        Toolbox::logInFile('newbase_plugin', "AJAX map data: Invalid CSRF token\n");
-        sendResponse(false, __('Invalid or expired security token', 'newbase'), [], 403);
-    }
-}
-
-// ===== PROCESS REQUEST =====
+// ===== MAIN EXECUTION =====
 
 try {
     global $DB;
 
+    // ===== AUTHENTICATION CHECK =====
+    if (!Session::getLoginUserID()) {
+        AjaxHandler::sendResponse(false, __('Authentication required'), [], 401);
+    }
+
+    // ===== CHECK PERMISSIONS =====
+    if (!Task::canView()) {
+        Toolbox::logInFile(
+            'newbase_plugin',
+            sprintf("User %d tried to access map data without permission\n", Session::getLoginUserID())
+        );
+        AjaxHandler::sendResponse(false, __('You do not have permission to view tasks', 'newbase'), [], 403);
+    }
+
+    // ===== CHECK IF GPS FEATURE IS ENABLED =====
+    $config = Config::getConfig();
+    $enable_gps = $config['enable_gps'] ?? 1;
+
+    if (!$enable_gps) {
+        AjaxHandler::sendResponse(false, __('GPS tracking feature is disabled', 'newbase'), [], 403);
+    }
+
+    // ===== GET REQUEST METHOD =====
+    $method = $_SERVER['REQUEST_METHOD'];
+
+    // ===== GET REQUEST DATA =====
+    $input = ($method === 'POST') ? $_POST : $_GET;
+
+    // Support JSON input
+    if ($method === 'POST') {
+        $rawInput = file_get_contents('php://input');
+        $jsonInput = json_decode($rawInput, true);
+        if (is_array($jsonInput)) {
+            $input = array_merge($input, $jsonInput);
+        }
+    }
+
+    // ===== CSRF TOKEN VALIDATION =====
+    if (!AjaxHandler::checkCSRFToken()) {
+        Toolbox::logInFile('newbase_plugin', "AJAX map data: Invalid CSRF token\n");
+        AjaxHandler::sendResponse(false, __('Invalid or expired security token', 'newbase'), [], 403);
+    }
+
     // Only allow POST and GET methods
     if (!in_array($method, ['POST', 'GET'], true)) {
-        sendResponse(
+        AjaxHandler::sendResponse(
             false,
             sprintf(__('Method %s not allowed', 'newbase'), $method),
             [],
@@ -219,7 +186,7 @@ try {
     $status = isset($input['status']) ? trim($input['status']) : '';
     $valid_statuses = array_keys(Task::getStatuses());
     if (!empty($status) && !in_array($status, $valid_statuses, true)) {
-        sendResponse(
+        AjaxHandler::sendResponse(
             false,
             __('Invalid status filter', 'newbase'),
             ['valid_statuses' => $valid_statuses],
@@ -233,11 +200,11 @@ try {
 
     // Validate date format
     if (!empty($date_from) && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date_from)) {
-        sendResponse(false, __('Invalid date_from format (expected: YYYY-MM-DD)', 'newbase'), [], 400);
+        AjaxHandler::sendResponse(false, __('Invalid date_from format (expected: YYYY-MM-DD)', 'newbase'), [], 400);
     }
 
     if (!empty($date_to) && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date_to)) {
-        sendResponse(false, __('Invalid date_to format (expected: YYYY-MM-DD)', 'newbase'), [], 400);
+        AjaxHandler::sendResponse(false, __('Invalid date_to format (expected: YYYY-MM-DD)', 'newbase'), [], 400);
     }
 
     // Limit (max 1000 for performance)
@@ -411,7 +378,7 @@ try {
 
     // ===== SUCCESS RESPONSE =====
 
-    sendResponse(
+    AjaxHandler::sendResponse(
         true,
         sprintf(
             __('Loaded %d markers from %d tasks', 'newbase'),
@@ -452,15 +419,14 @@ try {
             )
         );
     }
-} catch (Exception $e) {
+} catch (\Exception $e) {
 
     // ===== ERROR HANDLING =====
 
     Toolbox::logInFile(
         'newbase_plugin',
         sprintf(
-            "ERROR in mapData.php (%s): %s\n",
-            $method,
+            "ERROR in mapData.php: %s\n",
             $e->getMessage()
         )
     );
@@ -473,7 +439,7 @@ try {
         $error_data['trace'] = $e->getTraceAsString();
     }
 
-    sendResponse(
+    AjaxHandler::sendResponse(
         false,
         __('An error occurred while loading map data', 'newbase'),
         $error_data,
