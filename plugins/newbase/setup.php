@@ -66,7 +66,6 @@ function plugin_init_newbase(): void
 
     // Add specific JavaScript files
     $PLUGIN_HOOKS['add_javascript']['newbase'] = [
-        'js/newbase.js',
         'js/forms.js',
         'js/mileage.js',
         'js/map.js',

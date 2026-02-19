@@ -1516,16 +1516,132 @@ $entity_id = Session::getActiveEntity();  // ✅ Wrapper GLPI
 
 ### 9.1 Resumo de Novos Erros (18/02/2026)
 
-| Erro | Arquivo(s) | Crítico | Tipo | Correção |
-|------|-----------|---------|------|----------|
-| ERRO 11 | ajax/taskActions.php | 🟡 Médio | Validação insuficiente | Adicionar Common::validateCoordinates() |
-| ERRO 12 | ajax/taskActions.php | 🔴 Crítico | Integridade de dados | Mudar `'NULL'` para `null` |
-| ERRO 13 | ajax/cnpj_proxy.php | 🔴 Crítico | LGPD/Compliance | Mascarar dados em logs |
-| ERRO 14 | front/index.php, front/report.php | 🟡 Médio | XSS potencial | Adicionar htmlspecialchars() everywhere |
-| ERRO 15 | src/AddressHandler.php vs Common.php | 🟡 Médio | DRY Violation | Consolidar em Common.php |
-| ERRO 16 | src/Task.php | 🟡 Médio | Padrão GLPI | Usar Session::, filter_input() |
+| Erro    | Arquivo(s)                           | Crítico   | Tipo                   | Correção                                |
+| ------- | ------------------------------------ | --------- | ---------------------- | --------------------------------------- |
+| ERRO 11 | ajax/taskActions.php                 | 🟡 Médio   | Validação insuficiente | Adicionar Common::validateCoordinates() |
+| ERRO 12 | ajax/taskActions.php                 | 🔴 Crítico | Integridade de dados   | Mudar `'NULL'` para `null`              |
+| ERRO 13 | ajax/cnpj_proxy.php                  | 🔴 Crítico | LGPD/Compliance        | Mascarar dados em logs                  |
+| ERRO 14 | front/index.php, front/report.php    | 🟡 Médio   | XSS potencial          | Adicionar htmlspecialchars() everywhere |
+| ERRO 15 | src/AddressHandler.php vs Common.php | 🟡 Médio   | DRY Violation          | Consolidar em Common.php                |
+| ERRO 16 | src/Task.php                         | 🟡 Médio   | Padrão GLPI            | Usar Session::, filter_input()          |
 
 **Total:** 6 novos problemas encontrados (além dos 10 já documentados)
 **Distribuição:** 3 Críticos + 2 Médios + 1 Técnico (debt)
+
+🔴 ERRO 17: Endpoint de CNPJ usando cnpj_proxy.php externo (obsoleto) – fluxo duplicado
+Contexto:
+O endpoint ajax/cnpj_proxy.php foi criado originalmente como um “proxy” dedicado apenas a consumir as APIs externas de CNPJ (BrasilAPI/ReceitaWS). Mais tarde foi criado ajax/searchCompany.php que fazia duas coisas: consultar base local e, se não encontrasse, chamar o cnpj_proxy.php. Isso gerou uma dependência desnecessária entre dois endpoints e duplicação de responsabilidade.
+
+Causa Raiz:
+searchCompany.php dependia de outro endpoint HTTP do próprio plugin (cnpj_proxy.php) em vez de acessar diretamente as APIs externas. Isso trouxe problemas de manutenção, debugging mais difícil (duas camadas de JSON) e tornou impossível remover o arquivo cnpj_proxy.php sem quebrar a busca de CNPJ.
+
+Sintomas observados:
+
+Ao excluir cnpj_proxy.php, o botão “Buscar CNPJ” continuava chamando searchCompany.php, mas todas as buscas retornavam erro de negócio "Company not found in any database or API" mesmo para CNPJs válidos.
+
+Logs mostravam apenas falha genérica em API, sem deixar claro que o problema era a dependência em um arquivo removido.
+
+O fluxo de responsabilidades ficou confuso: quem decide fonte prioritária? searchCompany.php ou cnpj_proxy.php?
+
+Arquivos envolvidos:
+
+ajax/searchCompany.php
+
+ajax/cnpj_proxy.php (REMOVIDO posteriormente)
+
+Código ANTES (Arquitetura duplicada / dependente):
+
+searchCompany.php:
+
+Valida CNPJ, CSRF, permissões.
+
+Consulta base local (CompanyData).
+
+Se não encontrava, chamava um endpoint interno cnpj_proxy.php via HTTP para buscar nas APIs externas.
+
+cnpj_proxy.php:
+
+Valida CSRF.
+
+Chama BrasilAPI e ReceitaWS.
+
+Faz merge dos dados e devolve JSON para o searchCompany.php.
+
+Principais problemas:
+
+Dependência circular de endpoint interno: searchCompany.php só funcionava se cnpj_proxy.php existisse e respondesse.
+
+Dificuldade de depuração: Dois níveis de JSON e dois logs distintos para uma mesma operação de “buscar CNPJ”.
+
+Impossibilidade de reaproveitar lógica: Ao remover cnpj_proxy.php, era preciso reimplementar tudo dentro de searchCompany.php.
+
+Código DEPOIS (Arquitetura unificada em um único endpoint):
+
+ajax/cnpj_proxy.php foi descontinuado/removido.
+
+Toda a lógica de integração com APIs externas foi incorporada diretamente ao searchCompany.php, com funções internas:
+
+searchBrasilAPI(string $cnpj): ?array
+
+searchReceitaWSAPI(string $cnpj): ?array
+
+mergeAPIData(?array $brasilAPI, ?array $receitaWS): array
+
+O fluxo final de searchCompany.php passou a ser:
+
+Validar autenticação, permissão, CSRF e método.
+
+Normalizar e validar CNPJ com Common::validateCNPJ().
+
+Tentar base local via searchLocalDatabase($cnpj).
+
+Se não achar, chamar diretamente searchBrasilAPI() e searchReceitaWSAPI().
+
+Fazer mergeAPIData() priorizando BrasilAPI e usando ReceitaWS como complemento.
+
+Formatar CNPJ (cnpj_formatted) e responder com AjaxHandler::sendResponse().
+
+Exemplo de fluxo unificado (pseudocódigo):
+
+php
+// 1) Tenta base local
+$companyData = searchLocalDatabase($cnpj);
+if ($companyData !== null) {
+    AjaxHandler::sendResponse(true, 'Company data loaded from local database', $companyData, 200);
+}
+
+// 2) Tenta APIs externas diretamente
+$brasilAPIData = searchBrasilAPI($cnpj);
+$receitaWSData = null;
+
+if ($brasilAPIData === null || empty($brasilAPIData['email'])) {
+    $receitaWSData = searchReceitaWSAPI($cnpj);
+}
+
+if ($brasilAPIData === null && $receitaWSData === null) {
+    AjaxHandler::sendResponse(false, 'Company not found in any database or API', ['cnpj' => $cnpj], 200);
+}
+
+$companyData = mergeAPIData($brasilAPIData, $receitaWSData);
+$companyData['cnpj_formatted'] = Common::formatCNPJ($cnpj);
+
+AjaxHandler::sendResponse(true, 'Company data loaded from external API', $companyData, 200);
+Impacto da correção:
+
+✅ Eliminação completa da dependência em cnpj_proxy.php.
+
+✅ Menos um endpoint para manter/testar (redução de complexidade).
+
+✅ Debugging mais simples: apenas searchCompany.php centraliza logs e decisões.
+
+✅ Arquitetura mais clara: um único ponto de entrada para busca por CNPJ (base local + APIs externas).
+
+Boas práticas reforçadas:
+
+Cada endpoint AJAX deve ter responsabilidade única e completa (não depender de outro endpoint HTTP para a mesma operação).
+
+Lógicas de integração externa (APIs) ficam agrupadas em funções bem nomeadas no mesmo arquivo ou em serviços reutilizáveis (Common, AjaxHandler).
+
+Remoção de arquivos obsoletos sempre acompanhada de refatoração para não quebrar fluxos existentes.
 
 ---**

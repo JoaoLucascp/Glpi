@@ -260,9 +260,9 @@ class CompanyData extends CommonDBTM
         if (!empty($data['cnpj'])) {
             $data['cnpj'] = preg_replace('/[^0-9]/', '', $data['cnpj']);
 
-            // Validate CNPJ if Common class exists
-            if (class_exists('GlpiPlugin\\Newbase\\Common') && 
-                method_exists('GlpiPlugin\\Newbase\\Common', 'validateCNPJ')) {
+            if (class_exists('GlpiPlugin\\Newbase\\Common')
+                && method_exists('GlpiPlugin\\Newbase\\Common', 'validateCNPJ')) {
+
                 if (!Common::validateCNPJ($data['cnpj'])) {
                     Toolbox::logInFile(
                         'newbase_plugin',
@@ -271,6 +271,38 @@ class CompanyData extends CommonDBTM
                     return false;
                 }
             }
+        }
+
+        // Normalizar telefone (se informado)
+        if (!empty($data['phone'])) {
+            $rawPhone = preg_replace('/[^0-9]/', '', $data['phone']);
+
+            if (!Common::validatePhone($rawPhone)) {
+                Toolbox::logInFile(
+                    'newbase_plugin',
+                    "Invalid phone provided: {$data['phone']}\n"
+                );
+                return false;
+            }
+
+            $data['phone'] = Common::formatPhone($rawPhone);
+        }
+
+        // Normalizar CEP (se informado)
+        if (!empty($data['cep'])) {
+            $rawCep = preg_replace('/[^0-9]/', '', $data['cep']);
+
+            if (!Common::validateCEP($rawCep)) {
+                Toolbox::logInFile(
+                    'newbase_plugin',
+                    "Invalid CEP provided: {$data['cep']}\n"
+                );
+                return false;
+            }
+
+            // Guarda com máscara
+            $data['cep'] = Common::formatCEP($rawCep);
+            // ou: $data['cep'] = $rawCep;
         }
 
         // Prepare data
@@ -432,7 +464,7 @@ class CompanyData extends CommonDBTM
 
     /**
      * Display form for company
-     * 
+     *
      * @param int   $ID      Item ID (0 for new)
      * @param array $options Form options
      * @return bool Success
@@ -465,6 +497,10 @@ class CompanyData extends CommonDBTM
             'size'      => 20,
             'maxlength' => 18,
         ]);
+        echo "&nbsp;<button type='button' class='btn btn-secondary'
+                data-action='search-cnpj'>
+                <i class='ti ti-search'></i>
+                </button>";
         echo "</td>";
         echo "</tr>";
 
@@ -506,6 +542,30 @@ class CompanyData extends CommonDBTM
         ]);
         echo "</td>";
         echo "</tr>";
+
+        // CEP e Cidade/Estado
+        echo "<tr class='tab_bg_1'>";
+        echo "<td>" . __('CEP', 'newbase') . "</td>";
+        echo "<td>";
+        echo Html::input('cep', [
+            'value' => $this->fields['cep'] ?? '',
+            'size'  => 10,
+        ]);
+        echo "&nbsp;<button type='button' class='btn btn-secondary'
+                data-action='search-cep'>
+                <i class='ti ti-search'></i>
+                </button>";
+        echo "</td>";
+
+        echo "<td>" . __('City') . "</td>";
+        echo "<td>";
+        echo Html::input('city', [
+            'value' => $this->fields['city'] ?? '',
+            'size'  => 30,
+        ]);
+        echo "</td>";
+        echo "</tr>";
+
 
         // Observações
         echo "<tr class='tab_bg_1'>";

@@ -129,12 +129,11 @@ CREATE TABLE `glpi_plugin_newbase_company_extras` (
     `notes` LONGTEXT,
     `is_deleted` TINYINT NOT NULL DEFAULT 0,
     `date_creation` TIMESTAMP NULL DEFAULT NULL,
-    `date_mod` TIMESTAMP NULL DEFAULT NULL,
+    `date_mod` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
     KEY `entities_id` (`entities_id`),
     KEY `cnpj` (`cnpj`),
     KEY `is_deleted` (`is_deleted`),
-    UNIQUE KEY `unique_entities_id` (`entities_id`),
     CONSTRAINT `fk_company_extras_entities` FOREIGN KEY (`entities_id`) REFERENCES `glpi_entities` (`id`) ON DELETE CASCADE
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = 'Dados complementares de empresas';
 
@@ -147,7 +146,7 @@ CREATE TABLE `glpi_plugin_newbase_config` (
     `config_value` LONGTEXT,
     `date_mod` TIMESTAMP NULL DEFAULT NULL,
     PRIMARY KEY (`id`),
-    UNIQUE KEY `unique_config_key` (`config_key`)
+    KEY `config_key` (`config_key`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = 'Configurações do plugin';
 
 -- INSERIR CONFIGURAÇÕES PADRÃO

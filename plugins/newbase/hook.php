@@ -205,7 +205,7 @@ function plugin_newbase_install(): bool
             $migration->displayMessage('Creating company extras table...');
             $query = "CREATE TABLE `glpi_plugin_newbase_company_extras` (
                 `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-                `entities_id` INT UNSIGNED NOT NULL,
+                `entities_id` INT UNSIGNED NOT NULL DEFAULT 0,
                 `cnpj` VARCHAR(18) DEFAULT NULL,
                 `corporate_name` VARCHAR(255) DEFAULT NULL,
                 `fantasy_name` VARCHAR(255) DEFAULT NULL,
@@ -221,7 +221,6 @@ function plugin_newbase_install(): bool
                 KEY `cnpj` (`cnpj`),
                 KEY `is_deleted` (`is_deleted`),
                 KEY `date_mod` (`date_mod`),
-                UNIQUE KEY `unique_entities_id` (`entities_id`),
                 CONSTRAINT `fk_company_extras_entities`
                     FOREIGN KEY (`entities_id`)
                     REFERENCES `glpi_entities`(`id`)
