@@ -1644,4 +1644,650 @@ Lógicas de integração externa (APIs) ficam agrupadas em funções bem nomeada
 
 Remoção de arquivos obsoletos sempre acompanhada de refatoração para não quebrar fluxos existentes.
 
+---
+
+## 🔴 ERRO 18: Campos essenciais faltando na tabela company_extras (19/02/2026)
+
+**Causa Raiz:**
+A tabela `glpi_plugin_newbase_company_extras` não possuía campos essenciais descritos na Estrutura.md:
+- Campos de endereço completo (street, number, complement, neighborhood, state, country, latitude, longitude)
+- Inscrições (estadual e municipal)
+- Status do contrato (contract_status)
+- Configurações de sistemas (systems_config JSON para IPBX/PABX, IPBX Cloud, Chatbot, Linha)
+
+**Manifestação:**
+Impossível armazenar dados completos de empresas. Formulário não exibia campos essenciais.
+
+**Localização Exata:**
+- `install/mysql/2.1.0.sql` - estrutura original da tabela
+- `src/CompanyData.php` - formulário incompleto
+
+**Código ANTES (Tabela):**
+```sql
+CREATE TABLE `glpi_plugin_newbase_company_extras` (
+    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `entities_id` INT UNSIGNED NOT NULL,
+    `cnpj` VARCHAR(18) DEFAULT NULL,
+    `corporate_name` VARCHAR(255) DEFAULT NULL,
+    `fantasy_name` VARCHAR(255) DEFAULT NULL,
+    `contact_person` VARCHAR(255) DEFAULT NULL,
+    `phone` VARCHAR(20) DEFAULT NULL,
+    `email` VARCHAR(255) DEFAULT NULL,
+    `notes` LONGTEXT,
+    ...
+);
+```
+
+**Código DEPOIS (Migration SQL):**
+```sql
+-- install/mysql/migrations/2.1.1-add_company_fields.sql
+ALTER TABLE `glpi_plugin_newbase_company_extras`
+ADD COLUMN `inscricao_estadual` VARCHAR(50) DEFAULT NULL,
+ADD COLUMN `inscricao_municipal` VARCHAR(50) DEFAULT NULL,
+ADD COLUMN `cep` VARCHAR(10) DEFAULT NULL,
+ADD COLUMN `street` VARCHAR(255) DEFAULT NULL,
+ADD COLUMN `number` VARCHAR(20) DEFAULT NULL,
+ADD COLUMN `complement` VARCHAR(255) DEFAULT NULL,
+ADD COLUMN `neighborhood` VARCHAR(255) DEFAULT NULL,
+ADD COLUMN `city` VARCHAR(255) DEFAULT NULL,
+ADD COLUMN `state` VARCHAR(2) DEFAULT NULL,
+ADD COLUMN `country` VARCHAR(100) DEFAULT 'Brasil',
+ADD COLUMN `latitude` DECIMAL(10, 8) DEFAULT NULL,
+ADD COLUMN `longitude` DECIMAL(11, 8) DEFAULT NULL,
+ADD COLUMN `contract_status` VARCHAR(50) DEFAULT 'active',
+ADD COLUMN `systems_config` LONGTEXT DEFAULT NULL COMMENT 'JSON config';
+```
+
+**Impacto:** 🔴 CRÍTICO - Impossível cadastrar empresas completamente
+**Status:** ✅ APLICADO (Migration 2.1.1 criada)
+
+---
+
+## 🔴 ERRO 19: Formulário CompanyData.php incompleto - campos faltando (19/02/2026)
+
+**Causa Raiz:**
+O método `showForm()` da classe CompanyData não renderizava todos os campos descritos na Estrutura.md. Faltavam:
+- Email e telefone (já existiam na tabela mas não no form)
+- Inscrição estadual e municipal
+- Endereço completo (cep tinha busca mas faltavam campos street, number, complement, neighborhood, state, country, latitude, longitude)
+- Status do contrato (contract_status)
+- Seções expandíveis (IPBX/PABX, IPBX Cloud, Chatbot, Linha Telefônica)
+
+**Manifestação:**
+Interface não permitia cadastro completo de empresas. Campos existentes na tabela não apareciam no formulário.
+
+**Localização Exata:** `src/CompanyData.php` linhas 500-650
+
+**Código ANTES (Parcial):**
+```php
+public function showForm($ID, array $options = []): bool
+{
+    $this->showFormHeader($options);
+    
+    // Apenas: name, cnpj, corporate_name, fantasy_name, 
+    // contact_person, website, cep (parcial), city, notes
+    
+    $this->showFormButtons($options);
+}
+```
+
+**Código DEPOIS (Completo):**
+```php
+public function showForm($ID, array $options = []): bool
+{
+    $this->showFormHeader($options);
+    
+    // ✅ Adicionar token CSRF manualmente
+    if (!isset($_SESSION['_glpi_csrf_token'])) {
+        Session::getNewCSRFToken();
+    }
+    echo Html::hidden('_glpi_csrf_token');
+    
+    // === SEÇÃO: DADOS PESSOAIS ===
+    // Nome, CNPJ (com botão buscar), Email, Telefone
+    // Razão Social, Nome Fantasia
+    // Inscrição Estadual, Inscrição Municipal
+    // Pessoa de Contato, Website
+    
+    // === SEÇÃO: ENDEREÇO ===
+    // CEP (com botão buscar), Rua
+    // Número, Complemento
+    // Bairro, Cidade
+    // Estado, País
+    // Latitude, Longitude
+    
+    // === SEÇÃO: STATUS ===
+    // Status do Contrato (dropdown: active/inactive/cancelled)
+    
+    // Observações
+    
+    $this->showFormButtons($options);
+}
+```
+
+**Impacto:** 🔴 CRÍTICO - Interface incompleta, impossível usar todos os recursos
+**Status:** ✅ APLICADO
+
+---
+
+## 🔴 ERRO 20: Falta implementação de tabs em CompanyData para seções IPBX/PABX (19/02/2026)
+
+**Causa Raiz:**
+A classe CompanyData não implementava os métodos `getTabNameForItem()` e `displayTabContentForItem()` necessários para exibir as seções de configuração de sistemas (IPBX/PABX, IPBX Cloud, Chatbot, Linha Telefônica) como tabs separadas.
+
+**Manifestação:**
+Seções IPBX/PABX, IPBX Cloud, Chatbot e Linha Telefônica descritas na Estrutura.md não apareciam na interface.
+
+**Localização Exata:** `src/CompanyData.php`
+
+**Código ANTES:**
+```php
+// Classe CompanyData não tinha métodos de tab
+// Apenas showForm() com campos básicos
+```
+
+**Código DEPOIS:**
+```php
+/**
+ * Define tabs for CompanyData
+ */
+public function defineTab($options = []) {
+    $ong = [];
+    $this->addDefaultFormTab($ong);
+    $this->addStandardTab(__CLASS__, $ong, $options);
+    return $ong;
+}
+
+/**
+ * Get tab name for item
+ */
+public function getTabNameForItem(CommonGLPI $item, $withtemplate = 0): string {
+    if ($item->getType() === self::getType()) {
+        return self::createTabEntry(__('Systems Configuration', 'newbase'));
+    }
+    return '';
+}
+
+/**
+ * Display tab content - Shows IPBX/PABX, IPBX Cloud, Chatbot, Linha
+ */
+public static function displayTabContentForItem(CommonGLPI $item, $tabnum = 1, $withtemplate = 0): bool {
+    if ($item->getType() === self::getType()) {
+        self::showSystemsConfigTab($item);
+        return true;
+    }
+    return false;
+}
+
+private static function showSystemsConfigTab(CompanyData $item): void {
+    // Renderiza 4 cards:
+    // 1. IPBX/PABX (model, version, ip_interno, ip_externo, portas, senhas, obs)
+    // 2. IPBX Cloud (mesma estrutura)
+    // 3. Chatbot (platform, api_key, config)
+    // 4. Linha Telefônica (provider, contract, notes)
+    // Dados armazenados em JSON no campo systems_config
+}
+```
+
+**Impacto:** 🔴 CRÍTICO - Funcionalidade principal do plugin inacessível
+**Status:** ✅ APLICADO
+
+---
+
+## 🟡 ERRO 21: Link de Relatórios ausente no Menu.php (19/02/2026)
+
+**Causa Raiz:**
+O método `getMenuContent()` em `src/Menu.php` não registrava o link para a página de relatórios (`/front/report.php`), tornando a funcionalidade inacessível via menu.
+
+**Manifestação:**
+Relatórios não apareciam no menu do plugin, apesar do arquivo `front/report.php` existir.
+
+**Localização Exata:** `src/Menu.php` linha ~180
+
+**Código ANTES:**
+```php
+public static function getMenuContent(): array {
+    // ...
+    
+    // Configuration link (only for admins)
+    if (Session::haveRight('config', UPDATE)) {
+        $menu['links']['config'] = '/plugins/newbase/front/config.form.php';
+    }
+    
+    return $menu;
+}
+```
+
+**Código DEPOIS:**
+```php
+public static function getMenuContent(): array {
+    // ...
+    
+    // Reports link
+    $menu['links']['report'] = '/plugins/newbase/front/report.php';
+    
+    // Configuration link (only for admins)
+    if (Session::haveRight('config', UPDATE)) {
+        $menu['links']['config'] = '/plugins/newbase/front/config.form.php';
+    }
+    
+    return $menu;
+}
+```
+
+**Impacto:** 🟡 MÉDIO - Funcionalidade de relatórios inacessível via menu
+**Status:** ✅ APLICADO
+
+---
+
+## RESUMO DE ERROS CORRIGIDOS - 19/02/2026
+
+| Erro    | Arquivo(s)                   | Crítico    | Tipo                        | Status     |
+| ------- | ---------------------------- | ---------- | --------------------------- | ---------- |
+| ERRO 18 | install/mysql/2.1.0.sql      | 🔴 Crítico | Estrutura BD incompleta     | ✅ APLICADO |
+| ERRO 19 | src/CompanyData.php          | 🔴 Crítico | Formulário incompleto       | ✅ APLICADO |
+| ERRO 20 | src/CompanyData.php          | 🔴 Crítico | Tabs não implementadas      | ✅ APLICADO |
+| ERRO 21 | src/Menu.php                 | 🟡 Médio   | Link faltando               | ✅ APLICADO |
+
+**Total de erros novos identificados:** 4  
+**Distribuição:** 3 Críticos + 1 Médio  
+**Status geral:** ✅ Todos os erros foram corrigidos
+
+### Arquivos Modificados:
+1. `src/CompanyData.php` - Formulário completo + tabs implementadas
+2. `src/Menu.php` - Link de relatórios adicionado
+3. `install/mysql/migrations/2.1.1-add_company_fields.sql` - Migration criada
+4. `front/tools/migrate.php` - Executor de migration via navegador
+
+### Instruções para Aplicar:
+1. Acesse: `http://glpi.test/plugins/newbase/front/tools/migrate.php`
+2. Clique em "Executar Migration 2.1.1"
+3. Aguarde confirmação de sucesso
+4. Recarregue a página de empresas para ver todos os campos
+
+---
+
+## 🟡 ERRO 22: Botão para listar empresas ausente no dashboard (20/02/2026)
+
+**Causa Raiz:**
+O dashboard (`front/index.php`) tinha apenas o botão "Nova empresa" mas não tinha um link para ver a lista de empresas cadastradas (`companydata.php`), tornando a funcionalidade inacessível via interface.
+
+**Manifestação:**
+Usuários conseguiam criar empresas mas não tinham como acessar a lista de empresas já cadastradas sem digitar a URL manualmente no navegador.
+
+**Localização Exata:** `front/index.php` linhas 50-68
+
+**Código ANTES:**
+```php
+// Apenas 2 botões
+if (CompanyData::canCreate()) {
+    echo "<a class='btn' href='companydata.form.php'>Nova empresa</a>";
+}
+if (Task::canCreate()) {
+    echo "<a class='btn' href='task.form.php'>Nova Tarefa</a>";
+}
+```
+
+**Código DEPOIS:**
+```php
+// 4 botões: 2 para listas + 2 para criar
+if (CompanyData::canView()) {
+    echo "<a class='btn btn-primary' href='companydata.php'>
+           <i class='ti ti-building'></i> Empresas</a>"; // NOVO
+}
+if (CompanyData::canCreate()) {
+    echo "<a class='btn btn-secondary' href='companydata.form.php'>
+           <i class='ti ti-plus'></i> Nova Empresa</a>";
+}
+if (Task::canView()) {
+    echo "<a class='btn btn-primary' href='task.php'>
+           <i class='ti ti-list-check'></i> Tarefas</a>"; // NOVO
+}
+if (Task::canCreate()) {
+    echo "<a class='btn btn-secondary' href='task.form.php'>
+           <i class='ti ti-plus'></i> Nova Tarefa</a>";
+}
+```
+
+**Impacto:** 🟡 MÉDIO - Lista de empresas inacessível via interface
+**Status:** ✅ APLICADO
+
+---
+
+## RESUMO FINAL DE ERROS CORRIGIDOS - 20/02/2026
+
+| Erro    | Arquivo(s)                   | Crítico    | Tipo                        | Status     |
+| ------- | ---------------------------- | ---------- | --------------------------- | ---------- |
+| ERRO 18 | install/mysql/2.1.0.sql      | 🔴 Crítico | Estrutura BD incompleta     | ✅ APLICADO |
+| ERRO 19 | src/CompanyData.php          | 🔴 Crítico | Formulário incompleto       | ✅ APLICADO |
+| ERRO 20 | src/CompanyData.php          | 🔴 Crítico | Tabs não implementadas      | ✅ APLICADO |
+| ERRO 21 | src/Menu.php                 | 🟡 Médio   | Link relatórios ausente    | ✅ APLICADO |
+| ERRO 22 | front/index.php              | 🟡 Médio   | Botão lista ausente        | ✅ APLICADO |
+
+**Total:** 5 erros corrigidos  
+**Distribuição:** 3 Críticos + 2 Médios  
+**Status geral:** ✅ 100% aplicados
+
+---
+
+## 🔴 ERRO 23: Sistema de busca CNPJ sem proteção contra rate limit e cliques múltiplos (24/02/2026)
+
+**Causa Raiz:**
+O sistema de busca de CNPJ tinha 3 problemas críticos:
+1. **file_get_contents falha** para Brasil API (inconsistência de rede)
+2. **Sem cache:** Múltiplas requisições ao mesmo CNPJ em curto período
+3. **Sem debounce:** Usuário podia clicar várias vezes no botão
+4. **ReceitaWS rate limit (HTTP 429):** 3 requisições/minuto, facilmente atingido com cliques repetidos
+
+**Manifestação:**
+Logs mostravam:
+```
+file_get_contents failed for Brasil API URL: https://brasilapi.com.br/api/cnpj/v1/11507196000121
+HTTP Error 429 for https://www.receitaws.com.br/v1/cnpj/11507196000121
+CNPJ 11.**.***/****-21 not found in any API
+```
+Usuário precisava clicar 7-10 vezes até conseguir resultado.
+
+**Localização Exata:** 
+- `ajax/searchCompany.php` linhas 112-180
+- `js/forms.js` linhas 70-215
+
+**Código ANTES (searchCompany.php):**
+```php
+function searchBrasilAPI(string $cnpj): ?array {
+    $url = "https://brasilapi.com.br/api/cnpj/v1/{$cnpj}";
+    $response = @file_get_contents($url); // ❌ Instável
+    
+    if ($response === false) {
+        return null;
+    }
+    return json_decode($response, true);
+}
+```
+
+**Código DEPOIS (searchCompany.php):**
+```php
+function searchBrasilAPI(string $cnpj): ?array {
+    $url = "https://brasilapi.com.br/api/cnpj/v1/{$cnpj}";
+    
+    // ✅ Usar cURL (mais confiável que file_get_contents)
+    $ch = curl_init();
+    curl_setopt_array($ch, [
+        CURLOPT_URL => $url,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => 10,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_SSL_VERIFYPEER => false,
+        CURLOPT_HTTPHEADER => [
+            'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+            'Accept: application/json'
+        ]
+    ]);
+    
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    
+    if ($response === false || $httpCode !== 200) {
+        Toolbox::logInFile('newbase_plugin', "Brasil API failed (HTTP {$httpCode})");
+        return null;
+    }
+    
+    return json_decode($response, true);
+}
+
+function searchReceitaWSAPI(string $cnpj): ?array {
+    // Mesma melhoria: usar cURL + detectar HTTP 429 explicitamente
+    // ...
+    if ($httpCode === 429) {
+        Toolbox::logInFile('newbase_plugin', "HTTP Error 429 (rate limit)");
+        return null;
+    }
+}
+```
+
+**Código ANTES (forms.js):**
+```javascript
+function initCNPJSearch() {
+    $('button[data-action="search-cnpj"]').on('click', function (e) {
+        const cnpj = $('[name="cnpj"]').val();
+        
+        // ❌ SEM proteção: usuário pode clicar várias vezes
+        // ❌ SEM cache: cada clique = nova requisição
+        
+        $.ajax({ /* buscar CNPJ */ });
+    });
+}
+```
+
+**Código DEPOIS (forms.js):**
+```javascript
+// ✅ Cache global (5 minutos)
+const cnpjCache = {};
+let isSearching = false; // ✅ Debounce
+
+function initCNPJSearch() {
+    $('button[data-action="search-cnpj"]').on('click', function (e) {
+        const cnpj = $('[name="cnpj"]').val();
+        
+        // ✅ Debounce: bloquear se já estiver buscando
+        if (isSearching) {
+            console.log('Já está buscando, aguarde...');
+            return;
+        }
+        
+        // ✅ Cache: retornar dados salvos (5 min)
+        const cnpjClean = cnpj.replace(/[^0-9]/g, '');
+        const now = Date.now();
+        if (cnpjCache[cnpjClean] && (now - cnpjCache[cnpjClean].timestamp) < 300000) {
+            fillFormWithCachedData(cnpjCache[cnpjClean].data);
+            showNotification('Dados carregados do cache', 'success');
+            return;
+        }
+        
+        isSearching = true; // ✅ Bloquear novos cliques
+        showLoading($cnpjButton, true, 'Buscando...'); // ✅ Feedback visual
+        
+        $.ajax({
+            success: function(data) {
+                // ✅ Salvar no cache
+                cnpjCache[cnpjClean] = {
+                    timestamp: Date.now(),
+                    data: data
+                };
+                isSearching = false; // ✅ Liberar
+            },
+            error: function() {
+                isSearching = false; // ✅ Liberar sempre
+            }
+        });
+    });
+}
+```
+
+**Melhorias Aplicadas:**
+1. ✅ **cURL ao invés de file_get_contents** - mais estável e com timeout
+2. ✅ **Cache de 5 minutos** - evita requisições repetidas
+3. ✅ **Debounce global** - bloqueia múltiplos cliques
+4. ✅ **Feedback visual** - botão mostra "Buscando..." e fica desabilitado
+5. ✅ **Detecção de HTTP 429** - logs mais claros sobre rate limit
+6. ✅ **User-Agent e Accept headers** - melhor compatibilidade com APIs
+
+**Impacto:** 🔴 CRÍTICO - Funcionalidade principal quase inutilizável
+**Status:** ✅ APLICADO
+
+**Teste:**
+1. Busque um CNPJ pela primeira vez - deve funcionar
+2. Busque o mesmo CNPJ novamente - deve usar cache (instantâneo)
+3. Tente clicar múltiplas vezes rapidamente - só processa uma vez
+
+---
+
+## RESUMO FINAL ATUALIZADO - 24/02/2026
+
+| Erro    | Arquivo(s)                   | Crítico    | Tipo                        | Status     |
+| ------- | ---------------------------- | ---------- | --------------------------- | ---------- |
+| ERRO 18 | install/mysql/2.1.0.sql      | 🔴 Crítico | Estrutura BD incompleta     | ✅ APLICADO |
+| ERRO 19 | src/CompanyData.php          | 🔴 Crítico | Formulário incompleto       | ✅ APLICADO |
+| ERRO 20 | src/CompanyData.php          | 🔴 Crítico | Tabs não implementadas      | ✅ APLICADO |
+| ERRO 21 | src/Menu.php                 | 🟡 Médio   | Link relatórios ausente    | ✅ APLICADO |
+| ERRO 22 | front/index.php              | 🟡 Médio   | Botão lista ausente        | ✅ APLICADO |
+| ERRO 23 | ajax/searchCompany.php, js   | 🔴 Crítico | Rate limit / sem cache     | ✅ APLICADO |
+
+**Total:** 6 erros corrigidos  
+**Distribuição:** 4 Críticos + 2 Médios  
+**Status geral:** ✅ 100% aplicados
+
+---
+
+## 🔴 ERRO 24: Campos decimais recebendo string vazia causando erro SQL (24/02/2026)
+
+**Causa Raiz:**
+O formulário envia strings vazias (`''`) para campos `latitude` e `longitude` quando não preenchidos. O MySQL não aceita string vazia em campos `DECIMAL` - apenas aceita `NULL` ou um número válido.
+
+**Manifestação:**
+Erro SQL ao salvar empresa:
+```
+MySQL query error:
+Incorrect decimal value: '' for column 'latitude' at row 1
+```
+
+**Localização Exata:** `src/CompanyData.php` métodos `prepareInputForAdd()` e `prepareInputForUpdate()`
+
+**Código ANTES:**
+```php
+public function prepareInputForAdd($input) {
+    // Process systems_config array into JSON
+    if (isset($input['systems_config']) && is_array($input['systems_config'])) {
+        $input['systems_config'] = json_encode($input['systems_config']);
+    }
+    
+    // ❌ Campos latitude/longitude com string vazia causam erro SQL
+    
+    return parent::prepareInputForAdd($input);
+}
+```
+
+**Código DEPOIS:**
+```php
+public function prepareInputForAdd($input) {
+    // Process systems_config array into JSON
+    if (isset($input['systems_config']) && is_array($input['systems_config'])) {
+        $input['systems_config'] = json_encode($input['systems_config']);
+    }
+    
+    // ✅ Converter strings vazias para NULL em campos decimais
+    $decimal_fields = ['latitude', 'longitude'];
+    foreach ($decimal_fields as $field) {
+        if (isset($input[$field]) && $input[$field] === '') {
+            $input[$field] = null;
+        }
+    }
+    
+    return parent::prepareInputForAdd($input);
+}
+
+// Mesma correção em prepareInputForUpdate()
+```
+
+**Por que aconteceu:**
+HTML inputs vazios enviam `value=""` (string vazia). O GLPI passa isso diretamente para o SQL. Campos `VARCHAR` aceitam string vazia, mas `DECIMAL` não.
+
+**Solução:**
+Converter explicitamente string vazia para `null` antes de salvar no banco.
+
+**Impacto:** 🔴 CRÍTICO - Impossível salvar empresas com coordenadas vazias
+**Status:** ✅ APLICADO
+
+**Teste:**
+1. Adicione uma empresa SEM preencher latitude/longitude
+2. Clique em Salvar
+3. Deve salvar sem erro (campos ficam NULL no banco)
+
+---
+
+## RESUMO FINAL ATUALIZADO - 24/02/2026
+
+| Erro    | Arquivo(s)                   | Crítico    | Tipo                        | Status     |
+| ------- | ---------------------------- | ---------- | --------------------------- | ---------- |
+| ERRO 18 | install/mysql/2.1.0.sql      | 🔴 Crítico | Estrutura BD incompleta     | ✅ APLICADO |
+| ERRO 19 | src/CompanyData.php          | 🔴 Crítico | Formulário incompleto       | ✅ APLICADO |
+| ERRO 20 | src/CompanyData.php          | 🔴 Crítico | Tabs não implementadas      | ✅ APLICADO |
+| ERRO 21 | src/Menu.php                 | 🟡 Médio   | Link relatórios ausente    | ✅ APLICADO |
+| ERRO 22 | front/index.php              | 🟡 Médio   | Botão lista ausente        | ✅ APLICADO |
+| ERRO 23 | ajax/searchCompany.php, js   | 🔴 Crítico | Rate limit / sem cache     | ✅ APLICADO |
+| ERRO 24 | src/CompanyData.php          | 🔴 Crítico | String vazia em DECIMAL    | ✅ APLICADO |
+
+**Total:** 7 erros corrigidos  
+**Distribuição:** 5 Críticos + 2 Médios  
+**Status geral:** ✅ 100% aplicados
+
+---
+
+## 🔴 ERRO 26: Abas IPBX/PABX não aparecem (typo no nome do método) (24/02/2026)
+
+**Causa Raiz:**
+O método para definir abas no GLPI 10+ chama-se `defineTabs()` (com 's'), mas estava implementado como `defineTab()` (sem 's'). Por isso, o sistema de tabs não era reconhecido e as abas "Configurações de Sistemas" não apareciam.
+
+**Manifestação:**
+Ao editar uma empresa, apenas a aba principal aparecia. As abas IPBX/PABX, IPBX Cloud, Chatbot, e Linha Telefônica não eram exibidas.
+
+**Localização Exata:** `src/CompanyData.php` linha 156
+
+**Código ANTES:**
+```php
+public function defineTab($options = []) // ❌ ERRO: sem 's'
+{
+    $ong = [];
+    $this->addDefaultFormTab($ong);
+    $this->addStandardTab(__CLASS__, $ong, $options);
+    return $ong;
+}
+```
+
+**Código DEPOIS:**
+```php
+public function defineTabs($options = []) // ✅ CORRETO: com 's'
+{
+    $ong = [];
+    $this->addDefaultFormTab($ong);
+    $this->addStandardTab(__CLASS__, $ong, $options);
+    return $ong;
+}
+```
+
+**Por que aconteceu:**
+Erro de digitação. O GLPI espera o método `defineTabs()` (plural) conforme documentação da classe `CommonDBTM`.
+
+**Impacto:** 🔴 CRÍTICO - Configurações de sistemas (IPBX/PABX) inacessíveis
+**Status:** ✅ APLICADO
+
+**Como testar:**
+1. Edite uma empresa existente
+2. Procure as abas no topo da página (abaixo do cabeçalho)
+3. Deve aparecer: "Formulário Principal" e "Configurações de Sistemas"
+4. Clique em "Configurações de Sistemas"
+5. Deve ver 4 cards: IPBX/PABX, IPBX Cloud, Chatbot, Linha Telefônica
+
+**Nota importante:** As abas só aparecem ao **EDITAR** empresas existentes, não ao criar novas. Após salvar uma empresa nova, clique nela na lista para editá-la e as abas aparecerão.
+
+---
+
+## RESUMO FINAL ATUALIZADO - 24/02/2026
+
+| Erro    | Arquivo(s)                   | Crítico    | Tipo                        | Status     |
+| ------- | ---------------------------- | ---------- | --------------------------- | ---------- |
+| ERRO 18 | install/mysql/2.1.0.sql      | 🔴 Crítico | Estrutura BD incompleta     | ✅ APLICADO |
+| ERRO 19 | src/CompanyData.php          | 🔴 Crítico | Formulário incompleto       | ✅ APLICADO |
+| ERRO 20 | src/CompanyData.php          | 🔴 Crítico | Tabs não implementadas      | ✅ APLICADO |
+| ERRO 21 | src/Menu.php                 | 🟡 Médio   | Link relatórios ausente    | ✅ APLICADO |
+| ERRO 22 | front/index.php              | 🟡 Médio   | Botão lista ausente        | ✅ APLICADO |
+| ERRO 23 | ajax/searchCompany.php, js   | 🔴 Crítico | Rate limit / sem cache     | ✅ APLICADO |
+| ERRO 24 | src/CompanyData.php          | 🔴 Crítico | String vazia em DECIMAL    | ✅ APLICADO |
+| ERRO 26 | src/CompanyData.php          | 🔴 Crítico | Typo em defineTabs()       | ✅ APLICADO |
+
+**Total:** 8 erros corrigidos  
+**Distribuição:** 6 Críticos + 2 Médios  
+**Status geral:** ✅ 100% aplicados
+
 ---**

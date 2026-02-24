@@ -181,6 +181,9 @@ class Menu extends CommonGLPI
             }
         }
 
+        // Reports link
+        $menu['links']['report'] = '/plugins/newbase/front/report.php';
+
         // Configuration link (only for admins)
         if (Session::haveRight('config', UPDATE)) {
             $menu['links']['config'] = '/plugins/newbase/front/config.form.php';

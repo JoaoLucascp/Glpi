@@ -71,11 +71,13 @@
 
     /**
      * Busca CNPJ com auto-preenchimento via searchCompany.php
+     * COM CACHE e DEBOUNCE para evitar múltiplas requisições
      */
-    /**
-     * Busca CNPJ com auto-preenchimento via searchCompany.php
-     * COM RETRY AUTOMÁTICO (3 tentativas)
-     */
+    
+    // Cache de requisições (evitar buscar mesmo CNPJ repetidamente)
+    const cnpjCache = {};
+    let isSearching = false; // Debounce global
+    
     function initCNPJSearch() {
         // Delegação: qualquer botão com data-action="search-cnpj"
         $(document)
@@ -91,14 +93,32 @@
                     alert('Digite um CNPJ');
                     return;
                 }
+                
+                // Debounce: bloquear se já estiver buscando
+                if (isSearching) {
+                    console.log('[NEWBASE] Já está buscando, aguarde...');
+                    return;
+                }
+                
+                // Cache: verificar se já buscou esse CNPJ recentemente (5 min)
+                const cnpjClean = cnpj.replace(/[^0-9]/g, '');
+                const now = Date.now();
+                if (cnpjCache[cnpjClean] && (now - cnpjCache[cnpjClean].timestamp) < 300000) {
+                    console.log('[NEWBASE] Usando dados do cache para CNPJ:', cnpj);
+                    fillFormWithCachedData(cnpjCache[cnpjClean].data);
+                    showNotification('Dados carregados do cache', 'success');
+                    return;
+                }
 
                 console.log('[NEWBASE] Buscando CNPJ:', cnpj);
-                showLoading($cnpjButton, true); // Desabilita botão visualmente
+                isSearching = true;
+                showLoading($cnpjButton, true, 'Buscando...'); // Desabilita botão visualmente
 
                 const csrfToken = getCSRFToken();
                 if (!csrfToken) {
                     console.error('[NEWBASE] CSRF Token não encontrado!');
                     showNotification('Erro de segurança: CSRF Token ausente. Recarregue a página.', 'error');
+                    isSearching = false;
                     showLoading($cnpjButton, false);
                     return;
                 }
@@ -128,34 +148,38 @@
                             if (response.success && response.data) {
                                 const data = response.data;
 
-                                // Nomes de campos conforme searchCompany.php
+                                // Nomes de campos conforme CompanyData.php
                                 $('[name="name"]').val(data.legal_name || data.corporate_name || '');
                                 $('[name="corporate_name"]').val(data.legal_name || '');
                                 $('[name="fantasy_name"]').val(data.fantasy_name || '');
                                 $('[name="email"]').val(data.email || '');
                                 $('[name="phone"]').val(data.phone || '');
-
-                                let endereco = data.street || '';
-                                if (data.number) {
-                                    endereco += (endereco ? ', ' : '') + data.number;
-                                }
-                                if (data.complement) {
-                                    endereco += ' ' + data.complement;
-                                }
-
-                                $('[name="address"]').val(endereco.trim());
+                                $('[name="street"]').val(data.street || '');
+                                $('[name="number"]').val(data.number || '');
+                                $('[name="complement"]').val(data.complement || '');
+                                $('[name="neighborhood"]').val(data.neighborhood || data.district || '');
                                 $('[name="city"]').val(data.city || '');
                                 $('[name="state"]').val(data.state || '');
-                                $('[name="cep"]').val(data.postcode || '');
+                                $('[name="cep"]').val(data.postcode || data.zip_code || '');
+                                $('[name="latitude"]').val(data.latitude || '');
+                                $('[name="longitude"]').val(data.longitude || '');
 
+                                // Salvar no cache
+                                cnpjCache[cnpjClean] = {
+                                    timestamp: Date.now(),
+                                    data: data
+                                };
+                                
                                 console.log('[NEWBASE] Campos preenchidos com sucesso');
                                 showNotification('Dados da empresa preenchidos com sucesso!', 'success');
+                                isSearching = false; // Liberar debounce
                                 showLoading($cnpjButton, false); // Sucesso final: reabilita botão
                             } else {
                                 // Erro de negócio (API respondeu, mas com erro lógico - ex: CNPJ inválido)
                                 // NÃO faz retry aqui, pois a resposta é definitiva
                                 console.error('[NEWBASE] Erro na resposta:', response.message);
                                 showNotification(response.message || 'Erro ao buscar CNPJ', 'error');
+                                isSearching = false; // Liberar debounce
                                 showLoading($cnpjButton, false);
                             }
                         },
@@ -179,6 +203,7 @@
                                 }
 
                                 showNotification(errorMsg, 'error');
+                                isSearching = false; // Liberar debounce
                                 showLoading($cnpjButton, false); // Erro final: reabilita botão
                             }
                         }
@@ -188,6 +213,26 @@
                 // Inicia a primeira tentativa
                 performSearch();
             });
+    }
+    
+    /**
+     * Preencher formulário com dados do cache
+     */
+    function fillFormWithCachedData(data) {
+        $('[name="name"]').val(data.legal_name || data.corporate_name || '');
+        $('[name="corporate_name"]').val(data.legal_name || '');
+        $('[name="fantasy_name"]').val(data.fantasy_name || '');
+        $('[name="email"]').val(data.email || '');
+        $('[name="phone"]').val(data.phone || '');
+        $('[name="street"]').val(data.street || '');
+        $('[name="number"]').val(data.number || '');
+        $('[name="complement"]').val(data.complement || '');
+        $('[name="neighborhood"]').val(data.neighborhood || data.district || '');
+        $('[name="city"]').val(data.city || '');
+        $('[name="state"]').val(data.state || '');
+        $('[name="cep"]').val(data.postcode || data.zip_code || '');
+        $('[name="latitude"]').val(data.latitude || '');
+        $('[name="longitude"]').val(data.longitude || '');
     }
 
     /**
@@ -225,7 +270,8 @@
                         console.log('[NEWBASE] Resposta CEP:', data);
 
                         if (data && !data.erro) {
-                            $('[name="address"]').val(data.logradouro || '');
+                            $('[name="street"]').val(data.logradouro || '');
+                            $('[name="neighborhood"]').val(data.bairro || '');
                             $('[name="city"]').val(data.localidade || '');
                             $('[name="state"]').val(data.uf || '');
 
@@ -246,18 +292,20 @@
     }
 
     /**
-     * Mostrar/Ocultar loading
+     * Mostrar/Ocultar loading com mensagem
      */
-    function showLoading($button, show) {
+    function showLoading($button, show, message) {
         if (show) {
             $button
                 .prop('disabled', true)
                 .addClass('loading')
-                .html('<i class="fas fa-spinner fa-spin"></i>');
+                .css('opacity', '0.6')
+                .html('<i class="fas fa-spinner fa-spin"></i> ' + (message || 'Buscando...'));
         } else {
             $button
                 .prop('disabled', false)
                 .removeClass('loading')
+                .css('opacity', '1')
                 .html('<i class="ti ti-search"></i>');
         }
     }

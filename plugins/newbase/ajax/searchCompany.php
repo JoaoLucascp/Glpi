@@ -113,11 +113,29 @@ function searchLocalDatabase(string $cnpj): ?array
  */
 function searchBrasilAPI(string $cnpj): ?array
 {
-    $url      = "https://brasilapi.com.br/api/cnpj/v1/{$cnpj}";
-    $response = @file_get_contents($url);
+    $url = "https://brasilapi.com.br/api/cnpj/v1/{$cnpj}";
+    
+    // Usar cURL ao invés de file_get_contents (mais confiável)
+    $ch = curl_init();
+    curl_setopt_array($ch, [
+        CURLOPT_URL => $url,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => 10,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_SSL_VERIFYPEER => false, // Para desenvolvimento local
+        CURLOPT_HTTPHEADER => [
+            'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            'Accept: application/json'
+        ]
+    ]);
+    
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $error = curl_error($ch);
+    curl_close($ch);
 
-    if ($response === false) {
-        Toolbox::logInFile('newbase_plugin', "file_get_contents failed for Brasil API URL: {$url}");
+    if ($response === false || $httpCode !== 200) {
+        Toolbox::logInFile('newbase_plugin', "Brasil API failed (HTTP {$httpCode}): {$error}");
         return null;
     }
 
@@ -137,10 +155,32 @@ function searchBrasilAPI(string $cnpj): ?array
  */
 function searchReceitaWSAPI(string $cnpj): ?array
 {
-    $url      = "https://www.receitaws.com.br/v1/cnpj/{$cnpj}";
-    $response = AjaxHandler::fetchCurl($url);
+    $url = "https://www.receitaws.com.br/v1/cnpj/{$cnpj}";
+    
+    $ch = curl_init();
+    curl_setopt_array($ch, [
+        CURLOPT_URL => $url,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => 10,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_SSL_VERIFYPEER => false,
+        CURLOPT_HTTPHEADER => [
+            'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            'Accept: application/json'
+        ]
+    ]);
+    
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
 
     if ($response === false) {
+        return null;
+    }
+    
+    // Log HTTP 429 (rate limit)
+    if ($httpCode === 429) {
+        Toolbox::logInFile('newbase_plugin', "HTTP Error 429 for {$url}");
         return null;
     }
 

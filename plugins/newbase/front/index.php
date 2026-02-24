@@ -51,17 +51,37 @@ if (!defined('GLPI_ROOT')) {
 // Botões de ação rápida no topo do dashboard
 echo "<div class='mb-3'>";
 
+// Link para lista de empresas
+if (\GlpiPlugin\Newbase\CompanyData::canView()) {
+    echo "<a class='btn btn-primary me-2' href='"
+    . $CFG_GLPI['root_doc']
+    . "/plugins/newbase/front/companydata.php'>"
+    . "<i class='ti ti-building'></i> "
+    . __('Empresas', 'newbase') . "</a>";
+}
+
 if (\GlpiPlugin\Newbase\CompanyData::canCreate()) {
     echo "<a class='btn btn-secondary me-2' href='"
     . $CFG_GLPI['root_doc']
     . "/plugins/newbase/front/companydata.form.php'>"
-    . __('Nova empresa', 'newbase') . "</a>";
+    . "<i class='ti ti-plus'></i> "
+    . __('Nova Empresa', 'newbase') . "</a>";
+}
+
+// Link para lista de tarefas
+if (\GlpiPlugin\Newbase\Task::canView()) {
+    echo "<a class='btn btn-primary me-2' href='"
+    . $CFG_GLPI['root_doc']
+    . \GlpiPlugin\Newbase\Task::getSearchURL(false) . "'>"
+    . "<i class='ti ti-list-check'></i> "
+    . __('Tarefas', 'newbase') . "</a>";
 }
 
 if (\GlpiPlugin\Newbase\Task::canCreate()) {
-    echo "<a class='btn btn-primary me-2' href='"
+    echo "<a class='btn btn-secondary me-2' href='"
     . $CFG_GLPI['root_doc']
     . \GlpiPlugin\Newbase\Task::getFormURL(false) . "'>"
+    . "<i class='ti ti-plus'></i> "
     . __('Nova Tarefa', 'newbase') . "</a>";
 }
 
