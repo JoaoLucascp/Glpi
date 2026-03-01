@@ -47,7 +47,7 @@ if (!defined('GLPI_ROOT')) {
 
 /**
  * System - Manages telecommunication systems
- * 
+ *
  * Supports multiple system types:
  * - PABX (Private Automatic Branch Exchange)
  * - IPBX (IP-based PBX)
@@ -268,7 +268,8 @@ class System extends CommonDBTM
     }
 
     /**
-     * Display form for system
+     * Display form for system (Bootstrap accordion + cards)
+     *
      * @param int   $ID      Item ID (0 for new)
      * @param array $options Additional options
      * @return bool Success
@@ -281,74 +282,147 @@ class System extends CommonDBTM
             return false;
         }
 
-        // Get entities_id (prioritize GET parameter)
-        $entities_id = $_GET['entities_id'] ?? $options['entities_id'] ?? $this->fields['entities_id'] ?? $_SESSION['glpiactive_entity'];
-
         $this->showFormHeader($options);
 
-        // BASIC INFORMATION
+        $v = $this->fields; // valores atuais
+
+        // ── Linha 1 (fora de tabs): Nome / Entidade / Tipo / Status ───────────
         echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __('Name') . " <span class='red'>*</span></td>";
+        echo "<td>" . __('Name') . " <span class='required'>*</span></td>";
         echo "<td>";
-        echo Html::input('name', [
-            'value' => $this->fields['name'] ?? '',
-            'size'  => 50,
-        ]);
+        Html::autocompletionTextField($this, 'name', ['value' => $v['name'] ?? '', 'size' => 50]);
         echo "</td>";
-        echo "<td>" . __('Company', 'newbase') . " <span class='red'>*</span></td>";
+        echo "<td>" . __('Type', 'newbase') . "</td>";
         echo "<td>";
-        Entity::dropdown([
-            'name'   => 'entities_id',
-            'value'  => $entities_id,
-            'entity' => $entities_id,
-        ]);
+        Dropdown::showFromArray('system_type', self::getSystemTypes(), ['value' => $v['system_type'] ?? 'ipbx']);
         echo "</td>";
         echo "</tr>";
 
         echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __('Type', 'newbase') . " <span class='red'>*</span></td>";
-        echo "<td>";
-        Dropdown::showFromArray('system_type', self::getSystemTypes(), [
-            'value' => $this->fields['system_type'] ?? 'pabx',
-        ]);
-        echo "</td>";
         echo "<td>" . __('Status') . "</td>";
         echo "<td>";
-        Dropdown::showFromArray('status', self::getSystemStatuses(), [
-            'value' => $this->fields['status'] ?? 'active',
-        ]);
+        Dropdown::showFromArray('status', self::getSystemStatuses(), ['value' => $v['status'] ?? 'active']);
         echo "</td>";
+        echo "<td colspan='2'></td>";
         echo "</tr>";
 
-        echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __('Description') . "</td>";
-        echo "<td colspan='3'>";
-        echo Html::textarea([
-            'name'  => 'description',
-            'value' => $this->fields['description'] ?? '',
-            'cols'  => 80,
-            'rows'  => 4,
-        ]);
-        echo "</td>";
-        echo "</tr>";
+        // ── Bloco de accordion dentro do formulário padrão ───────────────────
+        echo "<tr><td colspan='4' class='p-0'>";
+        echo '<div class="newbase-system-form-body px-2 py-3">';
+        echo '<div class="accordion accordion-flush nb-accordion" id="sysFormAccordion">';
 
-        // CONFIGURATION (JSON)
-        echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __('Configuration', 'newbase') . "</td>";
-        echo "<td colspan='3'>";
-        echo Html::textarea([
-            'name'  => 'configuration',
-            'value' => $this->fields['configuration'] ?? '',
-            'cols'  => 80,
-            'rows'  => 8,
-        ]);
-        echo "<br><small class='text-muted'>" . __('JSON format for technical configuration', 'newbase') . "</small>";
-        echo "</td>";
-        echo "</tr>";
+        // ── Accordion 1: Informações do Servidor ─────────────────────────────
+        echo $this->_accordionItem(
+            'sysInfoServer',
+            'ti-server text-primary',
+            'Informações do Servidor',
+            true,
+            function () use ($v) {
+                $rows = [
+                    ['Modelo',            'model',       false, 'Newcloud'],
+                    ['Versão Servidor',   'version',     false, '3.19'],
+                    ['IP Interno',        'internal_ip', false, '192.168.0.10'],
+                    ['IP Externo',        'external_ip', false, '200.x.x.x'],
+                    ['Porta Acesso Web',  'web_port',    false, '2080'],
+                    ['Senha Acesso Web',  'web_password', true, 'senha123'],
+                    ['Porta Acesso SSH',  'ssh_port',    false, '2022'],
+                    ['Senha Acesso SSH',  'ssh_password', true, 'senha123'],
+                ];
+                echo '<div class="row g-3">';
+                foreach ($rows as [$label, $field, $isPwd, $placeholder]) {
+                    $pwdBadge = $isPwd ? '&nbsp;<span class="badge bg-warning-lt">visível</span>' : '';
+                    echo '<div class="col-12 col-lg-6">';
+                    echo "<label class='form-label nb-" . ($isPwd ? 'pwd-label' : 'label') . "'>{$label}{$pwdBadge}</label>";
+                    echo Html::input($field, [
+                        'value'       => $v[$field] ?? '',
+                        'type'        => 'text',
+                        'placeholder' => $placeholder,
+                        'class'       => 'form-control nb-fc' . ($isPwd ? ' nb-pwd' : ''),
+                    ]);
+                    echo '</div>';
+                }
+                // Observações
+                echo '<div class="col-12">';
+                echo '<label class="form-label">Observações</label>';
+                echo Html::textarea([
+                    'name'  => 'observations',
+                    'value' => $v['observations'] ?? '',
+                    'class' => 'form-control nb-fc',
+                    'rows'  => 4,
+                ]);
+                echo '</div>';
+                echo '</div>';
+            }
+        );
+
+        // ── Accordion 2: Descrição ────────────────────────────────────────────
+        echo $this->_accordionItem(
+            'sysDesc',
+            'ti-file-description text-cyan',
+            'Descrição',
+            false,
+            function () use ($v) {
+                echo '<div class="row g-3">';
+                echo '<div class="col-12">';
+                echo '<label class="form-label">Descrição</label>';
+                echo Html::textarea([
+                    'name'  => 'description',
+                    'value' => $v['description'] ?? '',
+                    'class' => 'form-control nb-fc',
+                    'rows'  => 5,
+                ]);
+                echo '</div>';
+                echo '<div class="col-12">';
+                echo '<label class="form-label">Configuração adicional (JSON)</label>';
+                echo Html::textarea([
+                    'name'  => 'configuration',
+                    'value' => $v['configuration'] ?? '',
+                    'class' => 'form-control nb-fc nb-monospace',
+                    'rows'  => 5,
+                    'placeholder' => '{"chave": "valor"}',
+                ]);
+                echo '</div>';
+                echo '</div>';
+            }
+        );
+
+        echo '</div>'; // /.accordion
+        echo '</div>'; // /.newbase-system-form-body
+        echo "</td></tr>";
 
         $this->showFormButtons($options);
 
         return true;
+    }
+
+    /**
+     * Helper: gera HTML de um item de accordion (Bootstrap 5)
+     *
+     * @param string   $id       ID único
+     * @param string   $icon     Classe do ícone Tabler
+     * @param string   $title    Título
+     * @param bool     $open     Se deve abrir por padrão
+     * @param callable $content  Callback que imprime o conteúdo
+     * @return string HTML completo do accordion-item
+     */
+    private function _accordionItem(string $id, string $icon, string $title, bool $open, callable $content): string
+    {
+        $expanded = $open ? 'true' : 'false';
+        $show     = $open ? 'show' : '';
+        ob_start();
+        $content();
+        $body = ob_get_clean();
+
+        return "<div class='accordion-item nb-accordion-item'>"
+            . "<h2 class='accordion-header' id='h{$id}'>"
+            . "<button class='accordion-button nb-accordion-btn" . ($open ? '' : ' collapsed') . "' type='button'"
+            . " data-bs-toggle='collapse' data-bs-target='#p{$id}'"
+            . " aria-expanded='{$expanded}' aria-controls='p{$id}'>"
+            . "<i class='ti {$icon} me-2'></i><strong>{$title}</strong>"
+            . "</button></h2>"
+            . "<div id='p{$id}' class='accordion-collapse collapse {$show}' aria-labelledby='h{$id}'>"
+            . "<div class='accordion-body'>{$body}</div>"
+            . "</div></div>";
     }
 
     /**

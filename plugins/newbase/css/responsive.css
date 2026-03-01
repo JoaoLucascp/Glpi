@@ -275,6 +275,101 @@
     }
 }
 
+/* ═══════════════════════════════════════════════════
+   ACCORDION — responsividade
+═══════════════════════════════════════════════════ */
+
+/* Mobile (<768px): accordion empilhado, colunas em col-12 */
+@media only screen and (max-width: 767px) {
+    .nb-accordion .accordion-body {
+        padding: .85rem .7rem;
+    }
+
+    .newbase-systems-wrapper {
+        padding: .4rem;
+    }
+
+    /* Bootstrap row g-3 col-lg-6: mobile sempre 100% */
+    .newbase-systems-wrapper .col-lg-6,
+    .newbase-system-form-body .col-lg-6 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+
+    /* Tabelas de ramais: scroll horizontal no mobile */
+    .nb-table td input,
+    .nb-table td select {
+        min-width: 70px;
+        font-size: .78rem;
+        padding: .2rem .3rem;
+    }
+
+    .nb-save-btn {
+        width: 100%;
+        font-size: .95rem;
+    }
+}
+
+/* Tablet (768–991px): grid 2 colunas */
+@media only screen and (min-width: 768px) and (max-width: 991px) {
+    .newbase-systems-wrapper .col-lg-6 {
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
+}
+
+/* Desktop (>=992px): grid 2 colunas (col-lg-6 Bootstrap nativo) */
+@media only screen and (min-width: 992px) {
+    .newbase-systems-wrapper {
+        padding: .75rem 1rem;
+    }
+}
+
+/* ═════════════════════════════════════════════
+   MAPA LEAFLET — responsividade
+═════════════════════════════════════════════ */
+
+@media only screen and (max-width: 767px) {
+    /* Mapa em tela cheia de largura no mobile */
+    #nb-task-map,
+    .nb-map-container {
+        height: 280px;
+        min-height: 220px;
+    }
+
+    /* Botão de localização: largura total no mobile */
+    #nb-btn-my-location {
+        width: 100%;
+        margin-top: .5rem;
+    }
+
+    /* Tabelas de ramais/operadoras: scroll horizontal no mobile */
+    #nb-ipbx-ramais-table,
+    #nb-ipbx-ops-table {
+        min-width: 700px;
+    }
+
+    /* Col-12 forçado em mobile para campos do accordion */
+    .newbase-systems-wrapper .row > [class*="col-lg"] {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+}
+
+@media only screen and (min-width: 768px) and (max-width: 991px) {
+    #nb-task-map,
+    .nb-map-container {
+        height: 350px;
+    }
+}
+
+@media only screen and (min-width: 992px) {
+    #nb-task-map,
+    .nb-map-container {
+        height: 420px;
+    }
+}
+
 /* ========== Print Responsive ========== */
 @media print {
     /* Force single column for print */

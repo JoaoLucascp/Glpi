@@ -200,18 +200,34 @@ function plugin_newbase_install(): bool
             $DB->queryOrDie($query, 'Error creating task signatures table');
         }
 
-        // TABLE 5: Company Extras
-        if (!$DB->tableExists('glpi_plugin_newbase_company_extras')) {
+        // TABLE 5: Company Data (nome seguindo convenção GLPI: CompanyData → companydatas)
+        // Migration rename_table.php renomeia a tabela antiga se existir.
+        if (!$DB->tableExists('glpi_plugin_newbase_companydatas')) {
             $migration->displayMessage('Creating company extras table...');
-            $query = "CREATE TABLE `glpi_plugin_newbase_company_extras` (
+            $query = "CREATE TABLE `glpi_plugin_newbase_companydatas` (
                 `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
                 `entities_id` INT UNSIGNED NOT NULL DEFAULT 0,
                 `cnpj` VARCHAR(18) DEFAULT NULL,
                 `corporate_name` VARCHAR(255) DEFAULT NULL,
                 `fantasy_name` VARCHAR(255) DEFAULT NULL,
+                `inscricao_estadual` VARCHAR(50) DEFAULT NULL,
+                `inscricao_municipal` VARCHAR(50) DEFAULT NULL,
                 `contact_person` VARCHAR(255) DEFAULT NULL,
                 `phone` VARCHAR(20) DEFAULT NULL,
                 `email` VARCHAR(255) DEFAULT NULL,
+                `website` VARCHAR(255) DEFAULT NULL,
+                `cep` VARCHAR(10) DEFAULT NULL,
+                `street` VARCHAR(255) DEFAULT NULL,
+                `number` VARCHAR(20) DEFAULT NULL,
+                `complement` VARCHAR(255) DEFAULT NULL,
+                `neighborhood` VARCHAR(255) DEFAULT NULL,
+                `city` VARCHAR(255) DEFAULT NULL,
+                `state` VARCHAR(2) DEFAULT NULL,
+                `country` VARCHAR(100) DEFAULT 'Brasil',
+                `latitude` DECIMAL(10,8) DEFAULT NULL,
+                `longitude` DECIMAL(11,8) DEFAULT NULL,
+                `contract_status` VARCHAR(50) DEFAULT 'active',
+                `systems_config` LONGTEXT DEFAULT NULL,
                 `notes` LONGTEXT,
                 `is_deleted` TINYINT NOT NULL DEFAULT 0,
                 `date_creation` TIMESTAMP NULL DEFAULT NULL,
@@ -221,12 +237,12 @@ function plugin_newbase_install(): bool
                 KEY `cnpj` (`cnpj`),
                 KEY `is_deleted` (`is_deleted`),
                 KEY `date_mod` (`date_mod`),
-                CONSTRAINT `fk_company_extras_entities`
+                CONSTRAINT `fk_companydatas_entities`
                     FOREIGN KEY (`entities_id`)
                     REFERENCES `glpi_entities`(`id`)
                     ON DELETE CASCADE
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
-            $DB->queryOrDie($query, 'Error creating company extras table');
+            $DB->queryOrDie($query, 'Error creating companydatas table');
         }
 
         // Execute DB changes
@@ -269,7 +285,7 @@ function plugin_newbase_uninstall(): bool
             'glpi_plugin_newbase_tasks',           // Child of addresses, systems
             'glpi_plugin_newbase_addresses',       // Independent
             'glpi_plugin_newbase_systems',         // Independent
-            'glpi_plugin_newbase_company_extras',  // Independent
+            'glpi_plugin_newbase_companydatas',     // Independent (renomeada)
             // 'glpi_plugin_newbase_config',       // REMOVED - using core config now
         ];
 

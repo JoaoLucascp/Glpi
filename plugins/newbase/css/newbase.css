@@ -398,3 +398,245 @@
         page-break-inside: avoid;
     }
 }
+
+/* ═══════════════════════════════════════════════════
+   ACCORDION — SISTEMAS (Bootstrap 5 / Tabler override)
+═══════════════════════════════════════════════════ */
+
+.nb-accordion .accordion-item.nb-accordion-item {
+    border: 1px solid var(--tblr-border-color, #e6e7e9);
+    border-radius: 6px !important;
+    margin-bottom: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,.06);
+    transition: box-shadow .2s ease;
+}
+
+.nb-accordion .accordion-item.nb-accordion-item:hover {
+    box-shadow: 0 3px 10px rgba(0,0,0,.1);
+}
+
+.nb-accordion .accordion-button.nb-accordion-btn {
+    background: var(--tblr-card-bg, #fff);
+    color: var(--tblr-body-color, #354052);
+    font-size: .9rem;
+    padding: .85rem 1.1rem;
+    border-radius: 0 !important;
+    transition: background .15s ease;
+}
+
+.nb-accordion .accordion-button.nb-accordion-btn:not(.collapsed) {
+    background: linear-gradient(135deg, #e8f4fd 0%, #f0f8ff 100%);
+    color: var(--tblr-primary, #206bc4);
+    box-shadow: none;
+}
+
+.nb-accordion .accordion-button.nb-accordion-btn::after {
+    background-size: 16px;
+    opacity: .6;
+}
+
+.nb-accordion .accordion-body {
+    padding: 1.2rem 1.1rem;
+    background: #fcfcfd;
+}
+
+/* Section label (título de sub-seção dentro de accordion) */
+.nb-section-label {
+    font-size: .78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--tblr-muted, #6c757d);
+    border-bottom: 1px solid var(--tblr-border-color, #e6e7e9);
+    padding-bottom: 6px;
+    margin-bottom: 12px;
+}
+
+/* ═══════════════════════════════════════════════════
+   CAMPOS DE FORMULÁRIO MODERNOS (.nb-fc)
+═══════════════════════════════════════════════════ */
+
+.nb-fc {
+    border-radius: 5px;
+    border-color: var(--tblr-input-border-color, #d3d8e3);
+    transition: border-color .2s ease, box-shadow .2s ease;
+    font-size: .875rem;
+}
+
+.nb-fc:focus {
+    border-color: var(--tblr-primary, #206bc4);
+    box-shadow: 0 0 0 3px rgba(32,107,196,.12);
+}
+
+/* Campo de senha (type=text visível por design) */
+.nb-pwd {
+    background: #fffbf0;
+    border-left: 3px solid #f59f00;
+    font-family: monospace;
+    letter-spacing: .04em;
+}
+
+.nb-pwd:focus {
+    border-color: #f59f00;
+    box-shadow: 0 0 0 3px rgba(245,159,0,.15);
+}
+
+.nb-pwd-label {
+    color: #b34d00;
+    font-weight: 600;
+}
+
+/* Textarea monospace (JSON / config) */
+.nb-monospace {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: .82rem;
+    background: #1d2538;
+    color: #a8d9a8;
+    border-color: #2d3a52;
+}
+
+.nb-monospace:focus {
+    background: #1d2538;
+    color: #c8f7c8;
+}
+
+/* ═══════════════════════════════════════════════════
+   TABELAS DE RAMAIS / TRONCOS
+═══════════════════════════════════════════════════ */
+
+.nb-table {
+    font-size: .825rem;
+    border-color: var(--tblr-border-color, #e6e7e9);
+}
+
+.nb-table thead th {
+    font-size: .75rem;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    white-space: nowrap;
+    padding: .5rem .6rem;
+}
+
+.nb-table td {
+    padding: .3rem .4rem;
+    vertical-align: middle;
+}
+
+.nb-table td input,
+.nb-table td select {
+    min-width: 60px;
+}
+
+/* Animação de nova linha adicionada */
+@keyframes nb-row-flash {
+    0%   { background: #d4edda; }
+    100% { background: transparent; }
+}
+
+.nb-row-new {
+    animation: nb-row-flash .6s ease-out;
+}
+
+/* ═══════════════════════════════════════════════════
+   BOTÃO SALVAR — grande e centralizado
+═══════════════════════════════════════════════════ */
+
+.nb-save-btn {
+    min-width: 240px;
+    font-size: 1rem;
+    letter-spacing: .03em;
+    transition: transform .15s ease, box-shadow .15s ease;
+}
+
+.nb-save-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(32,107,196,.35);
+}
+
+/* ═══════════════════════════════════════════════════
+   WRAPPER DOS SISTEMAS
+═══════════════════════════════════════════════════ */
+
+.newbase-systems-wrapper {
+    padding: .75rem;
+    max-width: 1100px;
+}
+
+.newbase-system-form-body {
+    background: #f8f9fa;
+    border-radius: 6px;
+}
+
+/* ═══════════════════════════════════════════════
+   MAPA LEAFLET — Container e controles
+═══════════════════════════════════════════════ */
+
+/* Seção wrapper do mapa dentro do formulário de tarefa */
+.nb-map-section {
+    background: #f8f9fa;
+    border-radius: 6px;
+}
+
+/* Container principal do mapa Leaflet */
+#nb-task-map,
+.nb-map-container {
+    width: 100%;
+    height: 420px;
+    min-height: 300px;
+    border: 1px solid var(--tblr-border-color, #e6e7e9);
+    border-radius: 6px;
+    background: #e8f4f8;
+    position: relative;
+    z-index: 1;
+}
+
+/* Mapa dentro de modal ou tab (altura reduzida) */
+.tab-content #nb-task-map {
+    height: 380px;
+}
+
+/* Placeholder quando Leaflet ainda não carregou */
+#nb-task-map:empty::after {
+    content: '⏳ Carregando mapa...';
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #6c757d;
+    font-size: .875rem;
+}
+
+/* Garantir que Leaflet não vaze do container */
+.nb-map-container .leaflet-container {
+    border-radius: 6px;
+    height: 100% !important;
+}
+
+/* Botão de localização */
+#nb-btn-my-location {
+    white-space: nowrap;
+}
+
+/* ═══════════════════════════════════════════════
+   ANIMAÇÃO SPIN — ícones de carregamento
+═══════════════════════════════════════════════ */
+
+@keyframes nb-spin-anim {
+    to { transform: rotate(360deg); }
+}
+
+.nb-spin {
+    display: inline-block;
+    animation: nb-spin-anim .8s linear infinite;
+}
+
+/* ═══════════════════════════════════════════════
+   BADGES COLORIDOS (Tabler complementares)
+═══════════════════════════════════════════════ */
+
+.bg-cyan-lt    { background-color: rgba(23, 162, 184, .1); }
+.text-cyan     { color: #17a2b8 !important; }
+.bg-orange-lt  { background-color: rgba(253, 126, 20, .1); }
+.text-orange   { color: #fd7e14 !important; }
+

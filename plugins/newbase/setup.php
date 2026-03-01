@@ -65,11 +65,14 @@ function plugin_init_newbase(): void
     ];
 
     // Add specific JavaScript files
+    // ORDEM IMPORTANTE: map.js antes de forms.js (forms.js usa Newbase.Map.loadLeaflet)
     $PLUGIN_HOOKS['add_javascript']['newbase'] = [
-        'js/forms.js',
+        'js/jquery.mask.min.js', // máscaras de CNPJ / CEP
+        'js/map.js',             // loader do Leaflet (Newbase.Map.loadLeaflet)
+        'js/forms.js',           // busca CNPJ/CEP + mapa de tarefa
         'js/mileage.js',
-        'js/map.js',
-        'js/signature.js'
+        'js/signature.js',
+        'js/newbase.js',         // SweetAlert2 + duplicidade
     ];
 
     // Register classes for autoload and rights management
@@ -198,7 +201,7 @@ function plugin_newbase_check_config(bool $verbose = false): bool
         'glpi_plugin_newbase_systems',
         'glpi_plugin_newbase_tasks',
         'glpi_plugin_newbase_task_signatures',
-        'glpi_plugin_newbase_company_extras',
+        'glpi_plugin_newbase_companydatas',
     ];
 
     foreach ($required_tables as $table) {

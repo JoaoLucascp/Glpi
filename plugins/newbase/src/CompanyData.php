@@ -67,13 +67,40 @@ class CompanyData extends CommonDBTM
     public $dohistory = true;
 
     /**
+     * Enable recycle bin (soft delete) support
+     * @var bool
+     */
+    public $use_deleted = true; // Informa ao GLPI que a tabela tem coluna is_deleted
+
+    /**
+     * Habilita lixeira para esta classe
+     * @return bool
+     */
+    public function maybeDeleted(): bool
+    {
+        return true;
+    }
+
+    /**
+     * Permite exclusão permanente (purge) da lixeira
+     * Necessário para o GLPI processar o toggle de lixeira corretamente
+     * @return bool
+     */
+    public static function canPurge(): bool
+    {
+        return (bool) Session::haveRight(self::$rightname, PURGE);
+    }
+
+    /**
      * Get table name - Override to use correct table
      * @param string|null $classname Class name
      * @return string Table name
      */
     public static function getTable($classname = null): string
     {
-        return 'glpi_plugin_newbase_company_extras';
+        // Tabela renomeada na migration (rename_table.php) para seguir
+        // a convenção do GLPI: CompanyData → glpi_plugin_newbase_companydatas
+        return 'glpi_plugin_newbase_companydatas';
     }
 
     /**
@@ -84,6 +111,17 @@ class CompanyData extends CommonDBTM
     public static function getTypeName($nb = 0): string
     {
         return _n('Company', 'Companies', $nb, 'newbase');
+    }
+
+    /**
+     * Override name field: a tabela usa corporate_name como campo principal de exibição.
+     * Sem isso o CommonDBTM tenta gravar/ler uma coluna `name` que não existe.
+     *
+     * @return string
+     */
+    public static function getNameField(): string
+    {
+        return 'corporate_name';
     }
 
     /**
@@ -133,7 +171,10 @@ class CompanyData extends CommonDBTM
      */
     public static function getSearchURL($full = true): string
     {
-        return Plugin::getWebDir('newbase', $full) . '/front/companydata.php';
+        global $CFG_GLPI;
+
+        $dir = ($full ? $CFG_GLPI['root_doc'] : '');
+        return $dir . '/plugins/newbase/front/companydata.php';
     }
 
     /**
@@ -154,7 +195,7 @@ class CompanyData extends CommonDBTM
      * @param array $options Options
      * @return array Tab names
      */
-    public function defineTabs($options = []) // ✅ ERRO 26: Era defineTab (sem 's')
+    public function defineTabs($options = []) // ERRO 26: Era defineTab (sem 's')
     {
         $ong = [];
         $this->addDefaultFormTab($ong);
@@ -188,6 +229,7 @@ class CompanyData extends CommonDBTM
     public static function displayTabContentForItem(CommonGLPI $item, $tabnum = 1, $withtemplate = 0): bool
     {
         if ($item->getType() === self::getType()) {
+            /** @var CompanyData $item */
             self::showSystemsConfigTab($item);
             return true;
         }
@@ -195,158 +237,35 @@ class CompanyData extends CommonDBTM
     }
 
     /**
-     * Show systems configuration tab (IPBX/PABX, IPBX Cloud, Chatbot, Linha)
-     * 
+     * Show systems configuration tab usando Twig + Bootstrap accordion.
+     *
      * @param CompanyData $item Company item
      * @return void
      */
     private static function showSystemsConfigTab(CompanyData $item): void
     {
-        $ID = $item->getID();
-        $systems_config = json_decode($item->fields['systems_config'] ?? '{}', true) ?: [];
+        $ID     = $item->getID();
+        $raw    = $item->fields['systems_config'] ?? '{}';
+        $config = json_decode($raw, true) ?: [];
 
-        echo "<div class='center'>";
-        echo "<form method='post' action='" . $item->getFormURL() . "'>";
-        echo Html::hidden('id', ['value' => $ID]);
-        echo Html::hidden('_glpi_csrf_token');
+        // Garantir token CSRF
+        $csrf_token = \Session::getNewCSRFToken();
 
-        // IPBX/PABX Section
-        echo "<div class='card mb-3'>";
-        echo "<div class='card-header'><h3>" . __('IPBX/PABX', 'newbase') . "</h3></div>";
-        echo "<div class='card-body'>";
-        
-        $ipbx = $systems_config['ipbx'] ?? [];
-        
-        echo "<table class='tab_cadre_fixe'>";
-        echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __('Model', 'newbase') . "</td>";
-        echo "<td>" . Html::input('systems_config[ipbx][model]', ['value' => $ipbx['model'] ?? '']) . "</td>";
-        echo "<td>" . __('Version', 'newbase') . "</td>";
-        echo "<td>" . Html::input('systems_config[ipbx][version]', ['value' => $ipbx['version'] ?? '']) . "</td>";
-        echo "</tr>";
-        
-        echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __('Internal IP', 'newbase') . "</td>";
-        echo "<td>" . Html::input('systems_config[ipbx][ip_interno]', ['value' => $ipbx['ip_interno'] ?? '']) . "</td>";
-        echo "<td>" . __('External IP', 'newbase') . "</td>";
-        echo "<td>" . Html::input('systems_config[ipbx][ip_externo]', ['value' => $ipbx['ip_externo'] ?? '']) . "</td>";
-        echo "</tr>";
-        
-        echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __('Web Port', 'newbase') . "</td>";
-        echo "<td>" . Html::input('systems_config[ipbx][porta_web]', ['value' => $ipbx['porta_web'] ?? '']) . "</td>";
-        echo "<td>" . __('Web Password', 'newbase') . "</td>";
-        echo "<td>" . Html::input('systems_config[ipbx][senha_web]', ['value' => $ipbx['senha_web'] ?? '', 'type' => 'text']) . "</td>";
-        echo "</tr>";
-        
-        echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __('SSH Port', 'newbase') . "</td>";
-        echo "<td>" . Html::input('systems_config[ipbx][porta_ssh]', ['value' => $ipbx['porta_ssh'] ?? '']) . "</td>";
-        echo "<td>" . __('SSH Password', 'newbase') . "</td>";
-        echo "<td>" . Html::input('systems_config[ipbx][senha_ssh]', ['value' => $ipbx['senha_ssh'] ?? '', 'type' => 'text']) . "</td>";
-        echo "</tr>";
-        
-        echo "<tr class='tab_bg_1'>";
-        echo "<td colspan='4'>" . __('Observations', 'newbase') . "<br>";
-        echo Html::textarea(['name' => 'systems_config[ipbx][observacoes]', 'value' => $ipbx['observacoes'] ?? '', 'cols' => 80, 'rows' => 3]);
-        echo "</td></tr>";
-        echo "</table>";
-        echo "</div></div>";
+        \Glpi\Application\View\TemplateRenderer::getInstance()->display(
+            '@newbase/companydata/systems_tab.html.twig',
+            [
+                // Metadados
+                'item_id'    => $ID,
+                'form_url'   => $item->getFormURL(),
+                'csrf_token' => $csrf_token,
 
-        // IPBX Cloud Section
-        echo "<div class='card mb-3'>";
-        echo "<div class='card-header'><h3>" . __('IPBX Cloud', 'newbase') . "</h3></div>";
-        echo "<div class='card-body'>";
-        
-        $cloud = $systems_config['cloud'] ?? [];
-        
-        echo "<table class='tab_cadre_fixe'>";
-        echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __('Model', 'newbase') . "</td>";
-        echo "<td>" . Html::input('systems_config[cloud][model]', ['value' => $cloud['model'] ?? '']) . "</td>";
-        echo "<td>" . __('Version', 'newbase') . "</td>";
-        echo "<td>" . Html::input('systems_config[cloud][version]', ['value' => $cloud['version'] ?? '']) . "</td>";
-        echo "</tr>";
-        
-        echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __('Internal IP', 'newbase') . "</td>";
-        echo "<td>" . Html::input('systems_config[cloud][ip_interno]', ['value' => $cloud['ip_interno'] ?? '']) . "</td>";
-        echo "<td>" . __('External IP', 'newbase') . "</td>";
-        echo "<td>" . Html::input('systems_config[cloud][ip_externo]', ['value' => $cloud['ip_externo'] ?? '']) . "</td>";
-        echo "</tr>";
-        
-        echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __('Web Port', 'newbase') . "</td>";
-        echo "<td>" . Html::input('systems_config[cloud][porta_web]', ['value' => $cloud['porta_web'] ?? '']) . "</td>";
-        echo "<td>" . __('Web Password', 'newbase') . "</td>";
-        echo "<td>" . Html::input('systems_config[cloud][senha_web]', ['value' => $cloud['senha_web'] ?? '', 'type' => 'text']) . "</td>";
-        echo "</tr>";
-        
-        echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __('SSH Port', 'newbase') . "</td>";
-        echo "<td>" . Html::input('systems_config[cloud][porta_ssh]', ['value' => $cloud['porta_ssh'] ?? '']) . "</td>";
-        echo "<td>" . __('SSH Password', 'newbase') . "</td>";
-        echo "<td>" . Html::input('systems_config[cloud][senha_ssh]', ['value' => $cloud['senha_ssh'] ?? '', 'type' => 'text']) . "</td>";
-        echo "</tr>";
-        
-        echo "<tr class='tab_bg_1'>";
-        echo "<td colspan='4'>" . __('Observations', 'newbase') . "<br>";
-        echo Html::textarea(['name' => 'systems_config[cloud][observacoes]', 'value' => $cloud['observacoes'] ?? '', 'cols' => 80, 'rows' => 3]);
-        echo "</td></tr>";
-        echo "</table>";
-        echo "</div></div>";
-
-        // Chatbot Section
-        echo "<div class='card mb-3'>";
-        echo "<div class='card-header'><h3>" . __('Chatbot', 'newbase') . "</h3></div>";
-        echo "<div class='card-body'>";
-        
-        $chatbot = $systems_config['chatbot'] ?? [];
-        
-        echo "<table class='tab_cadre_fixe'>";
-        echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __('Platform', 'newbase') . "</td>";
-        echo "<td>" . Html::input('systems_config[chatbot][platform]', ['value' => $chatbot['platform'] ?? '']) . "</td>";
-        echo "<td>" . __('API Key', 'newbase') . "</td>";
-        echo "<td>" . Html::input('systems_config[chatbot][api_key]', ['value' => $chatbot['api_key'] ?? '', 'type' => 'text']) . "</td>";
-        echo "</tr>";
-        
-        echo "<tr class='tab_bg_1'>";
-        echo "<td colspan='4'>" . __('Configuration', 'newbase') . "<br>";
-        echo Html::textarea(['name' => 'systems_config[chatbot][config]', 'value' => $chatbot['config'] ?? '', 'cols' => 80, 'rows' => 3]);
-        echo "</td></tr>";
-        echo "</table>";
-        echo "</div></div>";
-
-        // Linha Telefônica Section
-        echo "<div class='card mb-3'>";
-        echo "<div class='card-header'><h3>" . __('Phone Line', 'newbase') . "</h3></div>";
-        echo "<div class='card-body'>";
-        
-        $linha = $systems_config['linha'] ?? [];
-        
-        echo "<table class='tab_cadre_fixe'>";
-        echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __('Provider', 'newbase') . "</td>";
-        echo "<td>" . Html::input('systems_config[linha][provider]', ['value' => $linha['provider'] ?? '']) . "</td>";
-        echo "<td>" . __('Contract Number', 'newbase') . "</td>";
-        echo "<td>" . Html::input('systems_config[linha][contract]', ['value' => $linha['contract'] ?? '']) . "</td>";
-        echo "</tr>";
-        
-        echo "<tr class='tab_bg_1'>";
-        echo "<td colspan='4'>" . __('Notes', 'newbase') . "<br>";
-        echo Html::textarea(['name' => 'systems_config[linha][notes]', 'value' => $linha['notes'] ?? '', 'cols' => 80, 'rows' => 3]);
-        echo "</td></tr>";
-        echo "</table>";
-        echo "</div></div>";
-
-        echo "<div class='center'>";
-        echo "<button type='submit' name='update' class='btn btn-primary'>";
-        echo "<i class='ti ti-device-floppy'></i> " . __('Save');
-        echo "</button></div>";
-        
-        Html::closeForm();
-        echo "</div>";
+                // Dados de cada módulo (fallback para array vazio)
+                'ipbx'       => $config['ipbx']       ?? [],
+                'ipbx_cloud' => $config['ipbx_cloud'] ?? [],
+                'linha'      => $config['linha']      ?? [],
+                'chatbot'    => $config['chatbot']    ?? [],
+            ]
+        );
     }
 
     // ========== DATA RETRIEVAL METHODS ==========
@@ -533,18 +452,32 @@ class CompanyData extends CommonDBTM
 
     /**
      * Prepare input for add
-     * 
+     *
      * @param array $input Input data
      * @return array|false Modified input or false
      */
     public function prepareInputForAdd($input)
     {
+        // CORREÇÃO: remover campo 'name' residual do POST (a tabela não tem essa coluna;
+        // getNameField() retorna 'corporate_name' como campo principal).
+        unset($input['name']);
+
+        // Garantir que corporate_name não esteja vazio
+        if (empty($input['corporate_name'])) {
+            \Session::addMessageAfterRedirect(
+                __('Corporate Name is required', 'newbase'),
+                false,
+                ERROR
+            );
+            return false;
+        }
+
         // Process systems_config array into JSON
         if (isset($input['systems_config']) && is_array($input['systems_config'])) {
             $input['systems_config'] = json_encode($input['systems_config']);
         }
-        
-        // ✅ ERRO 24: Converter strings vazias para NULL em campos decimais
+
+        // ERRO 24: Converter strings vazias para NULL em campos decimais
         $decimal_fields = ['latitude', 'longitude'];
         foreach ($decimal_fields as $field) {
             if (isset($input[$field]) && $input[$field] === '') {
@@ -557,18 +490,21 @@ class CompanyData extends CommonDBTM
 
     /**
      * Prepare input for update
-     * 
+     *
      * @param array $input Input data
      * @return array|false Modified input or false
      */
     public function prepareInputForUpdate($input)
     {
+        // CORREÇÃO: remover campo 'name' residual do POST
+        unset($input['name']);
+
         // Process systems_config array into JSON
         if (isset($input['systems_config']) && is_array($input['systems_config'])) {
             $input['systems_config'] = json_encode($input['systems_config']);
         }
         
-        // ✅ ERRO 24: Converter strings vazias para NULL em campos decimais
+        // ERRO 24: Converter strings vazias para NULL em campos decimais
         $decimal_fields = ['latitude', 'longitude'];
         foreach ($decimal_fields as $field) {
             if (isset($input[$field]) && $input[$field] === '') {
@@ -640,16 +576,19 @@ class CompanyData extends CommonDBTM
      */
     public function rawSearchOptions(): array
     {
-        $tab = parent::rawSearchOptions();
+        $tab = [];
 
+        // Opção 1 — campo principal (substitui a do parent que fica sem itemtype)
         $tab[] = [
-            'id'            => '2',
-            'table'         => 'glpi_entities',
-            'field'         => 'name',
-            'name'          => __('Name'),
-            'datatype'      => 'itemlink',
-            'massiveaction' => false,
+            'id'       => '1',
+            'table'    => $this->getTable(),
+            'field'    => 'corporate_name',
+            'name'     => __('Corporate Name', 'newbase'),
+            'datatype' => 'itemlink',
+            'itemtype' => self::class,
         ];
+
+
 
         $tab[] = [
             'id'       => '3',
@@ -709,6 +648,17 @@ class CompanyData extends CommonDBTM
             'massiveaction' => false,
         ];
 
+        $tab[] = [
+            'id'            => '30',
+            'table'         => $this->getTable(),
+            'field'         => 'is_deleted',
+            'name'          => __('Deleted'),
+            'datatype'      => 'bool',
+            'massiveaction' => false,
+            'nosearch'      => true,
+            'nodisplay'     => true,
+        ];
+
         return $tab;
     }
 
@@ -728,24 +678,19 @@ class CompanyData extends CommonDBTM
         }
 
         $this->showFormHeader($options);
-        
-        // ✅ CORREÇÃO ERRO 18/19: Adicionar token CSRF manualmente após showFormHeader
-        if (!isset($_SESSION['_glpi_csrf_token'])) {
-            Session::getNewCSRFToken();
-        }
-        echo Html::hidden('_glpi_csrf_token');
+        // NOTA: NÃO adicionar _glpi_csrf_token aqui — showFormHeader() já o injeta corretamente.
 
-        // === SEÇÃO: DADOS PESSOAIS ===
+        // === SEÇÃO: Empresas ===
         echo "<tr class='tab_bg_2'>";
         echo "<th colspan='4'>" . __('Personal Data', 'newbase') . "</th>";
         echo "</tr>";
 
-        // Nome / CNPJ
+        // Razão Social (campo principal = getNameField()) / CNPJ
         echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __('Name') . " <span class='red'>*</span></td>";
+        echo "<td>" . __('Corporate Name', 'newbase') . " <span class='red'>*</span></td>";
         echo "<td>";
-        echo Html::input('name', [
-            'value' => $this->fields['name'] ?? '',
+        echo Html::input('corporate_name', [
+            'value' => $this->fields['corporate_name'] ?? '',
             'size'  => 50,
         ]);
         echo "</td>";
@@ -763,8 +708,16 @@ class CompanyData extends CommonDBTM
         echo "</td>";
         echo "</tr>";
 
-        // Email / Telefone
+        // Nome Fantasia / Email
         echo "<tr class='tab_bg_1'>";
+        echo "<td>" . __('Fantasy Name', 'newbase') . "</td>";
+        echo "<td>";
+        echo Html::input('fantasy_name', [
+            'value' => $this->fields['fantasy_name'] ?? '',
+            'size'  => 50,
+        ]);
+        echo "</td>";
+
         echo "<td>" . __('Email') . "</td>";
         echo "<td>";
         echo Html::input('email', [
@@ -773,7 +726,10 @@ class CompanyData extends CommonDBTM
             'size'  => 50,
         ]);
         echo "</td>";
+        echo "</tr>";
 
+        // Telefone / Pessoa de Contato (linha separada)
+        echo "<tr class='tab_bg_1'>";
         echo "<td>" . __('Phone') . "</td>";
         echo "<td>";
         echo Html::input('phone', [
@@ -781,25 +737,7 @@ class CompanyData extends CommonDBTM
             'size'  => 20,
         ]);
         echo "</td>";
-        echo "</tr>";
-
-        // Razão Social / Nome Fantasia
-        echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __('Corporate Name', 'newbase') . "</td>";
-        echo "<td>";
-        echo Html::input('corporate_name', [
-            'value' => $this->fields['corporate_name'] ?? '',
-            'size'  => 50,
-        ]);
-        echo "</td>";
-
-        echo "<td>" . __('Fantasy Name', 'newbase') . "</td>";
-        echo "<td>";
-        echo Html::input('fantasy_name', [
-            'value' => $this->fields['fantasy_name'] ?? '',
-            'size'  => 50,
-        ]);
-        echo "</td>";
+        echo "<td colspan='2'></td>";
         echo "</tr>";
 
         // Inscrições

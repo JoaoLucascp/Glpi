@@ -1,0 +1,186 @@
+{#
+ # -------------------------------------------------------------------------
+ # Newbase Plugin - Mapa Leaflet para formulário de Tarefas
+ # Template: @newbase/task/map_widget.html.twig
+ # Inclua este template em qualquer formulário que precise do mapa.
+ # Exemplo PHP:
+ #   TemplateRenderer::getInstance()->display('@newbase/task/map_widget.html.twig', [
+ #       'latitude'  => $item->fields['gps_start_lat'] ?? null,
+ #       'longitude' => $item->fields['gps_start_lng'] ?? null,
+ #       'field_lat' => 'gps_start_lat',
+ #       'field_lng' => 'gps_start_lng',
+ #   ]);
+ # -------------------------------------------------------------------------
+ #}
+
+{# ── Carrega Leaflet CSS/JS via CDN se não disponível ── #}
+<link id="nb-leaflet-css" rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script>
+    if (typeof L === 'undefined') {
+        var s = document.createElement('script');
+        s.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+        document.head.appendChild(s);
+    }
+</script>
+
+<div class="card mb-3" id="nbMapCard">
+    <div class="card-header d-flex align-items-center justify-content-between">
+        <span><i class="ti ti-map-pin me-2 text-primary"></i><strong>Mapa de Localização</strong></span>
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-sm btn-outline-primary" id="nb-btn-my-location">
+                <i class="ti ti-current-location"></i> Minha Localização
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="nb-btn-clear-map">
+                <i class="ti ti-trash"></i> Limpar
+            </button>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div id="nb-task-map" style="width:100%;height:400px;"></div>
+    </div>
+    <div class="card-footer">
+        <div class="row g-2">
+            <div class="col-12 col-sm-6">
+                <label class="form-label small mb-1">Latitude</label>
+                <input type="text" class="form-control form-control-sm nb-fc"
+                       name="{{ field_lat|default('latitude') }}"
+                       id="nb-lat-input"
+                       value="{{ latitude|default('') }}"
+                       placeholder="-20.3222"
+                       readonly>
+            </div>
+            <div class="col-12 col-sm-6">
+                <label class="form-label small mb-1">Longitude</label>
+                <input type="text" class="form-control form-control-sm nb-fc"
+                       name="{{ field_lng|default('longitude') }}"
+                       id="nb-lng-input"
+                       value="{{ longitude|default('') }}"
+                       placeholder="-40.3381"
+                       readonly>
+            </div>
+        </div>
+        <p class="text-muted small mt-2 mb-0">
+            <i class="ti ti-info-circle me-1"></i>
+            Clique no mapa ou arraste o marcador para definir a localização. O marcador também pode ser movido.
+        </p>
+    </div>
+</div>
+
+<script>
+(function () {
+    'use strict';
+
+    var fieldLat = '{{ field_lat|default("latitude") }}';
+    var fieldLng = '{{ field_lng|default("longitude") }}';
+
+    // Aguarda Leaflet estar disponível
+    var waitL = setInterval(function () {
+        if (typeof L === 'undefined') return;
+        clearInterval(waitL);
+        startMap();
+    }, 100);
+
+    function startMap() {
+        var latVal = parseFloat(document.getElementById('nb-lat-input').value) || -20.3222;
+        var lngVal = parseFloat(document.getElementById('nb-lng-input').value) || -40.3381;
+
+        var map = L.map('nb-task-map').setView([latVal, lngVal], 13);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+            maxZoom: 19
+        }).addTo(map);
+
+        var marker = null;
+
+        // Se já tem coordenadas, coloca marcador
+        if (document.getElementById('nb-lat-input').value) {
+            placeMarker(latVal, lngVal, false);
+        }
+
+        // Clique no mapa
+        map.on('click', function (e) {
+            placeMarker(e.latlng.lat, e.latlng.lng, true);
+        });
+
+        // Botão minha localização
+        document.getElementById('nb-btn-my-location').addEventListener('click', function () {
+            if (!navigator.geolocation) {
+                showMapAlert('Geolocalização não suportada neste navegador.', 'error');
+                return;
+            }
+            this.disabled = true;
+            var self = this;
+            navigator.geolocation.getCurrentPosition(
+                function (pos) {
+                    map.setView([pos.coords.latitude, pos.coords.longitude], 15);
+                    placeMarker(pos.coords.latitude, pos.coords.longitude, true);
+                    self.disabled = false;
+                    showMapAlert('Localização atual definida!', 'success');
+                },
+                function () {
+                    self.disabled = false;
+                    showMapAlert('Não foi possível obter sua localização.', 'error');
+                }
+            );
+        });
+
+        // Botão limpar
+        document.getElementById('nb-btn-clear-map').addEventListener('click', function () {
+            if (marker) {
+                map.removeLayer(marker);
+                marker = null;
+            }
+            document.getElementById('nb-lat-input').value = '';
+            document.getElementById('nb-lng-input').value = '';
+            // Sincroniza campos ocultos com name correto (se existirem)
+            syncHiddenFields('', '');
+        });
+
+        function placeMarker(lat, lng, showToast) {
+            if (marker) map.removeLayer(marker);
+            marker = L.marker([lat, lng], { draggable: true }).addTo(map);
+            marker.on('dragend', function (e) {
+                var p = e.target.getLatLng();
+                setCoords(p.lat, p.lng);
+                showMapAlert('Lat: ' + p.lat.toFixed(6) + ' | Lng: ' + p.lng.toFixed(6), 'info');
+            });
+            setCoords(lat, lng);
+
+            if (showToast) {
+                showMapAlert('Lat: ' + lat.toFixed(6) + ' | Lng: ' + lng.toFixed(6), 'info');
+            }
+        }
+
+        function setCoords(lat, lng) {
+            var latStr = lat.toFixed(8);
+            var lngStr = lng.toFixed(8);
+            document.getElementById('nb-lat-input').value = latStr;
+            document.getElementById('nb-lng-input').value = lngStr;
+            syncHiddenFields(latStr, lngStr);
+        }
+
+        function syncHiddenFields(lat, lng) {
+            // Sincroniza com inputs ocultos caso existam (fallback)
+            var hidLat = document.querySelector('[name="' + fieldLat + '"]:not(#nb-lat-input)');
+            var hidLng = document.querySelector('[name="' + fieldLng + '"]:not(#nb-lng-input)');
+            if (hidLat) hidLat.value = lat;
+            if (hidLng) hidLng.value = lng;
+        }
+    }
+
+    function showMapAlert(msg, type) {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                icon: type,
+                text: msg,
+                toast: true,
+                position: 'top-end',
+                timer: 2000,
+                showConfirmButton: false
+            });
+        }
+    }
+})();
+</script>

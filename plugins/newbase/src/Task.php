@@ -394,6 +394,55 @@ class Task extends CommonDBTM
             }
             echo "</td>";
             echo "</tr>";
+
+            // ── MAPA LEAFLET ─────────────────────────────────────────────
+            echo "<tr class='tab_bg_2'>";
+            echo "<th colspan='4'>" . __('Location Map', 'newbase') . "</th>";
+            echo "</tr>";
+
+            echo "<tr class='tab_bg_1'>";
+            echo "<td colspan='4' class='p-0'>";
+            echo "<div class='nb-map-section p-3'>";
+
+            // Linha de coordenadas manuais + botão de geolocalização
+            echo "<div class='row g-2 mb-2'>";
+            echo "<div class='col-12 col-lg-4'>";
+            echo "<label class='form-label'>" . __('Latitude', 'newbase') . "</label>";
+            echo Html::input('latitude', [
+                'value'       => $this->fields['gps_start_lat'] ?? '',
+                'name'        => 'latitude',
+                'class'       => 'form-control nb-fc',
+                'placeholder' => '-20.3222',
+            ]);
+            echo "</div>";
+
+            echo "<div class='col-12 col-lg-4'>";
+            echo "<label class='form-label'>" . __('Longitude', 'newbase') . "</label>";
+            echo Html::input('longitude', [
+                'value'       => $this->fields['gps_start_lng'] ?? '',
+                'name'        => 'longitude',
+                'class'       => 'form-control nb-fc',
+                'placeholder' => '-40.3381',
+            ]);
+            echo "</div>";
+
+            echo "<div class='col-12 col-lg-4 d-flex align-items-end'>";
+            echo "<button type='button' id='nb-btn-my-location' class='btn btn-outline-primary w-100'>";
+            echo "<i class='ti ti-current-location me-1'></i> " . __('My Location', 'newbase');
+            echo "</button>";
+            echo "</div>";
+            echo "</div>"; // /.row
+
+            // Container do mapa Leaflet — inicializado por forms.js: initTaskMap()
+            echo "<div id='nb-task-map' class='nb-map-container rounded' ";
+            echo "     data-lat='" . ($this->fields['gps_start_lat'] ?? '') . "' ";
+            echo "     data-lng='" . ($this->fields['gps_start_lng'] ?? '') . "'>";
+            echo "</div>";
+
+            echo "</div>"; // /.nb-map-section
+            echo "</td>";
+            echo "</tr>";
+            // ── FIM MAPA ──────────────────────────────────────────────────
         }
 
         $this->showFormButtons($options);

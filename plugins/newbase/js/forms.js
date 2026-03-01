@@ -126,6 +126,8 @@
                 // Configuração da requisição com Retry
                 let attempts = 0;
                 const maxAttempts = 3;
+                // Delay progressivo entre tentativas: 1.5s, 3s
+                const retryDelays = [0, 1500, 3000];
 
                 function performSearch() {
                     attempts++;
@@ -184,27 +186,37 @@
                             }
                         },
                         error: function (xhr, status, error) {
-                            console.error(`[NEWBASE] AJAX Error (Tentativa ${attempts}/${maxAttempts}):`, status);
+                            console.error(`[NEWBASE] AJAX Error (Tentativa ${attempts}/${maxAttempts}): status=${status}, httpStatus=${xhr.status}`);
 
-                            // Se for erro recuperável (timeout ou erro de servidor 5xx) e ainda tiver tentativas
-                            if ((status === 'timeout' || xhr.status >= 500) && attempts < maxAttempts) {
-                                console.log(`[NEWBASE] Retentando em 2 segundos...`);
-                                setTimeout(performSearch, 2000); // Tenta de novo após 2s
+                            // Erros NÃO recuperáveis: autenticação/autorização/dado inválido
+                            const isFatalError = (xhr.status === 400 || xhr.status === 403 || xhr.status === 404);
+
+                            // Erros recuperáveis: qualquer coisa que não seja fatal e ainda há tentativas
+                            // Inclui: timeout, erro de rede (status==='error', xhr.status===0), 5xx
+                            const isRetryable = !isFatalError && attempts < maxAttempts;
+
+                            if (isRetryable) {
+                                const delay = retryDelays[attempts] || 2000;
+                                console.log(`[NEWBASE] Retentando em ${delay}ms... (tentativa ${attempts + 1}/${maxAttempts})`);
+                                showLoading($cnpjButton, true, `Tentativa ${attempts + 1}/${maxAttempts}...`);
+                                setTimeout(performSearch, delay);
                             } else {
-                                // Esgotou tentativas ou é erro fatal (400/403/404)
-                                let errorMsg = 'Erro ao conectar com o servidor após ' + attempts + ' tentativas.';
+                                // Esgotou tentativas ou é erro fatal
+                                let errorMsg;
 
                                 if (xhr.status === 400) {
-                                    errorMsg = 'Dados inválidos. Verifique o CNPJ digitado.';
+                                    errorMsg = 'CNPJ inválido. Verifique os dígitos digitados.';
                                 } else if (xhr.status === 403) {
                                     errorMsg = 'Sem permissão. Faça login novamente.';
                                 } else if (xhr.status === 404) {
                                     errorMsg = 'CNPJ não encontrado na base de dados.';
+                                } else {
+                                    errorMsg = `Falha na conexão após ${attempts} tentativas. Verifique sua rede e tente novamente.`;
                                 }
 
                                 showNotification(errorMsg, 'error');
-                                isSearching = false; // Liberar debounce
-                                showLoading($cnpjButton, false); // Erro final: reabilita botão
+                                isSearching = false;
+                                showLoading($cnpjButton, false);
                             }
                         }
                     });
@@ -312,20 +324,165 @@
 
     /**
      * Mostrar notificação
+     * Prioridade: SweetAlert2 > GLPI toast > alert nativo
      */
     function showNotification(message, type) {
-        // Usar notificação nativa do GLPI
-        if (typeof glpi_toast_info !== 'undefined') {
-            if (type === 'success') {
-                glpi_toast_info(message);
-            } else {
-                glpi_toast_error(message);
+        // 1º) SweetAlert2 (carregado via CDN no template Twig)
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                icon: type === 'success' ? 'success' : 'error',
+                title: type === 'success' ? 'Sucesso!' : 'Atenção',
+                text: message,
+                timer: type === 'success' ? 2500 : 0,
+                showConfirmButton: type !== 'success',
+                toast: type === 'success',
+                position: type === 'success' ? 'top-end' : 'center',
+                confirmButtonColor: '#206bc4'
+            });
+            return;
+        }
+
+        // 2º) Notificação nativa do GLPI
+        if (type === 'success' && typeof glpi_toast_info !== 'undefined') {
+            glpi_toast_info(message);
+            return;
+        }
+        if (type === 'error' && typeof glpi_toast_error !== 'undefined') {
+            glpi_toast_error(message);
+            return;
+        }
+
+        // 3º) Fallback
+        alert(message);
+    }
+
+    // ════════════════════════════════════════════════════════════
+    //  MAPA LEAFLET — Integração com campos lat/lng no formulário
+    // ════════════════════════════════════════════════════════════
+
+    /**
+     * Inicializa mapa Leaflet no container #nb-task-map
+     * Ao clicar no mapa, atualiza campos [name=latitude] e [name=longitude]
+     * Lê coordenadas iniciais de data-lat / data-lng no container
+     */
+    function initTaskMap() {
+        var $container = $('#nb-task-map');
+        if (!$container.length) return;
+
+        // Função interna que cria o mapa (chamada após Leaflet estar disponível)
+        function criarMapa() {
+            // Prioridade: data-attributes do container > campos de formulário > padrão ES
+            var initLat = parseFloat($container.data('lat'))
+                       || parseFloat($('[name="latitude"]').val())
+                       || -20.3222;
+            var initLng = parseFloat($container.data('lng'))
+                       || parseFloat($('[name="longitude"]').val())
+                       || -40.3381;
+
+            var map = L.map('nb-task-map').setView([initLat, initLng], 13);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '\u00a9 <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                maxZoom: 19
+            }).addTo(map);
+
+            // Marcador arrastável
+            var marker = null;
+
+            function placeMarker(lat, lng) {
+                if (marker) map.removeLayer(marker);
+                marker = L.marker([lat, lng], { draggable: true }).addTo(map);
+                marker.on('dragend', function (e) {
+                    var pos = e.target.getLatLng();
+                    setCoords(pos.lat, pos.lng);
+                });
+                setCoords(lat, lng);
             }
-        } else if (typeof displayAjaxMessageAfterRedirect !== 'undefined') {
-            displayAjaxMessageAfterRedirect();
+
+            function setCoords(lat, lng) {
+                $('[name="latitude"]').val(lat.toFixed(8));
+                $('[name="longitude"]').val(lng.toFixed(8));
+            }
+
+            // Posicionar marcador se já houver coordenadas
+            if ($('[name="latitude"]').val() || $container.data('lat')) {
+                placeMarker(initLat, initLng);
+            }
+
+            // Clique no mapa coloca/move marcador
+            map.on('click', function (e) {
+                placeMarker(e.latlng.lat, e.latlng.lng);
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon              : 'info',
+                        title             : 'Localização definida',
+                        text              : 'Lat: ' + e.latlng.lat.toFixed(6) + ' | Lng: ' + e.latlng.lng.toFixed(6),
+                        toast             : true,
+                        position          : 'top-end',
+                        timer             : 2000,
+                        showConfirmButton : false
+                    });
+                }
+            });
+
+            // Botão "Minha Localização" (injetado por Task::showForm)
+            $(document).off('click.nb-location').on('click.nb-location', '#nb-btn-my-location', function () {
+                if (!navigator.geolocation) {
+                    showNotification('Geolocalização não suportada neste navegador.', 'error');
+                    return;
+                }
+                var $btn = $(this);
+                $btn.prop('disabled', true).html('<i class="ti ti-loader nb-spin"></i> Localizando...');
+
+                navigator.geolocation.getCurrentPosition(
+                    function (pos) {
+                        $btn.prop('disabled', false).html('<i class="ti ti-current-location me-1"></i> Minha Localização');
+                        var lat = pos.coords.latitude;
+                        var lng = pos.coords.longitude;
+                        map.setView([lat, lng], 15);
+                        placeMarker(lat, lng);
+                        showNotification('Posição atual definida no mapa!', 'success');
+                    },
+                    function () {
+                        $btn.prop('disabled', false).html('<i class="ti ti-current-location me-1"></i> Minha Localização');
+                        showNotification('Não foi possível obter sua localização.', 'error');
+                    },
+                    { timeout: 10000, maximumAge: 60000 }
+                );
+            });
+
+            // Campos lat/lng alterados manualmente → atualiza mapa
+            $('[name="latitude"], [name="longitude"]').on('change.nb-map', function () {
+                var lat = parseFloat($('[name="latitude"]').val());
+                var lng = parseFloat($('[name="longitude"]').val());
+                if (!isNaN(lat) && !isNaN(lng)) {
+                    map.setView([lat, lng], 15);
+                    placeMarker(lat, lng);
+                }
+            });
+
+            // Garantir renderização correta após exibição da tab
+            setTimeout(function () { map.invalidateSize(); }, 200);
+        }
+
+        // Leaflet já carregado?
+        if (typeof L !== 'undefined') {
+            criarMapa();
+        } else if (typeof Newbase !== 'undefined' && typeof Newbase.Map !== 'undefined') {
+            // Usar loader de map.js (carrega CSS + JS do CDN)
+            Newbase.Map.loadLeaflet(criarMapa);
         } else {
-            alert(message);
+            // Fallback: polling simples
+            var waitL = setInterval(function () {
+                if (typeof L === 'undefined') return;
+                clearInterval(waitL);
+                criarMapa();
+            }, 250);
         }
     }
+
+    $(document).ready(function () {
+        initTaskMap();
+    });
 
 })(jQuery);
