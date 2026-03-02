@@ -110,7 +110,7 @@ class CompanyData extends CommonDBTM
      */
     public static function getTypeName($nb = 0): string
     {
-        return _n('Company', 'Companies', $nb, 'newbase');
+        return _n('Empresa', 'Companies', $nb, 'newbase');
     }
 
     /**
@@ -121,7 +121,7 @@ class CompanyData extends CommonDBTM
      */
     public static function getNameField(): string
     {
-        return 'corporate_name';
+        return 'fantasy_name';
     }
 
     /**
@@ -682,16 +682,16 @@ class CompanyData extends CommonDBTM
 
         // === SEÇÃO: Empresas ===
         echo "<tr class='tab_bg_2'>";
-        echo "<th colspan='4'>" . __('Personal Data', 'newbase') . "</th>";
+        echo "<th colspan='3'>" . __('Informações Gerais', 'newbase') . "</th>";
         echo "</tr>";
 
-        // Razão Social (campo principal = getNameField()) / CNPJ
+        // Nome Fantasia / CNPJ
         echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __('Corporate Name', 'newbase') . " <span class='red'>*</span></td>";
+        echo "<td>" . __('Fantasy Name', 'newbase') . "</td>";
         echo "<td>";
-        echo Html::input('corporate_name', [
-            'value' => $this->fields['corporate_name'] ?? '',
-            'size'  => 50,
+        echo Html::input('fantasy_name', [
+            'value' => $this->fields['fantasy_name'] ?? '',
+            'size'  => 35,
         ]);
         echo "</td>";
 
@@ -699,7 +699,7 @@ class CompanyData extends CommonDBTM
         echo "<td>";
         echo Html::input('cnpj', [
             'value'     => $this->fields['cnpj'] ?? '',
-            'size'      => 20,
+            'size'      => 35,
             'maxlength' => 18,
             'name'      => 'cnpj',
         ]);
@@ -708,13 +708,13 @@ class CompanyData extends CommonDBTM
         echo "</td>";
         echo "</tr>";
 
-        // Nome Fantasia / Email
+        // Razão Social (campo principal = getNameField()) / Email
         echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __('Fantasy Name', 'newbase') . "</td>";
+        echo "<td>" . __('Corporate Name', 'newbase') . " <span class='red'>*</span></td>";
         echo "<td>";
-        echo Html::input('fantasy_name', [
-            'value' => $this->fields['fantasy_name'] ?? '',
-            'size'  => 50,
+        echo Html::input('corporate_name', [
+            'value' => $this->fields['corporate_name'] ?? '',
+            'size'  => 35,
         ]);
         echo "</td>";
 
@@ -723,7 +723,7 @@ class CompanyData extends CommonDBTM
         echo Html::input('email', [
             'value' => $this->fields['email'] ?? '',
             'type'  => 'email',
-            'size'  => 50,
+            'size'  => 35,
         ]);
         echo "</td>";
         echo "</tr>";
@@ -734,29 +734,10 @@ class CompanyData extends CommonDBTM
         echo "<td>";
         echo Html::input('phone', [
             'value' => $this->fields['phone'] ?? '',
-            'size'  => 20,
+            'size'  => 35,
         ]);
         echo "</td>";
         echo "<td colspan='2'></td>";
-        echo "</tr>";
-
-        // Inscrições
-        echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __('State Registration', 'newbase') . "</td>";
-        echo "<td>";
-        echo Html::input('inscricao_estadual', [
-            'value' => $this->fields['inscricao_estadual'] ?? '',
-            'size'  => 30,
-        ]);
-        echo "</td>";
-
-        echo "<td>" . __('Municipal Registration', 'newbase') . "</td>";
-        echo "<td>";
-        echo Html::input('inscricao_municipal', [
-            'value' => $this->fields['inscricao_municipal'] ?? '',
-            'size'  => 30,
-        ]);
-        echo "</td>";
         echo "</tr>";
 
         // Pessoa de Contato / Website
@@ -765,7 +746,7 @@ class CompanyData extends CommonDBTM
         echo "<td>";
         echo Html::input('contact_person', [
             'value' => $this->fields['contact_person'] ?? '',
-            'size'  => 50,
+            'size'  => 35,
         ]);
         echo "</td>";
 
@@ -774,14 +755,14 @@ class CompanyData extends CommonDBTM
         echo Html::input('website', [
             'value' => $this->fields['website'] ?? '',
             'type'  => 'url',
-            'size'  => 50,
+            'size'  => 35,
         ]);
         echo "</td>";
         echo "</tr>";
 
         // === SEÇÃO: ENDEREÇO ===
         echo "<tr class='tab_bg_2'>";
-        echo "<th colspan='4'>" . __('Address', 'newbase') . "</th>";
+        echo "<th colspan='3'>" . __('Address', 'newbase') . "</th>";
         echo "</tr>";
 
         // CEP / Rua
@@ -790,7 +771,7 @@ class CompanyData extends CommonDBTM
         echo "<td>";
         echo Html::input('cep', [
             'value' => $this->fields['cep'] ?? '',
-            'size'  => 10,
+            'size'  => 35,
             'name'  => 'cep',
         ]);
         echo "&nbsp;<button type='button' class='btn btn-secondary' data-action='search-cep'>";
@@ -801,7 +782,7 @@ class CompanyData extends CommonDBTM
         echo "<td>";
         echo Html::input('street', [
             'value' => $this->fields['street'] ?? '',
-            'size'  => 50,
+            'size'  => 35,
             'name'  => 'street',
         ]);
         echo "</td>";
@@ -813,7 +794,7 @@ class CompanyData extends CommonDBTM
         echo "<td>";
         echo Html::input('number', [
             'value' => $this->fields['number'] ?? '',
-            'size'  => 10,
+            'size'  => 35,
         ]);
         echo "</td>";
 
@@ -821,7 +802,7 @@ class CompanyData extends CommonDBTM
         echo "<td>";
         echo Html::input('complement', [
             'value' => $this->fields['complement'] ?? '',
-            'size'  => 50,
+            'size'  => 35,
         ]);
         echo "</td>";
         echo "</tr>";
@@ -832,7 +813,7 @@ class CompanyData extends CommonDBTM
         echo "<td>";
         echo Html::input('neighborhood', [
             'value' => $this->fields['neighborhood'] ?? '',
-            'size'  => 30,
+            'size'  => 35,
             'name'  => 'neighborhood',
         ]);
         echo "</td>";
@@ -841,7 +822,7 @@ class CompanyData extends CommonDBTM
         echo "<td>";
         echo Html::input('city', [
             'value' => $this->fields['city'] ?? '',
-            'size'  => 30,
+            'size'  => 35,
             'name'  => 'city',
         ]);
         echo "</td>";
@@ -863,7 +844,7 @@ class CompanyData extends CommonDBTM
         echo "<td>";
         echo Html::input('country', [
             'value' => $this->fields['country'] ?? 'Brasil',
-            'size'  => 30,
+            'size'  => 35,
         ]);
         echo "</td>";
         echo "</tr>";
@@ -874,7 +855,7 @@ class CompanyData extends CommonDBTM
         echo "<td>";
         echo Html::input('latitude', [
             'value' => $this->fields['latitude'] ?? '',
-            'size'  => 20,
+            'size'  => 35,
             'name'  => 'latitude',
         ]);
         echo "</td>";
@@ -883,7 +864,7 @@ class CompanyData extends CommonDBTM
         echo "<td>";
         echo Html::input('longitude', [
             'value' => $this->fields['longitude'] ?? '',
-            'size'  => 20,
+            'size'  => 35,
             'name'  => 'longitude',
         ]);
         echo "</td>";
@@ -891,7 +872,7 @@ class CompanyData extends CommonDBTM
 
         // === SEÇÃO: STATUS ===
         echo "<tr class='tab_bg_2'>";
-        echo "<th colspan='4'>" . __('Status', 'newbase') . "</th>";
+        echo "<th colspan='3'>" . __('Status', 'newbase') . "</th>";
         echo "</tr>";
 
         echo "<tr class='tab_bg_1'>";

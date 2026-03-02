@@ -194,10 +194,9 @@ $iterator_users = $DB->request([
         ];
 
         foreach($cards as $c) {
-            // ✅ ERRO 14 CORRIGIDO: Escapar output
             $icon = htmlspecialchars($c['icon'], ENT_QUOTES, 'UTF-8');
             $color = htmlspecialchars($c['color'], ENT_QUOTES, 'UTF-8');
-            $value = htmlspecialchars((string)$c['value'], ENT_QUOTES, 'UTF-8'); // Converter para string antes de escapar
+            $value = htmlspecialchars((string)$c['value'], ENT_QUOTES, 'UTF-8');
             $label = htmlspecialchars($c['label'], ENT_QUOTES, 'UTF-8');
 
             echo "
@@ -233,7 +232,6 @@ $iterator_users = $DB->request([
                             <?php if (count($iterator_companies)): ?>
                                 <?php foreach ($iterator_companies as $row): ?>
                                     <tr>
-                                        <!-- ✅ Escapar nome da empresa -->
                                         <td><?php echo htmlspecialchars($row['company_name'] ?? '-', ENT_QUOTES, 'UTF-8'); ?></td>
                                         <td class="text-end"><span class="badge bg-secondary rounded-pill"><?php echo (int)$row['task_count']; ?></span></td>
                                     </tr>
@@ -265,7 +263,6 @@ $iterator_users = $DB->request([
                             <?php if (count($iterator_users)): ?>
                                 <?php foreach ($iterator_users as $row): ?>
                                     <tr>
-                                        <!-- ✅ Escapar nome do usuário -->
                                         <td><?php echo htmlspecialchars($row['user_name'] ?? '-', ENT_QUOTES, 'UTF-8'); ?></td>
                                         <td class="text-end"><span class="badge bg-secondary rounded-pill"><?php echo (int)$row['task_count']; ?></span></td>
                                     </tr>

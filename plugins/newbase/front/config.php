@@ -92,9 +92,9 @@ $csrf    = \Session::getNewCSRFToken();
                             <td>
                                 <div class="form-check form-switch mb-0">
                                     <input class="form-check-input" type="checkbox" role="switch"
-                                           name="enable_signature" value="1"
-                                           <?php echo $config['enable_signature'] ? 'checked' : ''; ?>
-                                           <?php echo $canedit ? '' : 'disabled'; ?>>
+                                            name="enable_signature" value="1"
+                                            <?php echo $config['enable_signature'] ? 'checked' : ''; ?>
+                                            <?php echo $canedit ? '' : 'disabled'; ?>>
                                 </div>
                             </td>
                         </tr>
@@ -105,9 +105,9 @@ $csrf    = \Session::getNewCSRFToken();
                             <td>
                                 <div class="form-check form-switch mb-0">
                                     <input class="form-check-input" type="checkbox" role="switch"
-                                           name="require_signature" value="1"
-                                           <?php echo $config['require_signature'] ? 'checked' : ''; ?>
-                                           <?php echo $canedit ? '' : 'disabled'; ?>>
+                                            name="require_signature" value="1"
+                                            <?php echo $config['require_signature'] ? 'checked' : ''; ?>
+                                            <?php echo $canedit ? '' : 'disabled'; ?>>
                                 </div>
                             </td>
                         </tr>
@@ -118,9 +118,9 @@ $csrf    = \Session::getNewCSRFToken();
                             <td>
                                 <div class="form-check form-switch mb-0">
                                     <input class="form-check-input" type="checkbox" role="switch"
-                                           name="enable_gps" value="1"
-                                           <?php echo $config['enable_gps'] ? 'checked' : ''; ?>
-                                           <?php echo $canedit ? '' : 'disabled'; ?>>
+                                            name="enable_gps" value="1"
+                                            <?php echo $config['enable_gps'] ? 'checked' : ''; ?>
+                                            <?php echo $canedit ? '' : 'disabled'; ?>>
                                 </div>
                             </td>
                         </tr>
@@ -131,9 +131,9 @@ $csrf    = \Session::getNewCSRFToken();
                             <td>
                                 <div class="form-check form-switch mb-0">
                                     <input class="form-check-input" type="checkbox" role="switch"
-                                           name="calculate_mileage" value="1"
-                                           <?php echo $config['calculate_mileage'] ? 'checked' : ''; ?>
-                                           <?php echo $canedit ? '' : 'disabled'; ?>>
+                                            name="calculate_mileage" value="1"
+                                            <?php echo $config['calculate_mileage'] ? 'checked' : ''; ?>
+                                            <?php echo $canedit ? '' : 'disabled'; ?>>
                                 </div>
                             </td>
                         </tr>
@@ -144,10 +144,10 @@ $csrf    = \Session::getNewCSRFToken();
                             </td>
                             <td>
                                 <input type="number" class="form-control form-control-sm"
-                                       style="width:80px;text-align:center;"
-                                       name="default_zoom" min="1" max="20"
-                                       value="<?php echo (int)$config['default_zoom']; ?>"
-                                       <?php echo $canedit ? '' : 'disabled'; ?>>
+                                        style="width:80px;text-align:center;"
+                                        name="default_zoom" min="1" max="20"
+                                        value="<?php echo (int)$config['default_zoom']; ?>"
+                                        <?php echo $canedit ? '' : 'disabled'; ?>>
                             </td>
                         </tr>
                     </table>
@@ -172,9 +172,9 @@ $csrf    = \Session::getNewCSRFToken();
                             <td>
                                 <div class="form-check form-switch mb-0">
                                     <input class="form-check-input" type="checkbox" role="switch"
-                                           name="enable_cnpj_search" value="1"
-                                           <?php echo $config['enable_cnpj_search'] ? 'checked' : ''; ?>
-                                           <?php echo $canedit ? '' : 'disabled'; ?>>
+                                            name="enable_cnpj_search" value="1"
+                                            <?php echo $config['enable_cnpj_search'] ? 'checked' : ''; ?>
+                                            <?php echo $canedit ? '' : 'disabled'; ?>>
                                 </div>
                             </td>
                         </tr>
@@ -186,9 +186,9 @@ $csrf    = \Session::getNewCSRFToken();
                             <td>
                                 <div class="form-check form-switch mb-0">
                                     <input class="form-check-input" type="checkbox" role="switch"
-                                           name="enable_cep_search" value="1"
-                                           <?php echo $config['enable_cep_search'] ? 'checked' : ''; ?>
-                                           <?php echo $canedit ? '' : 'disabled'; ?>>
+                                            name="enable_cep_search" value="1"
+                                            <?php echo $config['enable_cep_search'] ? 'checked' : ''; ?>
+                                            <?php echo $canedit ? '' : 'disabled'; ?>>
                                 </div>
                             </td>
                         </tr>
@@ -201,7 +201,7 @@ $csrf    = \Session::getNewCSRFToken();
         <?php if ($canedit): ?>
         <div style="margin-top:1.5rem;display:flex;justify-content:flex-end;gap:0.5rem;max-width:1100px;">
             <a href="<?php echo \Plugin::getWebDir('newbase'); ?>/front/index.php"
-               class="btn btn-secondary">
+                class="btn btn-secondary">
                 <i class="ti ti-arrow-left me-1"></i>Voltar
             </a>
             <button type="submit" name="update_config" class="btn btn-primary">
