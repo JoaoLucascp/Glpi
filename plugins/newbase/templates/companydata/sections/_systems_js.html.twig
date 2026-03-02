@@ -1,0 +1,167 @@
+{#
+ ┌────────────────────────────────────────────────────────────────────────┐
+ │  PARTIAL: JS compartilhado de todas as seções de sistemas              │
+ │  Template: @newbase/companydata/sections/_systems_js.html.twig         │
+ │  Incluído no final de cada seção via:                                  │
+ │    {% include '@newbase/companydata/sections/_systems_js.html.twig' %} │
+ │  Variáveis esperadas no escopo do template pai:                        │
+ │    item_id   int    — ID do registro                                   │
+ │    csrf_token string — Token CSRF                                      │
+ └────────────────────────────────────────────────────────────────────────┘
+#}
+<script>
+(function ($) {
+    'use strict';
+
+    // ── Helpers ─────────────────────────────────────────────────────────────
+
+    /**
+     * Renumera índices nos atributos name= de uma tbody após remoção de linha.
+     * Substitui [N][ pelo índice correto baseado na posição da <tr>.
+     * @param {string} tbodyId — ID do <tbody>
+     */
+    function renumerarLinhas(tbodyId) {
+        $('#' + tbodyId + ' tr').each(function (i) {
+            $(this).find('input, select, textarea').each(function () {
+                var name = $(this).attr('name');
+                if (!name) return;
+                $(this).attr('name', name.replace(/\]\[(\d+)\]\[/, '][' + i + ']['));
+            });
+        });
+    }
+
+    /**
+     * Gera HTML de uma linha de ramal vazia para a tabela IPBX/PABX.
+     * @param {number} idx — Índice da nova linha
+     * @returns {string} HTML da <tr>
+     */
+    function novaLinhaRamal(idx) {
+        var p = 'systems_config[ipbx][ramais][' + idx + ']';
+        return '<tr class="nb-ramal-row nb-row-new">'
+            + '<td><input type="text"   class="form-control nb-fc form-control-sm" name="' + p + '[ramal]"      placeholder="2001"></td>'
+            + '<td><input type="text"   class="form-control nb-fc nb-pwd form-control-sm" name="' + p + '[senha]" placeholder="senha" autocomplete="off"></td>'
+            + '<td><input type="text"   class="form-control nb-fc form-control-sm" name="' + p + '[ip]"         placeholder="192.168.x.x"></td>'
+            + '<td><input type="text"   class="form-control nb-fc form-control-sm" name="' + p + '[nome]"       placeholder="Ex: José"></td>'
+            + '<td><input type="text"   class="form-control nb-fc form-control-sm" name="' + p + '[localidade]" placeholder="Financeiro"></td>'
+            + '<td><select class="form-select nb-fc form-select-sm" name="' + p + '[gravacao]">'
+            +     '<option value="nao">Não</option>'
+            +     '<option value="sim">Sim</option>'
+            + '</select></td>'
+            + '<td><input type="text"   class="form-control nb-fc form-control-sm" name="' + p + '[obs]"        placeholder="..."></td>'
+            + '<td><button type="button" class="btn btn-sm btn-danger nb-remove-row" data-body="nb-ipbx-ramais-body" title="Remover ramal"><i class="ti ti-trash"></i></button></td>'
+            + '</tr>';
+    }
+
+    /**
+     * Gera HTML de uma linha de operadora vazia para a tabela de troncos.
+     * @param {number} idx — Índice da nova linha
+     * @returns {string} HTML da <tr>
+     */
+    function novaLinhaOperadora(idx) {
+        var p = 'systems_config[ipbx][operadoras][' + idx + ']';
+        return '<tr class="nb-op-row nb-row-new">'
+            + '<td><input type="text"   class="form-control nb-fc form-control-sm" name="' + p + '[numero_piloto]" placeholder="(27)3xxx-xxxx"></td>'
+            + '<td><input type="text"   class="form-control nb-fc form-control-sm" name="' + p + '[tipo_tronco]"   placeholder="SIP"></td>'
+            + '<td><input type="text"   class="form-control nb-fc form-control-sm" name="' + p + '[operadora]"     placeholder="Vivo"></td>'
+            + '<td><input type="text"   class="form-control nb-fc form-control-sm" name="' + p + '[ddr]"           placeholder="33727000-7100"></td>'
+            + '<td><input type="number" class="form-control nb-fc form-control-sm" name="' + p + '[canais]"        placeholder="10" min="1"></td>'
+            + '<td><input type="text"   class="form-control nb-fc form-control-sm" name="' + p + '[ip_proxy]"      placeholder="192.x.x.x"></td>'
+            + '<td><input type="text"   class="form-control nb-fc form-control-sm" name="' + p + '[porta_proxy]"   placeholder="5060"></td>'
+            + '<td><input type="text"   class="form-control nb-fc form-control-sm" name="' + p + '[ip_audio]"      placeholder="192.x.x.x"></td>'
+            + '<td><button type="button" class="btn btn-sm btn-danger nb-remove-row" data-body="nb-ipbx-ops-body" title="Remover operadora"><i class="ti ti-trash"></i></button></td>'
+            + '</tr>';
+    }
+
+    // ── Adicionar Ramal ──────────────────────────────────────────────────────
+    $(document).on('click', '#nb-btn-add-ramal', function () {
+        var $body = $('#nb-ipbx-ramais-body');
+        $body.append(novaLinhaRamal($body.find('tr').length));
+        $body.find('tr:last input:first').trigger('focus');
+    });
+
+    // ── Adicionar Operadora ──────────────────────────────────────────────────
+    $(document).on('click', '#nb-btn-add-operadora', function () {
+        var $body = $('#nb-ipbx-ops-body');
+        $body.append(novaLinhaOperadora($body.find('tr').length));
+        $body.find('tr:last input:first').trigger('focus');
+    });
+
+    // ── Remover linha (Ramal ou Operadora) ───────────────────────────────────
+    $(document).on('click', '.nb-remove-row', function () {
+        var bodyId = $(this).data('body');
+        $(this).closest('tr').remove();
+        renumerarLinhas(bodyId);
+    });
+
+    // ── Interceptar submit → AJAX ────────────────────────────────────────────
+    $(document).off('submit.nbSystems').on('submit.nbSystems', '#nb-systems-form', function (e) {
+        e.preventDefault();
+
+        var $form = $(this);
+        var $btn  = $form.find('.nb-save-btn');
+        var originalHtml = $btn.html();
+
+        $btn.prop('disabled', true)
+            .html('<span class="nb-spin d-inline-block me-2">⟳</span> Salvando...');
+
+        var ajaxUrl = (typeof CFG_GLPI !== 'undefined' ? CFG_GLPI.root_doc : '')
+                    + '/plugins/newbase/ajax/systemsConfig.php';
+
+        $.ajax({
+            type    : 'POST',
+            url     : ajaxUrl,
+            data    : $form.serialize(),
+            dataType: 'json',
+            timeout : 15000,
+            success : function (res) {
+                $btn.prop('disabled', false).html(originalHtml);
+                if (res && res.success) {
+                    _nbNotify(res.message || 'Configurações salvas com sucesso!', 'success');
+                } else {
+                    _nbNotify(res.message || 'Erro ao salvar configurações.', 'error');
+                }
+            },
+            error   : function (xhr) {
+                $btn.prop('disabled', false).html(originalHtml);
+                var msg = 'Erro de comunicação com o servidor.';
+                if (xhr.status === 403) { msg = 'Sessão expirada. Recarregue a página.'; }
+                if (xhr.status === 400) { msg = 'Dados inválidos enviados.'; }
+                _nbNotify(msg, 'error');
+            }
+        });
+    });
+
+    // ── Notificação: SweetAlert2 > toast GLPI > alert nativo ────────────────
+    function _nbNotify(msg, type) {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                icon              : type,
+                text              : msg,
+                toast             : (type === 'success'),
+                position          : (type === 'success') ? 'top-end' : 'center',
+                timer             : (type === 'success') ? 2500 : 0,
+                showConfirmButton : (type !== 'success'),
+                confirmButtonColor: '#206bc4'
+            });
+            return;
+        }
+        if (type === 'success' && typeof glpi_toast_info !== 'undefined') {
+            glpi_toast_info(msg);
+        } else if (type === 'error' && typeof glpi_toast_error !== 'undefined') {
+            glpi_toast_error(msg);
+        } else {
+            alert(msg);
+        }
+    }
+
+    // ── Injetar CSS de animação spin (uma única vez no DOM) ──────────────────
+    if (!document.getElementById('nb-sys-spin-style')) {
+        var s     = document.createElement('style');
+        s.id      = 'nb-sys-spin-style';
+        s.textContent = '@keyframes nb-spin-anim{to{transform:rotate(360deg)}}'
+                      + '.nb-spin{animation:nb-spin-anim .8s linear infinite;display:inline-block}';
+        document.head.appendChild(s);
+    }
+
+})(jQuery);
+</script>

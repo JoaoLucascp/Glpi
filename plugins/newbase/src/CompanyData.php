@@ -205,15 +205,20 @@ class CompanyData extends CommonDBTM
 
     /**
      * Get tab name for item
-     * 
-     * @param CommonGLPI $item Item
+     *
+     * @param CommonGLPI $item         Item
      * @param int        $withtemplate Template flag
-     * @return string Tab name
+     * @return string|array Tab name(s)
      */
-    public function getTabNameForItem(CommonGLPI $item, $withtemplate = 0): string
+    public function getTabNameForItem(CommonGLPI $item, $withtemplate = 0): string|array
     {
         if ($item->getType() === self::getType()) {
-            return self::createTabEntry(__('Systems Configuration', 'newbase'));
+            return [
+                1 => self::createTabEntry(__('IPBX / PABX', 'newbase')),
+                2 => self::createTabEntry(__('IPBX Cloud', 'newbase')),
+                3 => self::createTabEntry(__('Chatbot', 'newbase')),
+                4 => self::createTabEntry(__('Linha Telefônica', 'newbase')),
+            ];
         }
         return '';
     }
@@ -230,7 +235,13 @@ class CompanyData extends CommonDBTM
     {
         if ($item->getType() === self::getType()) {
             /** @var CompanyData $item */
-            self::showSystemsConfigTab($item);
+            match ((int) $tabnum) {
+                1 => $item->showSectionIpbxPabx(),
+                2 => $item->showSectionIpbxCloud(),
+                3 => $item->showSectionChatbot(),
+                4 => $item->showSectionLinhaTelefonica(),
+                default => false,
+            };
             return true;
         }
         return false;
@@ -242,31 +253,41 @@ class CompanyData extends CommonDBTM
      * @param CompanyData $item Company item
      * @return void
      */
-    private static function showSystemsConfigTab(CompanyData $item): void
+    public function showSectionIpbxPabx(): void
     {
-        $ID     = $item->getID();
-        $raw    = $item->fields['systems_config'] ?? '{}';
-        $config = json_decode($raw, true) ?: [];
+        $this->renderSystemSection('ipbx', '@newbase/companydata/sections/ipbx_pabx.html.twig');
+    }
 
-        // Garantir token CSRF
-        $csrf_token = \Session::getNewCSRFToken();
+    public function showSectionIpbxCloud(): void
+    {
+        $this->renderSystemSection('ipbx_cloud', '@newbase/companydata/sections/ipbx_cloud.html.twig');
+    }
+
+    public function showSectionChatbot(): void
+    {
+        $this->renderSystemSection('chatbot', '@newbase/companydata/sections/chatbot.html.twig');
+    }
+
+    public function showSectionLinhaTelefonica(): void
+    {
+        $this->renderSystemSection('linha', '@newbase/companydata/sections/linha_telefonica.html.twig');
+    }
+
+    private function renderSystemSection(string $sectionKey, string $template): void
+    {
+        $config = json_decode($this->fields['systems_config'] ?? '{}', true) ?: [];
 
         \Glpi\Application\View\TemplateRenderer::getInstance()->display(
-            '@newbase/companydata/systems_tab.html.twig',
+            $template,
             [
-                // Metadados
-                'item_id'    => $ID,
-                'form_url'   => $item->getFormURL(),
-                'csrf_token' => $csrf_token,
-
-                // Dados de cada módulo (fallback para array vazio)
-                'ipbx'       => $config['ipbx']       ?? [],
-                'ipbx_cloud' => $config['ipbx_cloud'] ?? [],
-                'linha'      => $config['linha']      ?? [],
-                'chatbot'    => $config['chatbot']    ?? [],
+                'item_id'    => $this->getID(),
+                'form_url'   => $this->getFormURL(),
+                'csrf_token' => \Session::getNewCSRFToken(),
+                'data'       => $config[$sectionKey] ?? [],
             ]
         );
     }
+
 
     // ========== DATA RETRIEVAL METHODS ==========
 

@@ -1,0 +1,127 @@
+{#
+ ┌────────────────────────────────────────────────────────────────────────┐
+ │  ABA 2: IPBX Cloud — Servidor em Nuvem                                │
+ │  Template: @newbase/companydata/sections/ipbx_cloud.html.twig          │
+ │  Chamado por: CompanyData::showSectionIpbxCloud()                      │
+ │  Variáveis recebidas:                                                  │
+ │    item_id    int    — ID do registro                                  │
+ │    form_url   string — URL do form (POST vai p/ AJAX)                  │
+ │    csrf_token string — Token CSRF da sessão                            │
+ │    data       array  — $config['ipbx_cloud'] do systems_config        │
+ └────────────────────────────────────────────────────────────────────────┘
+#}
+
+<div class="newbase-systems-wrapper">
+    <form id="nb-systems-form" method="post" novalidate>
+        <input type="hidden" name="id"                  value="{{ item_id }}">
+        <input type="hidden" name="section_key"         value="ipbx_cloud">
+        <input type="hidden" name="_glpi_csrf_token"    value="{{ csrf_token }}">
+
+        {# ── Sub-seção: Informações do Servidor Cloud ────────────────────── #}
+        <p class="nb-section-label">
+            <i class="ti ti-server me-1"></i> Informações do Servidor Cloud
+        </p>
+        <div class="row g-3">
+
+            <div class="col-12 col-lg-6">
+                <label class="form-label">Modelo</label>
+                <input type="text"
+                       name="systems_config[ipbx_cloud][model]"
+                       value="{{ data.model ?? '' }}"
+                       class="form-control nb-fc"
+                       placeholder="Ex: VoIP.ms, 3CX Cloud, Twilio">
+            </div>
+
+            <div class="col-12 col-lg-6">
+                <label class="form-label">Versão</label>
+                <input type="text"
+                       name="systems_config[ipbx_cloud][version]"
+                       value="{{ data.version ?? '' }}"
+                       class="form-control nb-fc"
+                       placeholder="Ex: 19.0">
+            </div>
+
+            <div class="col-12 col-lg-6">
+                <label class="form-label">IP Interno</label>
+                <input type="text"
+                       name="systems_config[ipbx_cloud][internal_ip]"
+                       value="{{ data.internal_ip ?? '' }}"
+                       class="form-control nb-fc"
+                       placeholder="Ex: 10.0.0.1">
+            </div>
+
+            <div class="col-12 col-lg-6">
+                <label class="form-label">Host / IP Externo</label>
+                <input type="text"
+                       name="systems_config[ipbx_cloud][external_ip]"
+                       value="{{ data.external_ip ?? '' }}"
+                       class="form-control nb-fc"
+                       placeholder="Ex: pbx.empresa.com ou 200.x.x.x">
+            </div>
+
+            <div class="col-12 col-lg-6">
+                <label class="form-label">Porta Acesso Web</label>
+                <input type="text"
+                       name="systems_config[ipbx_cloud][web_port]"
+                       value="{{ data.web_port ?? '' }}"
+                       class="form-control nb-fc"
+                       placeholder="Ex: 5001">
+            </div>
+
+            <div class="col-12 col-lg-6">
+                <label class="form-label nb-pwd-label">
+                    Senha Acesso Web
+                    <span class="badge bg-warning-lt text-warning ms-1 fw-normal">visível</span>
+                </label>
+                <input type="text"
+                       name="systems_config[ipbx_cloud][web_password]"
+                       value="{{ data.web_password ?? '' }}"
+                       class="form-control nb-fc nb-pwd"
+                       placeholder="Senha web"
+                       autocomplete="off">
+            </div>
+
+            <div class="col-12 col-lg-6">
+                <label class="form-label">Porta SSH</label>
+                <input type="text"
+                       name="systems_config[ipbx_cloud][ssh_port]"
+                       value="{{ data.ssh_port ?? '' }}"
+                       class="form-control nb-fc"
+                       placeholder="Ex: 22">
+            </div>
+
+            <div class="col-12 col-lg-6">
+                <label class="form-label nb-pwd-label">
+                    Senha SSH
+                    <span class="badge bg-warning-lt text-warning ms-1 fw-normal">visível</span>
+                </label>
+                <input type="text"
+                       name="systems_config[ipbx_cloud][ssh_password]"
+                       value="{{ data.ssh_password ?? '' }}"
+                       class="form-control nb-fc nb-pwd"
+                       placeholder="Senha SSH"
+                       autocomplete="off">
+            </div>
+
+            <div class="col-12">
+                <label class="form-label">Observações</label>
+                <textarea name="systems_config[ipbx_cloud][observations]"
+                          class="form-control nb-fc"
+                          rows="3"
+                          placeholder="Observações do servidor em nuvem...">{{ data.observations ?? '' }}</textarea>
+            </div>
+
+        </div>{# /.row #}
+
+        {# ── Botão Salvar ─────────────────────────────────────────────────── #}
+        <div class="text-center mt-4 pb-2">
+            <button type="submit" class="btn btn-primary nb-save-btn" id="nb-systems-save-btn">
+                <i class="ti ti-device-floppy me-2"></i>
+                Salvar IPBX Cloud
+            </button>
+        </div>
+
+    </form>
+</div>{# /.newbase-systems-wrapper #}
+
+{% include '@newbase/companydata/sections/_systems_js.html.twig' %}
