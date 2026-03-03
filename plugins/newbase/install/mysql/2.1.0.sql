@@ -114,16 +114,16 @@ CREATE TABLE `glpi_plugin_newbase_task_signatures` (
     CONSTRAINT `fk_signatures_tasks` FOREIGN KEY (`plugin_newbase_tasks_id`) REFERENCES `glpi_plugin_newbase_tasks` (`id`) ON DELETE CASCADE
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = 'Assinaturas digitais de tarefas';
 
--- TABELA 5: glpi_plugin_newbase_company_extras (Complementos de Empresa)
-DROP TABLE IF EXISTS `glpi_plugin_newbase_company_extras`;
+-- TABELA 5: glpi_plugin_newbase_company (Complementos de Empresa)
+DROP TABLE IF EXISTS `glpi_plugin_newbase_company`;
 
-CREATE TABLE `glpi_plugin_newbase_company_extras` (
+CREATE TABLE `glpi_plugin_newbase_company` (
     `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
     `entities_id` INT UNSIGNED NOT NULL,
     `cnpj` VARCHAR(18) DEFAULT NULL,
     `corporate_name` VARCHAR(255) DEFAULT NULL,
     `fantasy_name` VARCHAR(255) DEFAULT NULL,
-    `contact_person` VARCHAR(255) DEFAULT NULL,
+    `date_end` TIMESTAMP NULL DEFAULT NULL,
     `phone` VARCHAR(20) DEFAULT NULL,
     `email` VARCHAR(255) DEFAULT NULL,
     `notes` LONGTEXT,

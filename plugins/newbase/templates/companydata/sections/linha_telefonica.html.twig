@@ -1,65 +1,261 @@
 {#
- ┌────────────────────────────────────────────────────────────────────────┐
- │  ABA 4: Linha Telefônica — Linha Fixa                                  │
- │  Template: @newbase/companydata/sections/linha_telefonica.html.twig    │
- │  Chamado por: CompanyData::showSectionLinhaTelefonica()                │
- │  Variáveis recebidas:                                                  │
- │    item_id    int    — ID do registro                                  │
- │    form_url   string — URL do form (POST vai p/ AJAX)                  │
- │    csrf_token string — Token CSRF da sessão                            │
- │    data       array  — $config['linha'] do systems_config             │
- └────────────────────────────────────────────────────────────────────────┘
+ ┌────────────────────────────────────────────────────────────────────────────┐
+ │  ABA 6: Linha Telefônica                                                   │
+ │  Template : @newbase/companydata/sections/linha_telefonica.html.twig       │
+ │  Chamado por : SectionLinhaTelefonica::show()                              │
+ │                                                                            │
+ │  Variáveis recebidas:                                                      │
+ │    item_id        int    — ID do registro CompanyData                      │
+ │    csrf_token     string — Token CSRF da sessão                            │
+ │    section_key    string — 'linha_telefonica'                              │
+ │    status_options array  — ['ativo','portando','cancelado','pausado']      │
+ │    data           array  — campos escalares da tabela linha_telefonica     │
+ │      .numero_piloto, .tipo_linha, .operadora, .qtd_canais, .qtd_ddr       │
+ │      .portabilidade (bool), .data_portabilidade, .operadora_anterior      │
+ │      .data_ativacao, .data_vencimento, .status_linha                      │
+ │      .ip_proxy, .porta_proxy, .ip_audio, .observacoes                     │
+ └────────────────────────────────────────────────────────────────────────────┘
 #}
 
-<div class="newbase-systems-wrapper">
-    <form id="nb-systems-form" method="post" novalidate>
-        <input type="hidden" name="id"                  value="{{ item_id }}">
-        <input type="hidden" name="section_key"         value="linha">
-        <input type="hidden" name="_glpi_csrf_token"    value="{{ csrf_token }}">
+<div class="newbase-section-wrapper">
 
-        {# ── Sub-seção: Dados da Linha Telefônica ────────────────────────── #}
-        <p class="nb-section-label">
-            <i class="ti ti-phone me-1"></i> Dados da Linha Telefônica
-        </p>
-        <div class="row g-3">
+    <form id="nb-form-linha" class="nb-section-form" method="post" novalidate
+          data-section-key="linha_telefonica"
+          data-save-label="Salvar Linha Telefônica">
 
-            <div class="col-12 col-lg-6">
-                <label class="form-label">Operadora</label>
-                <input type="text"
-                       name="systems_config[linha][operadora]"
-                       value="{{ data.operadora ?? '' }}"
-                       class="form-control nb-fc"
-                       placeholder="Ex: Claro, Vivo, TIM, Oi">
+        <input type="hidden" name="id"               value="{{ item_id }}">
+        <input type="hidden" name="section_key"      value="{{ section_key }}">
+        <input type="hidden" name="_glpi_csrf_token" value="{{ csrf_token }}">
+
+        {# ══════════════════════════════════════════════════════════════════
+           SEÇÃO 1 — Dados da Linha
+           ══════════════════════════════════════════════════════════════════ #}
+        <div class="nb-card mb-4">
+            <div class="nb-card-header">
+                <i class="ti ti-phone me-2 text-orange"></i>
+                <strong>Dados da Linha</strong>
             </div>
+            <div class="nb-card-body">
+                <div class="row g-3">
 
-            <div class="col-12 col-lg-6">
-                <label class="form-label">Número do Contrato</label>
-                <input type="text"
-                       name="systems_config[linha][contrato]"
-                       value="{{ data.contrato ?? '' }}"
-                       class="form-control nb-fc"
-                       placeholder="Número ou código do contrato">
+                    <div class="col-12 col-md-4">
+                        <label class="form-label">Número Piloto</label>
+                        <input type="text"
+                               name="numero_piloto"
+                               value="{{ data.numero_piloto|e }}"
+                               class="form-control"
+                               placeholder="Ex: (27) 3333-0000">
+                    </div>
+
+                    <div class="col-12 col-md-4">
+                        <label class="form-label">Tipo de Linha</label>
+                        <input type="text"
+                               name="tipo_linha"
+                               value="{{ data.tipo_linha|e }}"
+                               class="form-control"
+                               placeholder="Ex: SIP, Analógica, Digital E1">
+                    </div>
+
+                    <div class="col-12 col-md-4">
+                        <label class="form-label">Operadora</label>
+                        <input type="text"
+                               name="operadora"
+                               value="{{ data.operadora|e }}"
+                               class="form-control"
+                               placeholder="Ex: Claro, Vivo, TIM, Oi">
+                    </div>
+
+                    <div class="col-6 col-md-3">
+                        <label class="form-label">Qtd. Canais</label>
+                        <input type="number"
+                               name="qtd_canais"
+                               value="{{ data.qtd_canais|default(0) }}"
+                               class="form-control"
+                               min="0"
+                               placeholder="0">
+                    </div>
+
+                    <div class="col-6 col-md-3">
+                        <label class="form-label">Qtd. DDR</label>
+                        <input type="number"
+                               name="qtd_ddr"
+                               value="{{ data.qtd_ddr|default(0) }}"
+                               class="form-control"
+                               min="0"
+                               placeholder="0">
+                    </div>
+
+                    <div class="col-12 col-md-3">
+                        <label class="form-label">Status da Linha</label>
+                        <select name="status_linha" class="form-select">
+                            {% for opt in status_options %}
+                            <option value="{{ opt }}"
+                                    {{ data.status_linha|default('ativo') == opt ? 'selected' : '' }}>
+                                {{ opt|capitalize }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="col-12 col-md-3">
+                        <label class="form-label">Data de Ativação</label>
+                        <input type="date"
+                               name="data_ativacao"
+                               value="{{ data.data_ativacao|e }}"
+                               class="form-control">
+                    </div>
+
+                    <div class="col-12 col-md-3">
+                        <label class="form-label">Data de Vencimento</label>
+                        <input type="date"
+                               name="data_vencimento"
+                               value="{{ data.data_vencimento|e }}"
+                               class="form-control">
+                    </div>
+
+                </div>{# /.row #}
+            </div>{# /.nb-card-body #}
+        </div>{# /.nb-card Dados da Linha #}
+
+        {# ══════════════════════════════════════════════════════════════════
+           SEÇÃO 2 — Portabilidade
+           ══════════════════════════════════════════════════════════════════ #}
+        <div class="nb-card mb-4">
+            <div class="nb-card-header">
+                <i class="ti ti-arrows-exchange me-2 text-blue"></i>
+                <strong>Portabilidade</strong>
             </div>
+            <div class="nb-card-body">
+                <div class="row g-3">
 
-            <div class="col-12">
-                <label class="form-label">Notas</label>
-                <textarea name="systems_config[linha][notas]"
-                          class="form-control nb-fc"
-                          rows="5"
-                          placeholder="Informações adicionais sobre a linha telefônica...">{{ data.notas ?? '' }}</textarea>
+                    <div class="col-12 col-md-3 d-flex align-items-center gap-2 pt-md-4">
+                        <label class="form-check form-switch mb-0">
+                            <input type="hidden"   name="portabilidade" value="0">
+                            <input type="checkbox" name="portabilidade" value="1"
+                                   class="form-check-input"
+                                   id="nb-portabilidade-check"
+                                   {{ data.portabilidade ? 'checked' : '' }}>
+                            <span class="form-check-label">Portabilidade</span>
+                        </label>
+                    </div>
+
+                    <div class="col-12 col-md-3" id="nb-portabilidade-fields"
+                         style="{{ data.portabilidade ? '' : 'display:none' }}">
+                        <label class="form-label">Data de Portabilidade</label>
+                        <input type="date"
+                               name="data_portabilidade"
+                               value="{{ data.data_portabilidade|e }}"
+                               class="form-control">
+                    </div>
+
+                    <div class="col-12 col-md-6" id="nb-portabilidade-operadora"
+                         style="{{ data.portabilidade ? '' : 'display:none' }}">
+                        <label class="form-label">Operadora Anterior</label>
+                        <input type="text"
+                               name="operadora_anterior"
+                               value="{{ data.operadora_anterior|e }}"
+                               class="form-control"
+                               placeholder="Ex: Oi, TIM, Claro">
+                    </div>
+
+                </div>{# /.row #}
+            </div>{# /.nb-card-body #}
+        </div>{# /.nb-card Portabilidade #}
+
+        {# ══════════════════════════════════════════════════════════════════
+           SEÇÃO 3 — Dados Técnicos (Proxy / Áudio)
+           ══════════════════════════════════════════════════════════════════ #}
+        <div class="nb-card mb-4">
+            <div class="nb-card-header">
+                <i class="ti ti-server-2 me-2 text-teal"></i>
+                <strong>Dados Técnicos</strong>
             </div>
+            <div class="nb-card-body">
+                <div class="row g-3">
 
-        </div>{# /.row #}
+                    <div class="col-12 col-md-4">
+                        <label class="form-label">IP Proxy</label>
+                        <input type="text"
+                               name="ip_proxy"
+                               value="{{ data.ip_proxy|e }}"
+                               class="form-control"
+                               placeholder="Ex: 192.168.0.10">
+                    </div>
 
-        {# ── Botão Salvar ─────────────────────────────────────────────────── #}
-        <div class="text-center mt-4 pb-2">
-            <button type="submit" class="btn btn-primary nb-save-btn" id="nb-systems-save-btn">
+                    <div class="col-12 col-md-4">
+                        <label class="form-label">Porta Proxy</label>
+                        <input type="text"
+                               name="porta_proxy"
+                               value="{{ data.porta_proxy|e }}"
+                               class="form-control"
+                               placeholder="Ex: 5060">
+                    </div>
+
+                    <div class="col-12 col-md-4">
+                        <label class="form-label">IP Áudio</label>
+                        <input type="text"
+                               name="ip_audio"
+                               value="{{ data.ip_audio|e }}"
+                               class="form-control"
+                               placeholder="Ex: 192.168.0.20">
+                    </div>
+
+                </div>{# /.row #}
+            </div>{# /.nb-card-body #}
+        </div>{# /.nb-card Dados Técnicos #}
+
+        {# ══════════════════════════════════════════════════════════════════
+           SEÇÃO 4 — Observações
+           ══════════════════════════════════════════════════════════════════ #}
+        <div class="nb-card mb-4">
+            <div class="nb-card-header">
+                <i class="ti ti-notes me-2 text-muted"></i>
+                <strong>Observações</strong>
+            </div>
+            <div class="nb-card-body">
+                <textarea name="observacoes"
+                          class="form-control"
+                          rows="4"
+                          placeholder="Observações gerais sobre a linha telefônica...">{{ data.observacoes|e }}</textarea>
+            </div>
+        </div>
+
+        {# ══════════════════════════════════════════════════════════════════
+           BOTÃO SALVAR
+           ══════════════════════════════════════════════════════════════════ #}
+        <div class="d-flex justify-content-end mt-2 pb-3">
+            <button type="submit" class="btn btn-primary nb-btn-save">
                 <i class="ti ti-device-floppy me-2"></i>
                 Salvar Linha Telefônica
             </button>
         </div>
 
     </form>
-</div>{# /.newbase-systems-wrapper #}
 
-{% include '@newbase/companydata/sections/_systems_js.html.twig' %}
+</div>{# /.newbase-section-wrapper #}
+
+{# ══════════════════════════════════════════════════════════════════════════
+   JS inline mínimo — toggle dos campos de portabilidade
+   (não depende do _shared_js — é específico desta aba)
+   ══════════════════════════════════════════════════════════════════════════ #}
+<script>
+(function () {
+    'use strict';
+
+    var chk    = document.getElementById('nb-portabilidade-check');
+    var fields = document.getElementById('nb-portabilidade-fields');
+    var opField= document.getElementById('nb-portabilidade-operadora');
+
+    if (!chk) return;
+
+    function togglePortabilidade() {
+        var show = chk.checked;
+        fields.style.display  = show ? '' : 'none';
+        opField.style.display = show ? '' : 'none';
+    }
+
+    chk.addEventListener('change', togglePortabilidade);
+}());
+</script>
+
+{% include '@newbase/companydata/sections/_shared_js.html.twig' %}

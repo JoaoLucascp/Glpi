@@ -1,266 +1,319 @@
 {#
- ┌────────────────────────────────────────────────────────────────────────┐
- │  ABA 1: IPBX / PABX — Servidor de Telefonia                           │
- │  Template: @newbase/companydata/sections/ipbx_pabx.html.twig           │
- │  Chamado por: CompanyData::showSectionIpbxPabx()                       │
- │  Variáveis recebidas:                                                  │
- │    item_id    int    — ID do registro                                  │
- │    form_url   string — URL do form (não usada: POST vai p/ AJAX)       │
- │    csrf_token string — Token CSRF da sessão                            │
- │    data       array  — $config['ipbx'] do systems_config              │
- └────────────────────────────────────────────────────────────────────────┘
+ ┌────────────────────────────────────────────────────────────────────────────┐
+ │  ABA 1: IPBX / PABX — Servidor de Telefonia                               │
+ │  Template : @newbase/companydata/sections/ipbx_pabx.html.twig             │
+ │  Chamado por : SectionIpbxPabx::show()                                    │
+ │                                                                            │
+ │  Variáveis recebidas:                                                      │
+ │    item_id     int    — ID do registro CompanyData                         │
+ │    csrf_token  string — Token CSRF da sessão                               │
+ │    section_key string — 'ipbx'                                             │
+ │    data        array  — campos escalares da tabela ipbx                    │
+ │      .id, .modelo, .versao, .ip_interno, .ip_externo                       │
+ │      .porta_web, .senha_web, .porta_ssh, .senha_ssh, .observacoes          │
+ │    ramais      array  — linhas JSON [{ramal,senha,ip,nome,                 │
+ │                          localidade,gravacao,obs}, ...]                    │
+ │    operadoras  array  — linhas JSON [{numero_piloto,tipo_tronco,           │
+ │                          operadora,ddr,canais,ip_proxy,                    │
+ │                          porta_proxy,ip_audio}, ...]                       │
+ └────────────────────────────────────────────────────────────────────────────┘
 #}
 
-<div class="newbase-systems-wrapper">
-    <form id="nb-systems-form" method="post" novalidate>
-        <input type="hidden" name="id"                  value="{{ item_id }}">
-        <input type="hidden" name="section_key"         value="ipbx">
-        <input type="hidden" name="_glpi_csrf_token"    value="{{ csrf_token }}">
+<div class="newbase-section-wrapper">
 
-        {# ── Sub-seção: Informações do Servidor ─────────────────────────── #}
-        <p class="nb-section-label">
-            <i class="ti ti-server me-1"></i> Informações do Servidor
-        </p>
-        <div class="row g-3 mb-4">
+    <form id="nb-form-ipbx" class="nb-section-form" method="post" novalidate
+          data-section-key="ipbx"
+          data-save-label="Salvar IPBX / PABX">
 
-            <div class="col-12 col-lg-6">
-                <label class="form-label">Modelo</label>
-                <input type="text"
-                       name="systems_config[ipbx][model]"
-                       value="{{ data.model ?? '' }}"
-                       class="form-control nb-fc"
-                       placeholder="Ex: NewCloud, Issabel, FreePBX">
+        <input type="hidden" name="id"               value="{{ item_id }}">
+        <input type="hidden" name="section_key"      value="{{ section_key }}">
+        <input type="hidden" name="_glpi_csrf_token" value="{{ csrf_token }}">
+
+        {# ══════════════════════════════════════════════════════════════════
+           SEÇÃO 1 — Informações do Servidor
+           ══════════════════════════════════════════════════════════════════ #}
+        <div class="nb-card mb-4">
+            <div class="nb-card-header">
+                <i class="ti ti-server me-2 text-primary"></i>
+                <strong>Informações do Servidor</strong>
             </div>
+            <div class="nb-card-body">
+                <div class="row g-3">
 
-            <div class="col-12 col-lg-6">
-                <label class="form-label">Versão do Servidor</label>
-                <input type="text"
-                       name="systems_config[ipbx][version]"
-                       value="{{ data.version ?? '' }}"
-                       class="form-control nb-fc"
-                       placeholder="Ex: 3.19">
+                    <div class="col-12 col-md-6">
+                        <label class="form-label">Modelo</label>
+                        <input type="text"
+                               name="modelo"
+                               value="{{ data.modelo|e }}"
+                               class="form-control"
+                               placeholder="Ex: NewCloud, Issabel, FreePBX">
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <label class="form-label">Versão</label>
+                        <input type="text"
+                               name="versao"
+                               value="{{ data.versao|e }}"
+                               class="form-control"
+                               placeholder="Ex: 3.19">
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <label class="form-label">IP Interno</label>
+                        <input type="text"
+                               name="ip_interno"
+                               value="{{ data.ip_interno|e }}"
+                               class="form-control"
+                               placeholder="Ex: 192.168.0.10">
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <label class="form-label">IP Externo</label>
+                        <input type="text"
+                               name="ip_externo"
+                               value="{{ data.ip_externo|e }}"
+                               class="form-control"
+                               placeholder="Ex: 200.x.x.x">
+                    </div>
+
+                    <div class="col-12 col-md-3">
+                        <label class="form-label">Porta Web</label>
+                        <input type="text"
+                               name="porta_web"
+                               value="{{ data.porta_web|e }}"
+                               class="form-control"
+                               placeholder="Ex: 2080">
+                    </div>
+
+                    <div class="col-12 col-md-3">
+                        <label class="form-label">
+                            Senha Web
+                            <span class="badge bg-warning-lt text-warning ms-1 fw-normal fs-6">visível</span>
+                        </label>
+                        <input type="text"
+                               name="senha_web"
+                               value="{{ data.senha_web|e }}"
+                               class="form-control nb-pwd"
+                               placeholder="Senha de acesso web"
+                               autocomplete="off">
+                    </div>
+
+                    <div class="col-12 col-md-3">
+                        <label class="form-label">Porta SSH</label>
+                        <input type="text"
+                               name="porta_ssh"
+                               value="{{ data.porta_ssh|e }}"
+                               class="form-control"
+                               placeholder="Ex: 22">
+                    </div>
+
+                    <div class="col-12 col-md-3">
+                        <label class="form-label">
+                            Senha SSH
+                            <span class="badge bg-warning-lt text-warning ms-1 fw-normal fs-6">visível</span>
+                        </label>
+                        <input type="text"
+                               name="senha_ssh"
+                               value="{{ data.senha_ssh|e }}"
+                               class="form-control nb-pwd"
+                               placeholder="Senha SSH"
+                               autocomplete="off">
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label">Observações</label>
+                        <textarea name="observacoes"
+                                  class="form-control"
+                                  rows="3"
+                                  placeholder="Observações adicionais sobre o servidor...">{{ data.observacoes|e }}</textarea>
+                    </div>
+
+                </div>{# /.row #}
+            </div>{# /.nb-card-body #}
+        </div>{# /.nb-card Servidor #}
+
+        {# ══════════════════════════════════════════════════════════════════
+           SEÇÃO 2 — Ramais (tabela dinâmica)
+           ══════════════════════════════════════════════════════════════════ #}
+        <div class="nb-card mb-4">
+            <div class="nb-card-header">
+                <i class="ti ti-device-mobile me-2 text-blue"></i>
+                <strong>Ramais</strong>
+                <button type="button"
+                        class="btn btn-sm btn-outline-primary ms-auto nb-btn-add-row"
+                        data-target-body="nb-ramais-body"
+                        data-template="nb-tpl-ramal">
+                    <i class="ti ti-plus me-1"></i> Adicionar Ramal
+                </button>
             </div>
+            <div class="nb-card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-sm nb-table align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Ramal</th>
+                                <th>Senha</th>
+                                <th>IP Aparelho</th>
+                                <th>Nome</th>
+                                <th>Localidade</th>
+                                <th>Gravação</th>
+                                <th>Observações</th>
+                                <th class="nb-col-action"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="nb-ramais-body">
+                            {% for ramal in ramais %}
+                            <tr class="nb-dyn-row">
+                                <td><input type="text"   class="form-control form-control-sm" name="ramais[{{ loop.index0 }}][ramal]"     value="{{ ramal.ramal|default('')|e }}"     placeholder="2001"></td>
+                                <td><input type="text"   class="form-control form-control-sm nb-pwd" name="ramais[{{ loop.index0 }}][senha]" value="{{ ramal.senha|default('')|e }}"     placeholder="senha" autocomplete="off"></td>
+                                <td><input type="text"   class="form-control form-control-sm" name="ramais[{{ loop.index0 }}][ip]"        value="{{ ramal.ip|default('')|e }}"        placeholder="192.168.x.x"></td>
+                                <td><input type="text"   class="form-control form-control-sm" name="ramais[{{ loop.index0 }}][nome]"      value="{{ ramal.nome|default('')|e }}"      placeholder="Ex: João"></td>
+                                <td><input type="text"   class="form-control form-control-sm" name="ramais[{{ loop.index0 }}][localidade]" value="{{ ramal.localidade|default('')|e }}" placeholder="Financeiro"></td>
+                                <td>
+                                    <select class="form-select form-select-sm" name="ramais[{{ loop.index0 }}][gravacao]">
+                                        <option value="nao" {{ ramal.gravacao|default('nao') == 'nao' ? 'selected' : '' }}>Não</option>
+                                        <option value="sim" {{ ramal.gravacao|default('') == 'sim' ? 'selected' : '' }}>Sim</option>
+                                    </select>
+                                </td>
+                                <td><input type="text"   class="form-control form-control-sm" name="ramais[{{ loop.index0 }}][obs]"       value="{{ ramal.obs|default('')|e }}"       placeholder="..."></td>
+                                <td>
+                                    <button type="button" class="btn btn-sm btn-ghost-danger nb-btn-remove-row" title="Remover">
+                                        <i class="ti ti-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% else %}
+                            {# Linha placeholder quando não há ramais — removida ao adicionar a primeira #}
+                            <tr id="nb-ramais-empty" class="nb-empty-row">
+                                <td colspan="8" class="text-center text-muted py-3">
+                                    <i class="ti ti-inbox me-1"></i> Nenhum ramal cadastrado. Clique em "+ Adicionar Ramal".
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>{# /.nb-card-body #}
+        </div>{# /.nb-card Ramais #}
 
-            <div class="col-12 col-lg-6">
-                <label class="form-label">IP Interno</label>
-                <input type="text"
-                       name="systems_config[ipbx][internal_ip]"
-                       value="{{ data.internal_ip ?? '' }}"
-                       class="form-control nb-fc"
-                       placeholder="Ex: 192.168.0.10">
+        {# ══════════════════════════════════════════════════════════════════
+           SEÇÃO 3 — Operadoras / Troncos (tabela dinâmica)
+           ══════════════════════════════════════════════════════════════════ #}
+        <div class="nb-card mb-4">
+            <div class="nb-card-header">
+                <i class="ti ti-building-broadcast-tower me-2 text-teal"></i>
+                <strong>Operadoras / Troncos</strong>
+                <button type="button"
+                        class="btn btn-sm btn-outline-teal ms-auto nb-btn-add-row"
+                        data-target-body="nb-operadoras-body"
+                        data-template="nb-tpl-operadora">
+                    <i class="ti ti-plus me-1"></i> Adicionar Operadora
+                </button>
             </div>
+            <div class="nb-card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-sm nb-table align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Nº Piloto</th>
+                                <th>Tipo Tronco</th>
+                                <th>Operadora</th>
+                                <th>DDR</th>
+                                <th>Canais</th>
+                                <th>IP Proxy</th>
+                                <th>Porta Proxy</th>
+                                <th>IP Áudio</th>
+                                <th class="nb-col-action"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="nb-operadoras-body">
+                            {% for op in operadoras %}
+                            <tr class="nb-dyn-row">
+                                <td><input type="text"   class="form-control form-control-sm" name="operadoras[{{ loop.index0 }}][numero_piloto]" value="{{ op.numero_piloto|default('')|e }}" placeholder="(27)3xxx-xxxx"></td>
+                                <td><input type="text"   class="form-control form-control-sm" name="operadoras[{{ loop.index0 }}][tipo_tronco]"   value="{{ op.tipo_tronco|default('')|e }}"   placeholder="SIP"></td>
+                                <td><input type="text"   class="form-control form-control-sm" name="operadoras[{{ loop.index0 }}][operadora]"     value="{{ op.operadora|default('')|e }}"     placeholder="Vivo"></td>
+                                <td><input type="text"   class="form-control form-control-sm" name="operadoras[{{ loop.index0 }}][ddr]"           value="{{ op.ddr|default('')|e }}"           placeholder="3300-0000"></td>
+                                <td><input type="number" class="form-control form-control-sm" name="operadoras[{{ loop.index0 }}][canais]"        value="{{ op.canais|default('')|e }}"        placeholder="10" min="1"></td>
+                                <td><input type="text"   class="form-control form-control-sm" name="operadoras[{{ loop.index0 }}][ip_proxy]"      value="{{ op.ip_proxy|default('')|e }}"      placeholder="192.x.x.x"></td>
+                                <td><input type="text"   class="form-control form-control-sm" name="operadoras[{{ loop.index0 }}][porta_proxy]"   value="{{ op.porta_proxy|default('')|e }}"   placeholder="5060"></td>
+                                <td><input type="text"   class="form-control form-control-sm" name="operadoras[{{ loop.index0 }}][ip_audio]"      value="{{ op.ip_audio|default('')|e }}"      placeholder="192.x.x.x"></td>
+                                <td>
+                                    <button type="button" class="btn btn-sm btn-ghost-danger nb-btn-remove-row" title="Remover">
+                                        <i class="ti ti-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr id="nb-operadoras-empty" class="nb-empty-row">
+                                <td colspan="9" class="text-center text-muted py-3">
+                                    <i class="ti ti-inbox me-1"></i> Nenhuma operadora cadastrada. Clique em "+ Adicionar Operadora".
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>{# /.nb-card-body #}
+        </div>{# /.nb-card Operadoras #}
 
-            <div class="col-12 col-lg-6">
-                <label class="form-label">IP Externo</label>
-                <input type="text"
-                       name="systems_config[ipbx][external_ip]"
-                       value="{{ data.external_ip ?? '' }}"
-                       class="form-control nb-fc"
-                       placeholder="Ex: 200.x.x.x">
-            </div>
-
-            <div class="col-12 col-lg-6">
-                <label class="form-label">Porta Acesso Web</label>
-                <input type="text"
-                       name="systems_config[ipbx][web_port]"
-                       value="{{ data.web_port ?? '' }}"
-                       class="form-control nb-fc"
-                       placeholder="Ex: 2080">
-            </div>
-
-            <div class="col-12 col-lg-6">
-                <label class="form-label nb-pwd-label">
-                    Senha Acesso Web
-                    <span class="badge bg-warning-lt text-warning ms-1 fw-normal">visível</span>
-                </label>
-                <input type="text"
-                       name="systems_config[ipbx][web_password]"
-                       value="{{ data.web_password ?? '' }}"
-                       class="form-control nb-fc nb-pwd"
-                       placeholder="Senha de acesso web"
-                       autocomplete="off">
-            </div>
-
-            <div class="col-12 col-lg-6">
-                <label class="form-label">Porta Acesso SSH</label>
-                <input type="text"
-                       name="systems_config[ipbx][ssh_port]"
-                       value="{{ data.ssh_port ?? '' }}"
-                       class="form-control nb-fc"
-                       placeholder="Ex: 2022">
-            </div>
-
-            <div class="col-12 col-lg-6">
-                <label class="form-label nb-pwd-label">
-                    Senha Acesso SSH
-                    <span class="badge bg-warning-lt text-warning ms-1 fw-normal">visível</span>
-                </label>
-                <input type="text"
-                       name="systems_config[ipbx][ssh_password]"
-                       value="{{ data.ssh_password ?? '' }}"
-                       class="form-control nb-fc nb-pwd"
-                       placeholder="Senha SSH"
-                       autocomplete="off">
-            </div>
-
-            <div class="col-12">
-                <label class="form-label">Observações</label>
-                <textarea name="systems_config[ipbx][observations]"
-                          class="form-control nb-fc"
-                          rows="3"
-                          placeholder="Observações adicionais sobre o servidor...">{{ data.observations ?? '' }}</textarea>
-            </div>
-
-        </div>{# /.row Informações do Servidor #}
-
-        {# ── Sub-seção: Ramais ───────────────────────────────────────────── #}
-        <p class="nb-section-label">
-            <i class="ti ti-device-mobile me-1"></i> Ramais
-        </p>
-        <div class="table-responsive mb-2">
-            <table class="table table-sm nb-table align-middle" id="nb-ipbx-ramais-table">
-                <thead class="table-light">
-                    <tr>
-                        <th>Ramal</th>
-                        <th>Senha</th>
-                        <th>IP Aparelho</th>
-                        <th>Nome</th>
-                        <th>Localidade</th>
-                        <th>Gravação</th>
-                        <th>Observações</th>
-                        <th style="width:40px"></th>
-                    </tr>
-                </thead>
-                <tbody id="nb-ipbx-ramais-body">
-                    {% for ramal in data.ramais ?? [] %}
-                    <tr class="nb-ramal-row">
-                        <td>
-                            <input type="text"
-                                   class="form-control nb-fc form-control-sm"
-                                   name="systems_config[ipbx][ramais][{{ loop.index0 }}][ramal]"
-                                   value="{{ ramal.ramal ?? '' }}"
-                                   placeholder="2001">
-                        </td>
-                        <td>
-                            <input type="text"
-                                   class="form-control nb-fc nb-pwd form-control-sm"
-                                   name="systems_config[ipbx][ramais][{{ loop.index0 }}][senha]"
-                                   value="{{ ramal.senha ?? '' }}"
-                                   placeholder="senha"
-                                   autocomplete="off">
-                        </td>
-                        <td>
-                            <input type="text"
-                                   class="form-control nb-fc form-control-sm"
-                                   name="systems_config[ipbx][ramais][{{ loop.index0 }}][ip]"
-                                   value="{{ ramal.ip ?? '' }}"
-                                   placeholder="192.168.x.x">
-                        </td>
-                        <td>
-                            <input type="text"
-                                   class="form-control nb-fc form-control-sm"
-                                   name="systems_config[ipbx][ramais][{{ loop.index0 }}][nome]"
-                                   value="{{ ramal.nome ?? '' }}"
-                                   placeholder="Ex: José">
-                        </td>
-                        <td>
-                            <input type="text"
-                                   class="form-control nb-fc form-control-sm"
-                                   name="systems_config[ipbx][ramais][{{ loop.index0 }}][localidade]"
-                                   value="{{ ramal.localidade ?? '' }}"
-                                   placeholder="Financeiro">
-                        </td>
-                        <td>
-                            <select class="form-select nb-fc form-select-sm"
-                                    name="systems_config[ipbx][ramais][{{ loop.index0 }}][gravacao]">
-                                <option value="nao" {{ (ramal.gravacao ?? 'nao') == 'nao' ? 'selected' : '' }}>Não</option>
-                                <option value="sim" {{ (ramal.gravacao ?? '') == 'sim' ? 'selected' : '' }}>Sim</option>
-                            </select>
-                        </td>
-                        <td>
-                            <input type="text"
-                                   class="form-control nb-fc form-control-sm"
-                                   name="systems_config[ipbx][ramais][{{ loop.index0 }}][obs]"
-                                   value="{{ ramal.obs ?? '' }}"
-                                   placeholder="...">
-                        </td>
-                        <td>
-                            <button type="button"
-                                    class="btn btn-sm btn-danger nb-remove-row"
-                                    data-body="nb-ipbx-ramais-body"
-                                    title="Remover ramal">
-                                <i class="ti ti-trash"></i>
-                            </button>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        <button type="button"
-                class="btn btn-sm btn-outline-primary"
-                id="nb-btn-add-ramal">
-            <i class="ti ti-plus me-1"></i> Adicionar Ramal
-        </button>
-
-        {# ── Sub-seção: Informações de Operadora (Troncos) ───────────────── #}
-        <p class="nb-section-label mt-4">
-            <i class="ti ti-building-broadcast-tower me-1"></i> Informações de Operadora (Troncos)
-        </p>
-        <div class="table-responsive mb-2">
-            <table class="table table-sm nb-table align-middle" id="nb-ipbx-ops-table">
-                <thead class="table-light">
-                    <tr>
-                        <th>Nº Piloto</th>
-                        <th>Tipo Tronco</th>
-                        <th>Operadora</th>
-                        <th>DDR</th>
-                        <th>Canais</th>
-                        <th>IP Proxy</th>
-                        <th>Porta Proxy</th>
-                        <th>IP Áudio</th>
-                        <th style="width:40px"></th>
-                    </tr>
-                </thead>
-                <tbody id="nb-ipbx-ops-body">
-                    {% for op in data.operadoras ?? [] %}
-                    <tr class="nb-op-row">
-                        <td><input type="text"   class="form-control nb-fc form-control-sm" name="systems_config[ipbx][operadoras][{{ loop.index0 }}][numero_piloto]" value="{{ op.numero_piloto ?? '' }}" placeholder="(27)3xxx-xxxx"></td>
-                        <td><input type="text"   class="form-control nb-fc form-control-sm" name="systems_config[ipbx][operadoras][{{ loop.index0 }}][tipo_tronco]"   value="{{ op.tipo_tronco ?? '' }}"   placeholder="SIP"></td>
-                        <td><input type="text"   class="form-control nb-fc form-control-sm" name="systems_config[ipbx][operadoras][{{ loop.index0 }}][operadora]"     value="{{ op.operadora ?? '' }}"     placeholder="Vivo"></td>
-                        <td><input type="text"   class="form-control nb-fc form-control-sm" name="systems_config[ipbx][operadoras][{{ loop.index0 }}][ddr]"           value="{{ op.ddr ?? '' }}"           placeholder="33727000-7100"></td>
-                        <td><input type="number" class="form-control nb-fc form-control-sm" name="systems_config[ipbx][operadoras][{{ loop.index0 }}][canais]"        value="{{ op.canais ?? '' }}"        placeholder="10" min="1"></td>
-                        <td><input type="text"   class="form-control nb-fc form-control-sm" name="systems_config[ipbx][operadoras][{{ loop.index0 }}][ip_proxy]"      value="{{ op.ip_proxy ?? '' }}"     placeholder="192.x.x.x"></td>
-                        <td><input type="text"   class="form-control nb-fc form-control-sm" name="systems_config[ipbx][operadoras][{{ loop.index0 }}][porta_proxy]"   value="{{ op.porta_proxy ?? '' }}"  placeholder="5060"></td>
-                        <td><input type="text"   class="form-control nb-fc form-control-sm" name="systems_config[ipbx][operadoras][{{ loop.index0 }}][ip_audio]"      value="{{ op.ip_audio ?? '' }}"     placeholder="192.x.x.x"></td>
-                        <td>
-                            <button type="button"
-                                    class="btn btn-sm btn-danger nb-remove-row"
-                                    data-body="nb-ipbx-ops-body"
-                                    title="Remover operadora">
-                                <i class="ti ti-trash"></i>
-                            </button>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        <button type="button"
-                class="btn btn-sm btn-outline-secondary"
-                id="nb-btn-add-operadora">
-            <i class="ti ti-plus me-1"></i> Adicionar Operadora
-        </button>
-
-        {# ── Botão Salvar ─────────────────────────────────────────────────── #}
-        <div class="text-center mt-4 pb-2">
-            <button type="submit" class="btn btn-primary nb-save-btn" id="nb-systems-save-btn">
+        {# ══════════════════════════════════════════════════════════════════
+           BOTÃO SALVAR
+           ══════════════════════════════════════════════════════════════════ #}
+        <div class="d-flex justify-content-end mt-2 pb-3">
+            <button type="submit" class="btn btn-primary nb-btn-save">
                 <i class="ti ti-device-floppy me-2"></i>
                 Salvar IPBX / PABX
             </button>
         </div>
 
     </form>
-</div>{# /.newbase-systems-wrapper #}
 
-{% include '@newbase/companydata/sections/_systems_js.html.twig' %}
+    {# ══════════════════════════════════════════════════════════════════════
+       TEMPLATES HTML para linhas novas (usados pelo _shared_js)
+       ══════════════════════════════════════════════════════════════════════ #}
+
+    {# Template: nova linha de ramal #}
+    <template id="nb-tpl-ramal">
+        <tr class="nb-dyn-row">
+            <td><input type="text"   class="form-control form-control-sm" name="ramais[__IDX__][ramal]"      placeholder="2001"></td>
+            <td><input type="text"   class="form-control form-control-sm nb-pwd" name="ramais[__IDX__][senha]" placeholder="senha" autocomplete="off"></td>
+            <td><input type="text"   class="form-control form-control-sm" name="ramais[__IDX__][ip]"         placeholder="192.168.x.x"></td>
+            <td><input type="text"   class="form-control form-control-sm" name="ramais[__IDX__][nome]"       placeholder="Ex: João"></td>
+            <td><input type="text"   class="form-control form-control-sm" name="ramais[__IDX__][localidade]" placeholder="Financeiro"></td>
+            <td>
+                <select class="form-select form-select-sm" name="ramais[__IDX__][gravacao]">
+                    <option value="nao" selected>Não</option>
+                    <option value="sim">Sim</option>
+                </select>
+            </td>
+            <td><input type="text"   class="form-control form-control-sm" name="ramais[__IDX__][obs]"        placeholder="..."></td>
+            <td>
+                <button type="button" class="btn btn-sm btn-ghost-danger nb-btn-remove-row" title="Remover">
+                    <i class="ti ti-trash"></i>
+                </button>
+            </td>
+        </tr>
+    </template>
+
+    {# Template: nova linha de operadora #}
+    <template id="nb-tpl-operadora">
+        <tr class="nb-dyn-row">
+            <td><input type="text"   class="form-control form-control-sm" name="operadoras[__IDX__][numero_piloto]" placeholder="(27)3xxx-xxxx"></td>
+            <td><input type="text"   class="form-control form-control-sm" name="operadoras[__IDX__][tipo_tronco]"   placeholder="SIP"></td>
+            <td><input type="text"   class="form-control form-control-sm" name="operadoras[__IDX__][operadora]"     placeholder="Vivo"></td>
+            <td><input type="text"   class="form-control form-control-sm" name="operadoras[__IDX__][ddr]"           placeholder="3300-0000"></td>
+            <td><input type="number" class="form-control form-control-sm" name="operadoras[__IDX__][canais]"        placeholder="10" min="1"></td>
+            <td><input type="text"   class="form-control form-control-sm" name="operadoras[__IDX__][ip_proxy]"      placeholder="192.x.x.x"></td>
+            <td><input type="text"   class="form-control form-control-sm" name="operadoras[__IDX__][porta_proxy]"   placeholder="5060"></td>
+            <td><input type="text"   class="form-control form-control-sm" name="operadoras[__IDX__][ip_audio]"      placeholder="192.x.x.x"></td>
+            <td>
+                <button type="button" class="btn btn-sm btn-ghost-danger nb-btn-remove-row" title="Remover">
+                    <i class="ti ti-trash"></i>
+                </button>
+            </td>
+        </tr>
+    </template>
+
+</div>{# /.newbase-section-wrapper #}
+
+{% include '@newbase/companydata/sections/_shared_js.html.twig' %}

@@ -1,0 +1,185 @@
+{#
+ ┌────────────────────────────────────────────────────────────────────────────┐
+ │  ABA 4: Rede                                                               │
+ │  Template : @newbase/companydata/sections/rede.html.twig                  │
+ │  Chamado por : SectionRede::show()                                         │
+ │                                                                            │
+ │  Variáveis recebidas:                                                      │
+ │    item_id     int    — ID do registro CompanyData                         │
+ │    csrf_token  string — Token CSRF da sessão                               │
+ │    section_key string — 'rede'                                             │
+ │    rows        array  — linhas da tabela glpi_plugin_newbase_rede           │
+ │      [{ip, mascara, gateway, dns_primario, dns_secundario, observacoes}]   │
+ └────────────────────────────────────────────────────────────────────────────┘
+#}
+
+<div class="newbase-section-wrapper">
+
+    <form id="nb-form-rede" class="nb-section-form" method="post" novalidate
+          data-section-key="rede"
+          data-save-label="Salvar Rede">
+
+        <input type="hidden" name="id"               value="{{ item_id }}">
+        <input type="hidden" name="section_key"      value="{{ section_key }}">
+        <input type="hidden" name="_glpi_csrf_token" value="{{ csrf_token }}">
+
+        {# ══════════════════════════════════════════════════════════════════
+           TABELA DINÂMICA — Configurações de Rede
+           ══════════════════════════════════════════════════════════════════ #}
+        <div class="nb-card mb-4">
+            <div class="nb-card-header">
+                <i class="ti ti-network me-2 text-teal"></i>
+                <strong>Configurações de Rede</strong>
+                <button type="button"
+                        class="btn btn-sm btn-outline-teal ms-auto nb-btn-add-row"
+                        data-target-body="nb-rede-body"
+                        data-template="nb-tpl-rede">
+                    <i class="ti ti-plus me-1"></i> Adicionar Rede
+                </button>
+            </div>
+            <div class="nb-card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-sm nb-table align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="min-width:140px">IP</th>
+                                <th style="min-width:140px">Máscara</th>
+                                <th style="min-width:140px">Gateway</th>
+                                <th style="min-width:140px">DNS Primário</th>
+                                <th style="min-width:140px">DNS Secundário</th>
+                                <th>Observações</th>
+                                <th class="nb-col-action"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="nb-rede-body">
+                            {% for row in rows %}
+                            <tr class="nb-dyn-row">
+                                <td>
+                                    <input type="text"
+                                           class="form-control form-control-sm"
+                                           name="rows[{{ loop.index0 }}][ip]"
+                                           value="{{ row.ip|default('')|e }}"
+                                           placeholder="Ex: 192.168.0.0">
+                                </td>
+                                <td>
+                                    <input type="text"
+                                           class="form-control form-control-sm"
+                                           name="rows[{{ loop.index0 }}][mascara]"
+                                           value="{{ row.mascara|default('')|e }}"
+                                           placeholder="Ex: 255.255.255.0">
+                                </td>
+                                <td>
+                                    <input type="text"
+                                           class="form-control form-control-sm"
+                                           name="rows[{{ loop.index0 }}][gateway]"
+                                           value="{{ row.gateway|default('')|e }}"
+                                           placeholder="Ex: 192.168.0.1">
+                                </td>
+                                <td>
+                                    <input type="text"
+                                           class="form-control form-control-sm"
+                                           name="rows[{{ loop.index0 }}][dns_primario]"
+                                           value="{{ row.dns_primario|default('')|e }}"
+                                           placeholder="Ex: 8.8.8.8">
+                                </td>
+                                <td>
+                                    <input type="text"
+                                           class="form-control form-control-sm"
+                                           name="rows[{{ loop.index0 }}][dns_secundario]"
+                                           value="{{ row.dns_secundario|default('')|e }}"
+                                           placeholder="Ex: 8.8.4.4">
+                                </td>
+                                <td>
+                                    <input type="text"
+                                           class="form-control form-control-sm"
+                                           name="rows[{{ loop.index0 }}][observacoes]"
+                                           value="{{ row.observacoes|default('')|e }}"
+                                           placeholder="Observações">
+                                </td>
+                                <td>
+                                    <button type="button"
+                                            class="btn btn-sm btn-ghost-danger nb-btn-remove-row"
+                                            title="Remover rede">
+                                        <i class="ti ti-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr id="nb-rede-empty" class="nb-empty-row">
+                                <td colspan="7" class="text-center text-muted py-3">
+                                    <i class="ti ti-inbox me-1"></i> Nenhuma configuração de rede cadastrada. Clique em "+ Adicionar Rede".
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>{# /.nb-card-body #}
+        </div>{# /.nb-card #}
+
+        {# ══════════════════════════════════════════════════════════════════
+           BOTÃO SALVAR
+           ══════════════════════════════════════════════════════════════════ #}
+        <div class="d-flex justify-content-end mt-2 pb-3">
+            <button type="submit" class="btn btn-primary nb-btn-save">
+                <i class="ti ti-device-floppy me-2"></i>
+                Salvar Rede
+            </button>
+        </div>
+
+    </form>
+
+    {# ══════════════════════════════════════════════════════════════════════
+       TEMPLATE HTML para nova linha (usado pelo _shared_js)
+       ══════════════════════════════════════════════════════════════════════ #}
+    <template id="nb-tpl-rede">
+        <tr class="nb-dyn-row">
+            <td>
+                <input type="text"
+                       class="form-control form-control-sm"
+                       name="rows[__IDX__][ip]"
+                       placeholder="Ex: 192.168.0.0">
+            </td>
+            <td>
+                <input type="text"
+                       class="form-control form-control-sm"
+                       name="rows[__IDX__][mascara]"
+                       placeholder="Ex: 255.255.255.0">
+            </td>
+            <td>
+                <input type="text"
+                       class="form-control form-control-sm"
+                       name="rows[__IDX__][gateway]"
+                       placeholder="Ex: 192.168.0.1">
+            </td>
+            <td>
+                <input type="text"
+                       class="form-control form-control-sm"
+                       name="rows[__IDX__][dns_primario]"
+                       placeholder="Ex: 8.8.8.8">
+            </td>
+            <td>
+                <input type="text"
+                       class="form-control form-control-sm"
+                       name="rows[__IDX__][dns_secundario]"
+                       placeholder="Ex: 8.8.4.4">
+            </td>
+            <td>
+                <input type="text"
+                       class="form-control form-control-sm"
+                       name="rows[__IDX__][observacoes]"
+                       placeholder="Observações">
+            </td>
+            <td>
+                <button type="button"
+                        class="btn btn-sm btn-ghost-danger nb-btn-remove-row"
+                        title="Remover rede">
+                    <i class="ti ti-trash"></i>
+                </button>
+            </td>
+        </tr>
+    </template>
+
+</div>{# /.newbase-section-wrapper #}
+
+{% include '@newbase/companydata/sections/_shared_js.html.twig' %}

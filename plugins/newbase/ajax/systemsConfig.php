@@ -3,25 +3,36 @@
 /**
  * -------------------------------------------------------------------------
  * Newbase plugin for GLPI — ajax/systemsConfig.php
- * Endpoint AJAX para salvar UMA seção do systems_config de CompanyData.
+ * -------------------------------------------------------------------------
+ *
+ * Endpoint AJAX para salvar a seção ativa do formulário de CompanyData.
  *
  * Recebe via POST:
- *   id            int    — ID do registro CompanyData
- *   section_key   string — Chave da seção: ipbx | ipbx_cloud | chatbot | linha
- *   systems_config array — Apenas a seção enviada pelo formulário ativo
+ *   id               int    — ID do registro CompanyData
+ *   section_key      string — Identifica qual seção/tabela salvar
  *   _glpi_csrf_token string — Token CSRF
+ *   + campos específicos de cada seção (ver cada Section::save())
  *
- * Estratégia de merge:
- *   1. Carrega o JSON atual do campo systems_config do banco.
- *   2. Substitui APENAS a seção correspondente a section_key.
- *   3. Salva o JSON completo de volta, preservando as outras seções intactas.
+ * Seções suportadas:
+ *   ipbx             → SectionIpbxPabx::save()
+ *   ipbx_cloud       → SectionIpbxCloud::save()
+ *   dispositivos     → SectionDispositivos::save()
+ *   rede             → SectionRede::save()
+ *   chatbot          → SectionChatbot::save()
+ *   linha_telefonica → SectionLinhaTelefonica::save()
  * -------------------------------------------------------------------------
  */
 
 declare(strict_types=1);
 
-use GlpiPlugin\Newbase\CompanyData;
 use GlpiPlugin\Newbase\AjaxHandler;
+use GlpiPlugin\Newbase\CompanyData;
+use GlpiPlugin\Newbase\Sections\SectionIpbxPabx;
+use GlpiPlugin\Newbase\Sections\SectionIpbxCloud;
+use GlpiPlugin\Newbase\Sections\SectionDispositivos;
+use GlpiPlugin\Newbase\Sections\SectionRede;
+use GlpiPlugin\Newbase\Sections\SectionChatbot;
+use GlpiPlugin\Newbase\Sections\SectionLinhaTelefonica;
 
 include('../../../inc/includes.php');
 
@@ -48,13 +59,21 @@ if (!$id || $id <= 0) {
 }
 
 // ── Validar section_key ──────────────────────────────────────────────────────
-$allowed_sections = ['ipbx', 'ipbx_cloud', 'chatbot', 'linha'];
-$section_key      = filter_input(INPUT_POST, 'section_key', FILTER_SANITIZE_SPECIAL_CHARS);
+$allowedSections = [
+    SectionIpbxPabx::SECTION_KEY,
+    SectionIpbxCloud::SECTION_KEY,
+    SectionDispositivos::SECTION_KEY,
+    SectionRede::SECTION_KEY,
+    SectionChatbot::SECTION_KEY,
+    SectionLinhaTelefonica::SECTION_KEY,
+];
 
-if (empty($section_key) || !in_array($section_key, $allowed_sections, true)) {
+$sectionKey = filter_input(INPUT_POST, 'section_key', FILTER_SANITIZE_SPECIAL_CHARS);
+
+if (empty($sectionKey) || !in_array($sectionKey, $allowedSections, true)) {
     AjaxHandler::sendResponse(
         false,
-        'Seção inválida. Valores aceitos: ' . implode(', ', $allowed_sections),
+        'Seção inválida. Valores aceitos: ' . implode(', ', $allowedSections),
         [],
         400
     );
@@ -70,42 +89,31 @@ if (!$item->getFromDB($id)) {
 
 $item->check($id, UPDATE);
 
-// ── Obter dados da seção enviada ─────────────────────────────────────────────
-$submitted_config = $_POST['systems_config'] ?? [];
-if (!is_array($submitted_config)) {
-    AjaxHandler::sendResponse(false, 'Dados de configuração inválidos.', [], 400);
+// ── Rotear para a Section correta e salvar ───────────────────────────────────
+try {
+    $result = match ($sectionKey) {
+        SectionIpbxPabx::SECTION_KEY        => SectionIpbxPabx::save($id, $_POST),
+        SectionIpbxCloud::SECTION_KEY       => SectionIpbxCloud::save($id, $_POST),
+        SectionDispositivos::SECTION_KEY    => SectionDispositivos::save($id, $_POST),
+        SectionRede::SECTION_KEY            => SectionRede::save($id, $_POST),
+        SectionChatbot::SECTION_KEY         => SectionChatbot::save($id, $_POST),
+        SectionLinhaTelefonica::SECTION_KEY => SectionLinhaTelefonica::save($id, $_POST),
+    };
+} catch (\Throwable $e) {
+    Toolbox::logInFile(
+        'newbase_plugin',
+        sprintf(
+            "[systemsConfig] Exceção ao salvar seção '%s' para company_id %d: %s\n",
+            $sectionKey,
+            $id,
+            $e->getMessage()
+        )
+    );
+    AjaxHandler::sendResponse(false, 'Erro interno ao salvar. Verifique os logs do GLPI.', [], 500);
     exit;
 }
 
-// ── Extrair apenas a seção correspondente ────────────────────────────────────
-$section_data = $submitted_config[$section_key] ?? [];
-
-// Sanitizar recursivamente (strip_tags + trim)
-array_walk_recursive($section_data, function (&$val) {
-    if (is_string($val)) {
-        $val = strip_tags(trim($val));
-    }
-});
-
-// ── Merge: carrega o config atual e substitui apenas a seção enviada ─────────
-$current_json   = $item->fields['systems_config'] ?? '{}';
-$current_config = json_decode($current_json, true);
-
-// Garantir que é um array mesmo se o JSON estava vazio ou corrompido
-if (!is_array($current_config)) {
-    $current_config = [];
-}
-
-// Substituir apenas a seção que o formulário atual gerencia
-$current_config[$section_key] = $section_data;
-
-// ── Executar o update com o JSON completo mesclado ───────────────────────────
-// prepareInputForUpdate() converte o array inteiro para JSON e salva no campo
-$result = $item->update([
-    'id'             => $id,
-    'systems_config' => $current_config, // array completo (todas as seções)
-]);
-
+// ── Responder ────────────────────────────────────────────────────────────────
 if ($result) {
     AjaxHandler::sendResponse(true, 'Configurações salvas com sucesso!');
 } else {

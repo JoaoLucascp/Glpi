@@ -39,6 +39,12 @@ use Toolbox;
 use Plugin;
 use Session;
 use Html;
+use GlpiPlugin\Newbase\Sections\SectionIpbxPabx;
+use GlpiPlugin\Newbase\Sections\SectionIpbxCloud;
+use GlpiPlugin\Newbase\Sections\SectionDispositivos;
+use GlpiPlugin\Newbase\Sections\SectionRede;
+use GlpiPlugin\Newbase\Sections\SectionChatbot;
+use GlpiPlugin\Newbase\Sections\SectionLinhaTelefonica;
 
 if (!defined('GLPI_ROOT')) {
     die("Sorry. You can't access this file directly");
@@ -216,8 +222,10 @@ class CompanyData extends CommonDBTM
             return [
                 1 => self::createTabEntry(__('IPBX / PABX', 'newbase')),
                 2 => self::createTabEntry(__('IPBX Cloud', 'newbase')),
-                3 => self::createTabEntry(__('Chatbot', 'newbase')),
-                4 => self::createTabEntry(__('Linha Telefônica', 'newbase')),
+                3 => self::createTabEntry(__('Dispositivos', 'newbase')),
+                4 => self::createTabEntry(__('Rede', 'newbase')),
+                5 => self::createTabEntry(__('Chatbot', 'newbase')),
+                6 => self::createTabEntry(__('Linha Telefônica', 'newbase')),
             ];
         }
         return '';
@@ -236,10 +244,12 @@ class CompanyData extends CommonDBTM
         if ($item->getType() === self::getType()) {
             /** @var CompanyData $item */
             match ((int) $tabnum) {
-                1 => $item->showSectionIpbxPabx(),
-                2 => $item->showSectionIpbxCloud(),
-                3 => $item->showSectionChatbot(),
-                4 => $item->showSectionLinhaTelefonica(),
+                1 => SectionIpbxPabx::show($item),
+                2 => SectionIpbxCloud::show($item),
+                3 => SectionDispositivos::show($item),
+                4 => SectionRede::show($item),
+                5 => SectionChatbot::show($item),
+                6 => SectionLinhaTelefonica::show($item),
                 default => false,
             };
             return true;
@@ -247,46 +257,8 @@ class CompanyData extends CommonDBTM
         return false;
     }
 
-    /**
-     * Show systems configuration tab usando Twig + Bootstrap accordion.
-     *
-     * @param CompanyData $item Company item
-     * @return void
-     */
-    public function showSectionIpbxPabx(): void
-    {
-        $this->renderSystemSection('ipbx', '@newbase/companydata/sections/ipbx_pabx.html.twig');
-    }
-
-    public function showSectionIpbxCloud(): void
-    {
-        $this->renderSystemSection('ipbx_cloud', '@newbase/companydata/sections/ipbx_cloud.html.twig');
-    }
-
-    public function showSectionChatbot(): void
-    {
-        $this->renderSystemSection('chatbot', '@newbase/companydata/sections/chatbot.html.twig');
-    }
-
-    public function showSectionLinhaTelefonica(): void
-    {
-        $this->renderSystemSection('linha', '@newbase/companydata/sections/linha_telefonica.html.twig');
-    }
-
-    private function renderSystemSection(string $sectionKey, string $template): void
-    {
-        $config = json_decode($this->fields['systems_config'] ?? '{}', true) ?: [];
-
-        \Glpi\Application\View\TemplateRenderer::getInstance()->display(
-            $template,
-            [
-                'item_id'    => $this->getID(),
-                'form_url'   => $this->getFormURL(),
-                'csrf_token' => \Session::getNewCSRFToken(),
-                'data'       => $config[$sectionKey] ?? [],
-            ]
-        );
-    }
+    // Os métodos showSection* foram migrados para src/Sections/*.php
+    // Cada classe Section é responsável por carregar seus próprios dados e renderizar o template.
 
 
     // ========== DATA RETRIEVAL METHODS ==========
@@ -699,11 +671,19 @@ class CompanyData extends CommonDBTM
         }
 
         $this->showFormHeader($options);
-        // NOTA: NÃO adicionar _glpi_csrf_token aqui — showFormHeader() já o injeta corretamente.
 
-        // === SEÇÃO: Empresas ===
+        // === SEÇÃO: Informações Gerais ===
         echo "<tr class='tab_bg_2'>";
-        echo "<th colspan='3'>" . __('Informações Gerais', 'newbase') . "</th>";
+        echo "<th colspan='4'>" . __('Informações Gerais', 'newbase') . "</th>";
+        echo "</tr>";
+
+        // ID (somente leitura)
+        echo "<tr class='tab_bg_1'>";
+        echo "<td>" . __('ID') . "</td>";
+        echo "<td>";
+        echo "<span class='form-control-plaintext'><strong>" . ($ID > 0 ? (int)$ID : __('Novo', 'newbase')) . "</strong></span>";
+        echo "</td>";
+        echo "<td colspan='2'></td>";
         echo "</tr>";
 
         // Nome Fantasia / CNPJ
@@ -711,8 +691,8 @@ class CompanyData extends CommonDBTM
         echo "<td>" . __('Fantasy Name', 'newbase') . "</td>";
         echo "<td>";
         echo Html::input('fantasy_name', [
-            'value' => $this->fields['fantasy_name'] ?? '',
-            'size'  => 35,
+        'value' => $this->fields['fantasy_name'] ?? '',
+        'size'  => 35,
         ]);
         echo "</td>";
 
@@ -729,7 +709,7 @@ class CompanyData extends CommonDBTM
         echo "</td>";
         echo "</tr>";
 
-        // Razão Social (campo principal = getNameField()) / Email
+        // Razão Social / Email
         echo "<tr class='tab_bg_1'>";
         echo "<td>" . __('Corporate Name', 'newbase') . " <span class='red'>*</span></td>";
         echo "<td>";
@@ -749,7 +729,7 @@ class CompanyData extends CommonDBTM
         echo "</td>";
         echo "</tr>";
 
-        // Telefone / Pessoa de Contato (linha separada)
+        // Telefone
         echo "<tr class='tab_bg_1'>";
         echo "<td>" . __('Phone') . "</td>";
         echo "<td>";
@@ -761,29 +741,9 @@ class CompanyData extends CommonDBTM
         echo "<td colspan='2'></td>";
         echo "</tr>";
 
-        // Pessoa de Contato / Website
-        echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __('Contact Person', 'newbase') . "</td>";
-        echo "<td>";
-        echo Html::input('contact_person', [
-            'value' => $this->fields['contact_person'] ?? '',
-            'size'  => 35,
-        ]);
-        echo "</td>";
-
-        echo "<td>" . __('Website', 'newbase') . "</td>";
-        echo "<td>";
-        echo Html::input('website', [
-            'value' => $this->fields['website'] ?? '',
-            'type'  => 'url',
-            'size'  => 35,
-        ]);
-        echo "</td>";
-        echo "</tr>";
-
-        // === SEÇÃO: ENDEREÇO ===
+        // === SEÇÃO: Endereço ===
         echo "<tr class='tab_bg_2'>";
-        echo "<th colspan='3'>" . __('Address', 'newbase') . "</th>";
+        echo "<th colspan='4'>" . __('Address', 'newbase') . "</th>";
         echo "</tr>";
 
         // CEP / Rua
@@ -802,34 +762,23 @@ class CompanyData extends CommonDBTM
         echo "<td>" . __('Street', 'newbase') . "</td>";
         echo "<td>";
         echo Html::input('street', [
-            'value' => $this->fields['street'] ?? '',
-            'size'  => 35,
-            'name'  => 'street',
+        'value' => $this->fields['street'] ?? '',
+        'size'  => 35,
+        'name'  => 'street',
         ]);
         echo "</td>";
         echo "</tr>";
 
-        // Número / Complemento
+        // Número / Bairro
         echo "<tr class='tab_bg_1'>";
         echo "<td>" . __('Number', 'newbase') . "</td>";
         echo "<td>";
         echo Html::input('number', [
-            'value' => $this->fields['number'] ?? '',
-            'size'  => 35,
+        'value' => $this->fields['number'] ?? '',
+        'size'  => 35,
         ]);
         echo "</td>";
 
-        echo "<td>" . __('Complement', 'newbase') . "</td>";
-        echo "<td>";
-        echo Html::input('complement', [
-            'value' => $this->fields['complement'] ?? '',
-            'size'  => 35,
-        ]);
-        echo "</td>";
-        echo "</tr>";
-
-        // Bairro / Cidade
-        echo "<tr class='tab_bg_1'>";
         echo "<td>" . __('Neighborhood', 'newbase') . "</td>";
         echo "<td>";
         echo Html::input('neighborhood', [
@@ -838,7 +787,10 @@ class CompanyData extends CommonDBTM
             'name'  => 'neighborhood',
         ]);
         echo "</td>";
+        echo "</tr>";
 
+        // Cidade / Estado
+        echo "<tr class='tab_bg_1'>";
         echo "<td>" . __('City') . "</td>";
         echo "<td>";
         echo Html::input('city', [
@@ -847,20 +799,20 @@ class CompanyData extends CommonDBTM
             'name'  => 'city',
         ]);
         echo "</td>";
-        echo "</tr>";
 
-        // Estado / País
-        echo "<tr class='tab_bg_1'>";
         echo "<td>" . __('State') . "</td>";
         echo "<td>";
         echo Html::input('state', [
-            'value' => $this->fields['state'] ?? '',
-            'size'  => 2,
+            'value'     => $this->fields['state'] ?? '',
+            'size'      => 2,
             'maxlength' => 2,
-            'name'  => 'state',
+            'name'      => 'state',
         ]);
         echo "</td>";
+        echo "</tr>";
 
+        // País / (vazio)
+        echo "<tr class='tab_bg_1'>";
         echo "<td>" . __('Country') . "</td>";
         echo "<td>";
         echo Html::input('country', [
@@ -868,9 +820,10 @@ class CompanyData extends CommonDBTM
             'size'  => 35,
         ]);
         echo "</td>";
+        echo "<td colspan='2'></td>";
         echo "</tr>";
 
-        // Coordenadas GPS
+        // Latitude / Longitude
         echo "<tr class='tab_bg_1'>";
         echo "<td>" . __('Latitude', 'newbase') . "</td>";
         echo "<td>";
@@ -891,14 +844,15 @@ class CompanyData extends CommonDBTM
         echo "</td>";
         echo "</tr>";
 
-        // === SEÇÃO: STATUS ===
+        // === SEÇÃO: Status da Empresa ===
         echo "<tr class='tab_bg_2'>";
-        echo "<th colspan='3'>" . __('Status', 'newbase') . "</th>";
+        echo "<th colspan='4'>" . __('Status da Empresa', 'newbase') . "</th>";
         echo "</tr>";
 
+        // Status do Contrato
         echo "<tr class='tab_bg_1'>";
         echo "<td>" . __('Contract Status', 'newbase') . "</td>";
-        echo "<td colspan='3'>";
+        echo "<td>";
         $contract_options = [
             'active'    => __('Active Contract', 'newbase'),
             'inactive'  => __('No Contract', 'newbase'),
@@ -906,6 +860,25 @@ class CompanyData extends CommonDBTM
         ];
         echo Html::select('contract_status', $contract_options, [
             'value' => $this->fields['contract_status'] ?? 'active',
+        ]);
+        echo "</td>";
+        echo "<td colspan='2'></td>";
+        echo "</tr>";
+
+        // Data de Cadastro / Data de Encerramento
+        echo "<tr class='tab_bg_1'>";
+        echo "<td>" . __('Data de Cadastro', 'newbase') . "</td>";
+        echo "<td>";
+        echo Html::showDateField('date_creation', [
+            'value'    => $this->fields['date_creation'] ?? '',
+            'readonly' => true,
+        ]);
+        echo "</td>";
+
+        echo "<td>" . __('Data de Encerramento', 'newbase') . "</td>";
+        echo "<td>";
+        echo Html::showDateField('date_end', [
+            'value' => $this->fields['date_end'] ?? '',
         ]);
         echo "</td>";
         echo "</tr>";
