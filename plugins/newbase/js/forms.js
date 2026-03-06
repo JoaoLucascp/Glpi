@@ -73,11 +73,11 @@
      * Busca CNPJ com auto-preenchimento via searchCompany.php
      * COM CACHE e DEBOUNCE para evitar múltiplas requisições
      */
-    
+
     // Cache de requisições (evitar buscar mesmo CNPJ repetidamente)
     const cnpjCache = {};
     let isSearching = false; // Debounce global
-    
+
     function initCNPJSearch() {
         // Delegação: qualquer botão com data-action="search-cnpj"
         $(document)
@@ -93,13 +93,13 @@
                     alert('Digite um CNPJ');
                     return;
                 }
-                
+
                 // Debounce: bloquear se já estiver buscando
                 if (isSearching) {
                     console.log('[NEWBASE] Já está buscando, aguarde...');
                     return;
                 }
-                
+
                 // Cache: verificar se já buscou esse CNPJ recentemente (5 min)
                 const cnpjClean = cnpj.replace(/[^0-9]/g, '');
                 const now = Date.now();
@@ -171,7 +171,7 @@
                                     timestamp: Date.now(),
                                     data: data
                                 };
-                                
+
                                 console.log('[NEWBASE] Campos preenchidos com sucesso');
                                 showNotification('Dados da empresa preenchidos com sucesso!', 'success');
                                 isSearching = false; // Liberar debounce
@@ -226,7 +226,7 @@
                 performSearch();
             });
     }
-    
+
     /**
      * Preencher formulário com dados do cache
      */
@@ -373,11 +373,11 @@
         function criarMapa() {
             // Prioridade: data-attributes do container > campos de formulário > padrão ES
             var initLat = parseFloat($container.data('lat'))
-                       || parseFloat($('[name="latitude"]').val())
-                       || -20.3222;
+                || parseFloat($('[name="latitude"]').val())
+                || -20.3222;
             var initLng = parseFloat($container.data('lng'))
-                       || parseFloat($('[name="longitude"]').val())
-                       || -40.3381;
+                || parseFloat($('[name="longitude"]').val())
+                || -40.3381;
 
             var map = L.map('nb-task-map').setView([initLat, initLng], 13);
 
@@ -414,13 +414,13 @@
                 placeMarker(e.latlng.lat, e.latlng.lng);
                 if (typeof Swal !== 'undefined') {
                     Swal.fire({
-                        icon              : 'info',
-                        title             : 'Localização definida',
-                        text              : 'Lat: ' + e.latlng.lat.toFixed(6) + ' | Lng: ' + e.latlng.lng.toFixed(6),
-                        toast             : true,
-                        position          : 'top-end',
-                        timer             : 2000,
-                        showConfirmButton : false
+                        icon: 'info',
+                        title: 'Localização definida',
+                        text: 'Lat: ' + e.latlng.lat.toFixed(6) + ' | Lng: ' + e.latlng.lng.toFixed(6),
+                        toast: true,
+                        position: 'top-end',
+                        timer: 2000,
+                        showConfirmButton: false
                     });
                 }
             });

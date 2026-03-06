@@ -135,7 +135,6 @@ class SectionIpbxPabx
         // Construir o campo JSON com ramais e operadoras
         $systemsConfig = json_encode([
             'ramais'     => self::sanitizeRows($input['ramais']     ?? []),
-            'operadoras' => self::sanitizeRows($input['operadoras'] ?? []),
         ]);
 
         // Campos escalares permitidos

@@ -38,13 +38,13 @@ use Entity;
 use Toolbox;
 use Plugin;
 use Session;
-use Html;
 use GlpiPlugin\Newbase\Sections\SectionIpbxPabx;
 use GlpiPlugin\Newbase\Sections\SectionIpbxCloud;
 use GlpiPlugin\Newbase\Sections\SectionDispositivos;
 use GlpiPlugin\Newbase\Sections\SectionRede;
 use GlpiPlugin\Newbase\Sections\SectionChatbot;
 use GlpiPlugin\Newbase\Sections\SectionLinhaTelefonica;
+use GlpiPlugin\Newbase\Sections\SectionDocumentos;
 
 if (!defined('GLPI_ROOT')) {
     die("Sorry. You can't access this file directly");
@@ -226,6 +226,7 @@ class CompanyData extends CommonDBTM
                 4 => self::createTabEntry(__('Rede', 'newbase')),
                 5 => self::createTabEntry(__('Chatbot', 'newbase')),
                 6 => self::createTabEntry(__('Linha Telefônica', 'newbase')),
+                7 => self::createTabEntry(__('Documentos', 'newbase')),
             ];
         }
         return '';
@@ -250,6 +251,7 @@ class CompanyData extends CommonDBTM
                 4 => SectionRede::show($item),
                 5 => SectionChatbot::show($item),
                 6 => SectionLinhaTelefonica::show($item),
+                7 => SectionDocumentos::show($item),
                 default => false,
             };
             return true;
@@ -489,6 +491,7 @@ class CompanyData extends CommonDBTM
      */
     public function prepareInputForUpdate($input)
     {
+
         // CORREÇÃO: remover campo 'name' residual do POST
         unset($input['name']);
 
@@ -496,7 +499,7 @@ class CompanyData extends CommonDBTM
         if (isset($input['systems_config']) && is_array($input['systems_config'])) {
             $input['systems_config'] = json_encode($input['systems_config']);
         }
-        
+
         // ERRO 24: Converter strings vazias para NULL em campos decimais
         $decimal_fields = ['latitude', 'longitude'];
         foreach ($decimal_fields as $field) {
@@ -568,92 +571,209 @@ class CompanyData extends CommonDBTM
      * @return array Search options
      */
     public function rawSearchOptions(): array
-    {
-        $tab = [];
+{
+    $tab = [];
 
-        // Opção 1 — campo principal (substitui a do parent que fica sem itemtype)
-        $tab[] = [
-            'id'       => '1',
-            'table'    => $this->getTable(),
-            'field'    => 'corporate_name',
-            'name'     => __('Corporate Name', 'newbase'),
-            'datatype' => 'itemlink',
-            'itemtype' => self::class,
-        ];
+    $tab[] = [
+        'id'       => '1',
+        'table'    => $this->getTable(),
+        'field'    => 'corporate_name',
+        'name'     => __('Corporate Name', 'newbase'),
+        'datatype' => 'itemlink',
+        'itemtype' => self::class,
+    ];
 
+    $tab[] = [
+        'id'       => '3',
+        'table'    => $this->getTable(),
+        'field'    => 'cnpj',
+        'name'     => __('CNPJ', 'newbase'),
+        'datatype' => 'string',
+    ];
 
+    $tab[] = [
+        'id'       => '4',
+        'table'    => $this->getTable(),
+        'field'    => 'corporate_name',
+        'name'     => __('Corporate Name', 'newbase'),
+        'datatype' => 'string',
+    ];
 
-        $tab[] = [
-            'id'       => '3',
-            'table'    => $this->getTable(),
-            'field'    => 'cnpj',
-            'name'     => __('CNPJ', 'newbase'),
-            'datatype' => 'string',
-        ];
+    $tab[] = [
+        'id'       => '5',
+        'table'    => $this->getTable(),
+        'field'    => 'fantasy_name',
+        'name'     => __('Fantasy Name', 'newbase'),
+        'datatype' => 'string',
+    ];
 
-        $tab[] = [
-            'id'       => '4',
-            'table'    => $this->getTable(),
-            'field'    => 'corporate_name',
-            'name'     => __('Corporate Name', 'newbase'),
-            'datatype' => 'string',
-        ];
+    $tab[] = [
+        'id'       => '6',
+        'table'    => $this->getTable(),
+        'field'    => 'contact_person',
+        'name'     => __('Contact Person', 'newbase'),
+        'datatype' => 'string',
+    ];
 
-        $tab[] = [
-            'id'       => '5',
-            'table'    => $this->getTable(),
-            'field'    => 'fantasy_name',
-            'name'     => __('Fantasy Name', 'newbase'),
-            'datatype' => 'string',
-        ];
+    $tab[] = [
+        'id'       => '7',
+        'table'    => $this->getTable(),
+        'field'    => 'website',
+        'name'     => __('Website', 'newbase'),
+        'datatype' => 'weblink',
+    ];
 
-        $tab[] = [
-            'id'       => '6',
-            'table'    => $this->getTable(),
-            'field'    => 'contact_person',
-            'name'     => __('Contact Person', 'newbase'),
-            'datatype' => 'string',
-        ];
+    $tab[] = [
+        'id'       => '8',
+        'table'    => $this->getTable(),
+        'field'    => 'phone',
+        'name'     => __('Phone'),
+        'datatype' => 'string',
+    ];
 
-        $tab[] = [
-            'id'       => '7',
-            'table'    => $this->getTable(),
-            'field'    => 'website',
-            'name'     => __('Website', 'newbase'),
-            'datatype' => 'weblink',
-        ];
+    $tab[] = [
+        'id'       => '9',
+        'table'    => $this->getTable(),
+        'field'    => 'email',
+        'name'     => __('Email'),
+        'datatype' => 'string',
+    ];
 
-        $tab[] = [
-            'id'            => '19',
-            'table'         => $this->getTable(),
-            'field'         => 'date_mod',
-            'name'          => __('Last update'),
-            'datatype'      => 'datetime',
-            'massiveaction' => false,
-        ];
+    $tab[] = [
+        'id'       => '10',
+        'table'    => $this->getTable(),
+        'field'    => 'cep',
+        'name'     => __('Postal Code', 'newbase'),
+        'datatype' => 'string',
+    ];
 
-        $tab[] = [
-            'id'            => '121',
-            'table'         => $this->getTable(),
-            'field'         => 'date_creation',
-            'name'          => __('Creation date'),
-            'datatype'      => 'datetime',
-            'massiveaction' => false,
-        ];
+    $tab[] = [
+        'id'       => '11',
+        'table'    => $this->getTable(),
+        'field'    => 'street',
+        'name'     => __('Street', 'newbase'),
+        'datatype' => 'string',
+    ];
 
-        $tab[] = [
-            'id'            => '30',
-            'table'         => $this->getTable(),
-            'field'         => 'is_deleted',
-            'name'          => __('Deleted'),
-            'datatype'      => 'bool',
-            'massiveaction' => false,
-            'nosearch'      => true,
-            'nodisplay'     => true,
-        ];
+    $tab[] = [
+        'id'       => '12',
+        'table'    => $this->getTable(),
+        'field'    => 'number',
+        'name'     => __('Number', 'newbase'),
+        'datatype' => 'string',
+    ];
 
-        return $tab;
-    }
+    $tab[] = [
+        'id'       => '13',
+        'table'    => $this->getTable(),
+        'field'    => 'complement',
+        'name'     => __('Complement', 'newbase'),
+        'datatype' => 'string',
+    ];
+
+    $tab[] = [
+        'id'       => '14',
+        'table'    => $this->getTable(),
+        'field'    => 'neighborhood',
+        'name'     => __('Neighborhood', 'newbase'),
+        'datatype' => 'string',
+    ];
+
+    $tab[] = [
+        'id'       => '15',
+        'table'    => $this->getTable(),
+        'field'    => 'city',
+        'name'     => __('City'),
+        'datatype' => 'string',
+    ];
+
+    $tab[] = [
+        'id'       => '16',
+        'table'    => $this->getTable(),
+        'field'    => 'state',
+        'name'     => __('State'),
+        'datatype' => 'string',
+    ];
+
+    $tab[] = [
+        'id'       => '17',
+        'table'    => $this->getTable(),
+        'field'    => 'country',
+        'name'     => __('Country'),
+        'datatype' => 'string',
+    ];
+
+    $tab[] = [
+        'id'       => '18',
+        'table'    => $this->getTable(),
+        'field'    => 'latitude',
+        'name'     => __('Latitude', 'newbase'),
+        'datatype' => 'decimal',
+    ];
+
+    $tab[] = [
+        'id'       => '20',
+        'table'    => $this->getTable(),
+        'field'    => 'longitude',
+        'name'     => __('Longitude', 'newbase'),
+        'datatype' => 'decimal',
+    ];
+
+    $tab[] = [
+        'id'       => '21',
+        'table'    => $this->getTable(),
+        'field'    => 'contract_status',
+        'name'     => __('Contract Status', 'newbase'),
+        'datatype' => 'string',
+    ];
+
+    $tab[] = [
+        'id'       => '22',
+        'table'    => $this->getTable(),
+        'field'    => 'notes',
+        'name'     => __('Comments'),
+        'datatype' => 'text',
+    ];
+
+    $tab[] = [
+        'id'       => '23',
+        'table'    => $this->getTable(),
+        'field'    => 'date_end',
+        'name'     => __('Data de Encerramento', 'newbase'),
+        'datatype' => 'date',
+    ];
+
+    $tab[] = [
+        'id'            => '19',
+        'table'         => $this->getTable(),
+        'field'         => 'date_mod',
+        'name'          => __('Last update'),
+        'datatype'      => 'datetime',
+        'massiveaction' => false,
+    ];
+
+    $tab[] = [
+        'id'            => '121',
+        'table'         => $this->getTable(),
+        'field'         => 'date_creation',
+        'name'          => __('Creation date'),
+        'datatype'      => 'datetime',
+        'massiveaction' => false,
+    ];
+
+    $tab[] = [
+        'id'            => '30',
+        'table'         => $this->getTable(),
+        'field'         => 'is_deleted',
+        'name'          => __('Deleted'),
+        'datatype'      => 'bool',
+        'massiveaction' => false,
+        'nosearch'      => true,
+        'nodisplay'     => true,
+    ];
+
+    return $tab;
+}
 
     /**
      * Display form for company
@@ -664,240 +784,29 @@ class CompanyData extends CommonDBTM
      */
     public function showForm($ID, array $options = []): bool
     {
-        $this->initForm($ID, $options);
+        // O ID real pode vir em $options['id'] quando chamado via aba AJAX
+        $real_id = (int) ($options['id'] ?? $ID);
+
+        $this->initForm($real_id, $options);
 
         if (!$this->canView()) {
             return false;
         }
 
-        $this->showFormHeader($options);
+        // Após initForm com ID correto, $this->fields['id'] deve ter o valor real
+        $final_id = (int) ($this->fields['id'] ?? $real_id);
 
-        // === SEÇÃO: Informações Gerais ===
-        echo "<tr class='tab_bg_2'>";
-        echo "<th colspan='4'>" . __('Informações Gerais', 'newbase') . "</th>";
-        echo "</tr>";
-
-        // ID (somente leitura)
-        echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __('ID') . "</td>";
-        echo "<td>";
-        echo "<span class='form-control-plaintext'><strong>" . ($ID > 0 ? (int)$ID : __('Novo', 'newbase')) . "</strong></span>";
-        echo "</td>";
-        echo "<td colspan='2'></td>";
-        echo "</tr>";
-
-        // Nome Fantasia / CNPJ
-        echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __('Fantasy Name', 'newbase') . "</td>";
-        echo "<td>";
-        echo Html::input('fantasy_name', [
-        'value' => $this->fields['fantasy_name'] ?? '',
-        'size'  => 35,
-        ]);
-        echo "</td>";
-
-        echo "<td>" . __('CNPJ', 'newbase') . "</td>";
-        echo "<td>";
-        echo Html::input('cnpj', [
-            'value'     => $this->fields['cnpj'] ?? '',
-            'size'      => 35,
-            'maxlength' => 18,
-            'name'      => 'cnpj',
-        ]);
-        echo "&nbsp;<button type='button' class='btn btn-secondary' data-action='search-cnpj'>";
-        echo "<i class='ti ti-search'></i></button>";
-        echo "</td>";
-        echo "</tr>";
-
-        // Razão Social / Email
-        echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __('Corporate Name', 'newbase') . " <span class='red'>*</span></td>";
-        echo "<td>";
-        echo Html::input('corporate_name', [
-            'value' => $this->fields['corporate_name'] ?? '',
-            'size'  => 35,
-        ]);
-        echo "</td>";
-
-        echo "<td>" . __('Email') . "</td>";
-        echo "<td>";
-        echo Html::input('email', [
-            'value' => $this->fields['email'] ?? '',
-            'type'  => 'email',
-            'size'  => 35,
-        ]);
-        echo "</td>";
-        echo "</tr>";
-
-        // Telefone
-        echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __('Phone') . "</td>";
-        echo "<td>";
-        echo Html::input('phone', [
-            'value' => $this->fields['phone'] ?? '',
-            'size'  => 35,
-        ]);
-        echo "</td>";
-        echo "<td colspan='2'></td>";
-        echo "</tr>";
-
-        // === SEÇÃO: Endereço ===
-        echo "<tr class='tab_bg_2'>";
-        echo "<th colspan='4'>" . __('Address', 'newbase') . "</th>";
-        echo "</tr>";
-
-        // CEP / Rua
-        echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __('Postal Code', 'newbase') . "</td>";
-        echo "<td>";
-        echo Html::input('cep', [
-            'value' => $this->fields['cep'] ?? '',
-            'size'  => 35,
-            'name'  => 'cep',
-        ]);
-        echo "&nbsp;<button type='button' class='btn btn-secondary' data-action='search-cep'>";
-        echo "<i class='ti ti-search'></i></button>";
-        echo "</td>";
-
-        echo "<td>" . __('Street', 'newbase') . "</td>";
-        echo "<td>";
-        echo Html::input('street', [
-        'value' => $this->fields['street'] ?? '',
-        'size'  => 35,
-        'name'  => 'street',
-        ]);
-        echo "</td>";
-        echo "</tr>";
-
-        // Número / Bairro
-        echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __('Number', 'newbase') . "</td>";
-        echo "<td>";
-        echo Html::input('number', [
-        'value' => $this->fields['number'] ?? '',
-        'size'  => 35,
-        ]);
-        echo "</td>";
-
-        echo "<td>" . __('Neighborhood', 'newbase') . "</td>";
-        echo "<td>";
-        echo Html::input('neighborhood', [
-            'value' => $this->fields['neighborhood'] ?? '',
-            'size'  => 35,
-            'name'  => 'neighborhood',
-        ]);
-        echo "</td>";
-        echo "</tr>";
-
-        // Cidade / Estado
-        echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __('City') . "</td>";
-        echo "<td>";
-        echo Html::input('city', [
-            'value' => $this->fields['city'] ?? '',
-            'size'  => 35,
-            'name'  => 'city',
-        ]);
-        echo "</td>";
-
-        echo "<td>" . __('State') . "</td>";
-        echo "<td>";
-        echo Html::input('state', [
-            'value'     => $this->fields['state'] ?? '',
-            'size'      => 2,
-            'maxlength' => 2,
-            'name'      => 'state',
-        ]);
-        echo "</td>";
-        echo "</tr>";
-
-        // País / (vazio)
-        echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __('Country') . "</td>";
-        echo "<td>";
-        echo Html::input('country', [
-            'value' => $this->fields['country'] ?? 'Brasil',
-            'size'  => 35,
-        ]);
-        echo "</td>";
-        echo "<td colspan='2'></td>";
-        echo "</tr>";
-
-        // Latitude / Longitude
-        echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __('Latitude', 'newbase') . "</td>";
-        echo "<td>";
-        echo Html::input('latitude', [
-            'value' => $this->fields['latitude'] ?? '',
-            'size'  => 35,
-            'name'  => 'latitude',
-        ]);
-        echo "</td>";
-
-        echo "<td>" . __('Longitude', 'newbase') . "</td>";
-        echo "<td>";
-        echo Html::input('longitude', [
-            'value' => $this->fields['longitude'] ?? '',
-            'size'  => 35,
-            'name'  => 'longitude',
-        ]);
-        echo "</td>";
-        echo "</tr>";
-
-        // === SEÇÃO: Status da Empresa ===
-        echo "<tr class='tab_bg_2'>";
-        echo "<th colspan='4'>" . __('Status da Empresa', 'newbase') . "</th>";
-        echo "</tr>";
-
-        // Status do Contrato
-        echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __('Contract Status', 'newbase') . "</td>";
-        echo "<td>";
-        $contract_options = [
-            'active'    => __('Active Contract', 'newbase'),
-            'inactive'  => __('No Contract', 'newbase'),
-            'cancelled' => __('Cancelled Contract', 'newbase'),
-        ];
-        echo Html::select('contract_status', $contract_options, [
-            'value' => $this->fields['contract_status'] ?? 'active',
-        ]);
-        echo "</td>";
-        echo "<td colspan='2'></td>";
-        echo "</tr>";
-
-        // Data de Cadastro / Data de Encerramento
-        echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __('Data de Cadastro', 'newbase') . "</td>";
-        echo "<td>";
-        echo Html::showDateField('date_creation', [
-            'value'    => $this->fields['date_creation'] ?? '',
-            'readonly' => true,
-        ]);
-        echo "</td>";
-
-        echo "<td>" . __('Data de Encerramento', 'newbase') . "</td>";
-        echo "<td>";
-        echo Html::showDateField('date_end', [
-            'value' => $this->fields['date_end'] ?? '',
-        ]);
-        echo "</td>";
-        echo "</tr>";
-
-        // Observações
-        echo "<tr class='tab_bg_1'>";
-        echo "<td>" . __('Comments') . "</td>";
-        echo "<td colspan='3'>";
-        echo Html::textarea([
-            'name'  => 'notes',
-            'value' => $this->fields['notes'] ?? '',
-            'cols'  => 80,
-            'rows'  => 4,
-        ]);
-        echo "</td>";
-        echo "</tr>";
-
-        $this->showFormButtons($options);
+        \Glpi\Application\View\TemplateRenderer::getInstance()->display(
+            '@newbase/companydata/sections/empresa.html.twig',
+            [
+                'item_id'    => $final_id,
+                'form_url'   => $this->getFormURL(),
+                'csrf_token' => \Session::getNewCSRFToken(),
+                'data'       => $this->fields,
+            ]
+        );
 
         return true;
     }
+
 }

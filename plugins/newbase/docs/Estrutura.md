@@ -181,7 +181,7 @@ Exemplo de Ativação no GLPI:
 
 ```yaml
 *glpi_plugin_newbase_company
-├── Dados da Empresa:
+├── Informações Gerais:
 │   ├── Buscar CNPJ automaticamente e preencher os campos abaixo
 │   ├── Id
 │   ├── Nome Fantasia
@@ -264,7 +264,7 @@ Exemplo de Ativação no GLPI:
 
 ```yaml
 *glpi_plugin_newbase_dispositivos
-└── Informações dispositivos: (2 - Formulario dos dispositiovos interligados ao Servidor Telefonia).
+└── Dispositivos de Rede: (2 - Formulario dos dispositiovos interligados ao Servidor Telefonia).
     ├── Tipo de dispositivo (Coluna 2.1 - Campo de texto - Ex:FXS, FXO, ATA, Aligera, E1).
     ├── IP do dispositivo (Coluna 2.2 - Campo de número para IP do dispositivo - Ex:192.xxx.xx.x).
     ├── Senha do dispositivo (Coluna 2.3 - Campo de número para senha de acesso ao dispotisivo - Ex:12345).
@@ -277,7 +277,7 @@ Exemplo de Ativação no GLPI:
 
 ```yaml
 *glpi_plugin_newbase_rede
-└── Informações de rede: (3 - Formulario das informações de rede - Ex:IP, Mascara, Gateway).
+└── Configurações de Rede: (3 - Formulario das informações de rede - Ex:IP, Mascara, Gateway).
     ├── IP (Coluna 3.1 - Campo de número para IP da rede).
     ├── Máscara de Rede (Coluna 3.2 - Campo de número para máscara da rede).
     ├── Gateway (Coluna 3.3 - Campo de número para gateway da rede).
@@ -306,11 +306,12 @@ Exemplo de Ativação no GLPI:
 │   ├── Senha de admin (Campo de número para senha de admin - Ex:senha123).
 │   ├── login Super-admin (Campo de texto para login de super-admin - Ex:super-admin).
 │   ├── Super-senha (Campo de número para senha de super-admin - Ex:senha123).
+│   ├── Responsável: (1 - formulario de informações do responsável)
 │   ├── Nome do responsavel (Campo de texto para nome dos responsaveis - Ex:Rafael - gestor)
 │   ├── Número do responsavel (Campo de número para número dos responsaveis - Ex:(27)9 9000-0000)
 │   ├── E-mail do responsavel (Campo de texto para e-mail dos responsaveis - Ex:empresa@gmail.com)
 │   ├── Redes sociais (Campo de texto para redes sociais autenticadas no Chatbot - Ex:Facebook,Instagram, WhatsApp).
-│   ├── Comunicação em massa (1 - Formulario de informações do sistema de comunicação em massa - Ex:Nome, Data, Número).
+│   ├── Comunicação em massa: (1 - Formulario de informações do sistema de comunicação em massa - Ex:Nome, Data, Número).
 │   ├── Nome do sistema (Coluna 1.1 - Campo de texto para nome do sistema - Ex:Fireblick).
 │   ├── Data de ativação (Coluna 1.2 - Campo de número para data de ativação - Ex:14/12/2025).
 │   ├── Número Autenticado (Coluna 1.3 - Campo de número para telefone autenticado - Ex:(27) 3372-7000).
@@ -319,19 +320,18 @@ Exemplo de Ativação no GLPI:
 │   ├── Login (Coluna 1.6 - Campo de texto para login de acesso ao sistema - Ex:admin).
 │   ├── Senha (Coluna 1.7 - Campo de número para senha de acesso ao sistema - Ex:senha123).
 │   ├── Responsavel (Coluna 1.8 - Campo de texto para nome do responsavel - Ex:Rafael - gestor)
-├── Restrições (Planilha 1.9 - Informações de restrições com colunas auto ajustaveis (Ex:Data,Duração, Número).
+├── Restrições: (Planilha 1.9 - Informações de restrições com colunas auto ajustaveis (Ex:Data,Duração, Número).
 │   ├── Data da restrição (Coluna 1.9.1 - Campo de número para data da restrição - Ex:14/12/2025).
 │   ├── Duração (Coluna 1.9.1 - Campo de número para duração da restrição - Ex:24H).
 │   └── Número restrito (Coluna 1.9.1 - Campo de número para telefone que foi restrito - Ex:(27)3372-7000).
-│   └── Números secundarios (Coluna 1.10 - Campo de número para telefone secundarios - Ex:(27)3372-7000).
-├── Usuários (2 - Formulario dos usuários cadastrados no Chatbot com colunas auto ajustaveis - Ex:Nome, Login, Senha).
+├── Usuários: (2 - Formulario dos usuários cadastrados no Chatbot com colunas auto ajustaveis - Ex:Nome, Login, Senha).
 │   ├── Nome (Coluna 2.1 - Campo de texto para nome dos usuários - Ex:Miguel).
 │   ├── Login (Coluna 2.2 - Campo de texto para logins dos usuários - Ex:bot.miguel).
 │   ├── Senha (Coluna 2.3 - Campo de número para senhas dos usuários - Ex:Senha123).
 │   ├── E-mail (Coluna 2.4 - Campo de texto para e-mail dos usuários (Ex:empresa@gmail.com).
 │   ├── Tipo (Coluna 2.5 - Campo de texto para tipo de aceesso dos usuários (Ex:Administrador ou Agente).
 │   └── Observações (Coluna 2.6 - Campo de texto para observações adicionais.
-└── Observações (Campo de texto para observações adicionais.
+└── Observações: (Campo de texto para observações adicionais.
 ```
 
 ---
@@ -346,7 +346,7 @@ Exemplo de Ativação no GLPI:
     ├── Operadora (Campo de número para operadora da linha telefonica - Ex:Zafex, Nvoip).
     ├── Quantidade de canais (Campo de número para Quantos canais contratado - Ex:30 canais).
     ├── Quantidade de DDR (Campo de número  - Ex:33727000 - 7100).
-    ├── Portabilidade (Campo seletora para portabilidade feita ou não - Ex:Sim, Não).
+    ├── Portabilidade: (Campo seletora para portabilidade feita ou não - Ex:Sim, Não).
     ├── Data Portabilidade (Campo de número para data da portabilidade - Ex:17/12/2025).
     ├── Operadora Anterior (Campo de texto para operadora anterior - Ex:Vivo, Oi, Claro).
     ├── Data Ativação (Campo de número para data da ativação da linha telefonica - EX:14/12/2025).
